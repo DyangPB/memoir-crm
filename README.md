@@ -27,12 +27,12 @@ pnpm build
 
 ## Deploy
 
-Deploy runs from CI on every push to `main`, and locally with `pnpm deploy`. Both need a
-Cloudflare account with a D1 database named `memoir`:
+Live at <https://memoir.shadypb.workers.dev>. Deploy locally with `pnpm deploy`, and from
+CI on every push to `main` (needs a `CLOUDFLARE_API_TOKEN` repository secret with Workers
+and D1 edit permissions).
 
-- set `CLOUDFLARE_API_TOKEN` (Workers + D1 edit) as a repository secret for CI
-- replace the placeholder `database_id` in `apps/web/wrangler.jsonc` with the real one
-- apply migrations with `wrangler d1 migrations apply memoir --remote` (from `apps/web`)
+The `memoir` D1 database is already provisioned and bound in `apps/web/wrangler.jsonc`.
+Apply schema changes with `wrangler d1 migrations apply memoir --remote` from `apps/web`.
 
 ## Regenerating types
 

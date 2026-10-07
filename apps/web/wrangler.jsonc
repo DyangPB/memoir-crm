@@ -11,7 +11,7 @@
     {
       "binding": "DB",
       "database_name": "memoir",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "5025a282-107f-49c2-b89c-859872c454ae",
       "migrations_dir": "../../packages/db/migrations"
     }
   ]
