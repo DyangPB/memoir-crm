@@ -1,0 +1,21 @@
+{
+  "name": "memoir",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.9.1",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @memoir/web dev",
+    "build": "pnpm --filter @memoir/web build",
+    "preview": "pnpm --filter @memoir/web preview",
+    "deploy": "pnpm --filter @memoir/web deploy",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}
