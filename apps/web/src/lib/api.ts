@@ -8,6 +8,9 @@ import type {
   LabelSummary,
   Note,
   NoteInput,
+  Reminder,
+  ReminderInput,
+  ReminderWithContact,
 } from "@memoir/core";
 
 export type ApiResult<T> =
@@ -246,4 +249,47 @@ export async function updateFieldDefinition(
 
 export async function deleteFieldDefinition(id: string): Promise<ApiResult<null>> {
   return request<null>(`/api/fields/${id}`, { method: "DELETE" });
+}
+
+export async function listOpenReminders(): Promise<ApiResult<ReminderWithContact[]>> {
+  const result = await request<{ reminders: ReminderWithContact[] }>("/api/reminders");
+
+  return result.ok ? { ok: true, value: result.value.reminders } : result;
+}
+
+export async function listContactReminders(contactId: string): Promise<ApiResult<Reminder[]>> {
+  const result = await request<{ reminders: Reminder[] }>(`/api/contacts/${contactId}/reminders`);
+
+  return result.ok ? { ok: true, value: result.value.reminders } : result;
+}
+
+export async function createReminder(
+  contactId: string,
+  input: ReminderInput,
+): Promise<ApiResult<Reminder>> {
+  const result = await request<{ reminder: Reminder }>(`/api/contacts/${contactId}/reminders`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return result.ok ? { ok: true, value: result.value.reminder } : result;
+}
+
+export async function tickReminder(
+  contactId: string,
+  reminderId: string,
+): Promise<ApiResult<Reminder>> {
+  const result = await request<{ reminder: Reminder }>(
+    `/api/contacts/${contactId}/reminders/${reminderId}/tick`,
+    { method: "POST" },
+  );
+
+  return result.ok ? { ok: true, value: result.value.reminder } : result;
+}
+
+export async function deleteReminder(
+  contactId: string,
+  reminderId: string,
+): Promise<ApiResult<null>> {
+  return request<null>(`/api/contacts/${contactId}/reminders/${reminderId}`, { method: "DELETE" });
 }

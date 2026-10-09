@@ -8,6 +8,8 @@ import {
   type InteractionInput,
   type LabelSummary,
   type Note,
+  type Reminder,
+  type ReminderInput,
 } from "@memoir/core";
 import { Circle, Coffee, MessageCircle, Phone } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
@@ -18,25 +20,32 @@ import { InteractionForm } from "../components/interaction-form";
 import { LetterAvatar } from "../components/letter-avatar";
 import { NoteForm } from "../components/note-form";
 import { PageLoading } from "../components/page-loading";
+import { ReminderForm } from "../components/reminder-form";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
   createInteraction,
   createLabel,
   createNote,
+  createReminder,
   deleteInteraction,
   deleteNote,
+  deleteReminder,
   getContact,
+  listContactReminders,
   listFieldDefinitions,
   listInteractions,
   listLabels,
   listNotes,
   setContactLabels,
+  tickReminder,
   updateInteraction,
   updateNote,
 } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { formatDay, todayIsoDay } from "../lib/format";
+import { reminderChipClass, reminderTiming } from "../lib/reminders";
+import { cn } from "../lib/utils";
 
 const typeGlyphs = {
   call: Phone,
@@ -87,6 +96,7 @@ export function ContactDetailPage() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [interactions, setInteractions] = useState<Interaction[] | null>(null);
   const [notes, setNotes] = useState<Note[] | null>(null);
+  const [reminders, setReminders] = useState<Reminder[] | null>(null);
   const [fieldDefinitions, setFieldDefinitions] = useState<FieldDefinition[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -97,6 +107,9 @@ export function ContactDetailPage() {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [confirmingNoteId, setConfirmingNoteId] = useState<string | null>(null);
   const [noteError, setNoteError] = useState<string | null>(null);
+
+  const [confirmingReminderId, setConfirmingReminderId] = useState<string | null>(null);
+  const [reminderError, setReminderError] = useState<string | null>(null);
 
   const [allLabels, setAllLabels] = useState<LabelSummary[] | null>(null);
   const [newLabelName, setNewLabelName] = useState("");
@@ -115,10 +128,18 @@ export function ContactDetailPage() {
       getContact(id),
       listInteractions(id),
       listNotes(id),
+      listContactReminders(id),
       listLabels(),
       listFieldDefinitions(),
     ]).then(
-      ([contactResult, interactionsResult, notesResult, labelsResult, fieldsResult]) => {
+      ([
+        contactResult,
+        interactionsResult,
+        notesResult,
+        remindersResult,
+        labelsResult,
+        fieldsResult,
+      ]) => {
         if (!active) {
           return;
         }
@@ -138,7 +159,13 @@ export function ContactDetailPage() {
           return;
         }
 
-        if (!interactionsResult.ok || !notesResult.ok || !labelsResult.ok || !fieldsResult.ok) {
+        if (
+          !interactionsResult.ok ||
+          !notesResult.ok ||
+          !remindersResult.ok ||
+          !labelsResult.ok ||
+          !fieldsResult.ok
+        ) {
           setLoadError("That didn't load. Refresh and try again.");
           return;
         }
@@ -146,6 +173,7 @@ export function ContactDetailPage() {
         setContact(contactResult.value);
         setInteractions(interactionsResult.value);
         setNotes(notesResult.value);
+        setReminders(remindersResult.value);
         setAllLabels(labelsResult.value);
         setFieldDefinitions(fieldsResult.value);
       },
@@ -308,6 +336,81 @@ export function ContactDetailPage() {
     await refreshNotes();
   }
 
+  async function refreshReminders() {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await listContactReminders(id);
+
+    if (result.ok) {
+      setReminders(result.value);
+    }
+  }
+
+  async function handleAddReminder(values: ReminderInput) {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await createReminder(id, values);
+
+    if (!result.ok) {
+      if (result.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setReminderError(result.message);
+      return;
+    }
+
+    setReminderError(null);
+    await refreshReminders();
+  }
+
+  async function handleTickReminder(reminderId: string) {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await tickReminder(id, reminderId);
+
+    if (!result.ok) {
+      if (result.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setReminderError(result.message);
+      return;
+    }
+
+    setReminderError(null);
+    await refreshReminders();
+  }
+
+  async function handleDeleteReminder(reminderId: string) {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await deleteReminder(id, reminderId);
+
+    if (!result.ok && result.status !== 404) {
+      if (result.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setReminderError(result.message);
+      return;
+    }
+
+    setConfirmingReminderId(null);
+    await refreshReminders();
+  }
+
   async function applyLabelIds(labelIds: string[]) {
     if (contact === null) {
       return;
@@ -397,12 +500,21 @@ export function ContactDetailPage() {
     );
   }
 
-  if (contact === null || interactions === null || notes === null || fieldDefinitions === null) {
+  if (
+    contact === null ||
+    interactions === null ||
+    notes === null ||
+    reminders === null ||
+    fieldDefinitions === null
+  ) {
     return <PageLoading label="Fetching this contact" />;
   }
 
   const lastOn = lastInteractionDate(interactions);
   const days = lastOn === null ? null : daysSince(new Date(`${lastOn}T00:00:00.000Z`), new Date());
+  const now = new Date();
+  const openReminders = reminders.filter((reminder) => reminder.status !== "done");
+  const doneReminders = reminders.filter((reminder) => reminder.status === "done");
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -676,6 +788,85 @@ export function ContactDetailPage() {
                 <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
                   {labelError}
                 </p>
+              )}
+            </section>
+
+            <section className="flex flex-col gap-4">
+              <h2 className="text-heading-lg text-ink">Reminders</h2>
+
+              <ReminderForm error={reminderError} onSubmit={handleAddReminder} />
+
+              {reminders.length === 0 ? (
+                <p className="text-body-md text-ink-mute">
+                  No reminders yet. Add one, and it will be waiting on your home screen when the
+                  day comes.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-4">
+                  {[...openReminders, ...doneReminders].map((reminder) => (
+                    <li className="flex flex-col gap-1.5" key={reminder.id}>
+                      <p
+                        className={cn(
+                          "text-body-md",
+                          reminder.status === "done"
+                            ? "text-ink-mute line-through"
+                            : "text-ink-secondary",
+                        )}
+                      >
+                        {reminder.body}
+                      </p>
+                      {reminder.status === "due" || reminder.status === "overdue" ? (
+                        <span
+                          className={cn(
+                            "self-start rounded-full px-2 py-1 text-micro-cap uppercase tabular-nums",
+                            reminderChipClass(reminder.status),
+                          )}
+                        >
+                          {reminderTiming(reminder, now)}
+                        </span>
+                      ) : (
+                        <span className="text-caption tabular-nums text-ink-mute">
+                          {reminderTiming(reminder, now)}
+                        </span>
+                      )}
+                      {confirmingReminderId === reminder.id ? (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-caption text-ink-mute">Delete this reminder?</span>
+                          <Button
+                            onClick={() => handleDeleteReminder(reminder.id)}
+                            variant="danger"
+                          >
+                            Delete reminder
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setConfirmingReminderId(null);
+                            }}
+                            variant="ghost"
+                          >
+                            Keep it
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          {reminder.status !== "done" && (
+                            <Button onClick={() => handleTickReminder(reminder.id)} variant="ghost">
+                              Mark done
+                            </Button>
+                          )}
+                          <Button
+                            onClick={() => {
+                              setConfirmingReminderId(reminder.id);
+                            }}
+                            variant="ghost"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
               )}
             </section>
 

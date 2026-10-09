@@ -1,13 +1,14 @@
-import { daysSince, type Contact, type LabelSummary } from "@memoir/core";
+import { daysSince, type Contact, type LabelSummary, type ReminderWithContact } from "@memoir/core";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { LetterAvatar } from "../components/letter-avatar";
 import { PageLoading } from "../components/page-loading";
+import { ReminderStrip } from "../components/reminder-strip";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { listContacts, listLabels } from "../lib/api";
+import { listContacts, listLabels, listOpenReminders } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { cn } from "../lib/utils";
 
@@ -58,6 +59,7 @@ export function AppPage() {
   const activeLabelId = searchParams.get("label");
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const [labels, setLabels] = useState<LabelSummary[]>([]);
+  const [reminders, setReminders] = useState<ReminderWithContact[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(query);
 
@@ -98,6 +100,24 @@ export function AppPage() {
     void listLabels().then((result) => {
       if (active && result.ok) {
         setLabels(result.value);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (session === null) {
+      return;
+    }
+
+    let active = true;
+
+    void listOpenReminders().then((result) => {
+      if (active && result.ok) {
+        setReminders(result.value);
       }
     });
 
@@ -179,6 +199,8 @@ export function AppPage() {
         {error !== null && (
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         )}
+
+        <ReminderStrip reminders={reminders} />
 
         {contacts === null ? (
           <p className="text-caption text-ink-mute">Fetching your people</p>

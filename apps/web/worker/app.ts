@@ -8,6 +8,7 @@ import { health } from "./routes/health";
 import { interactionsRoutes } from "./routes/interactions";
 import { labelsRoutes } from "./routes/labels";
 import { notesRoutes } from "./routes/notes";
+import { remindersRoutes } from "./routes/reminders";
 
 export const app = new Hono<{ Bindings: Env }>();
 
@@ -19,3 +20,4 @@ app.route("/api", fieldsRoutes);
 app.route("/api", interactionsRoutes);
 app.route("/api", labelsRoutes);
 app.route("/api", notesRoutes);
+app.route("/api", remindersRoutes);

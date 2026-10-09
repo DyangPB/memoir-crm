@@ -177,6 +177,33 @@ export const notes = sqliteTable(
   ],
 );
 
+export const reminders = sqliteTable(
+  "reminders",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    body: text("body").notNull(),
+    dueOn: text("due_on").notNull(),
+    status: text("status", { enum: ["pending", "due", "overdue", "done"] }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("reminders_userId_idx").on(table.userId),
+    index("reminders_contactId_idx").on(table.contactId),
+  ],
+);
+
 export const labels = sqliteTable(
   "labels",
   {
