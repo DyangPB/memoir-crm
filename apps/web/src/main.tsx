@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from "react-router";
 
 import { App } from "./App";
 import { AppPage } from "./pages/app";
+import { ContactEditPage } from "./pages/contact-edit";
+import { ContactNewPage } from "./pages/contact-new";
 import { LoginPage } from "./pages/login";
 import { SettingsPage } from "./pages/settings";
 import { SignupPage } from "./pages/signup";
@@ -23,6 +25,8 @@ createRoot(root).render(
         <Route element={<LoginPage />} path="/login" />
         <Route element={<SignupPage />} path="/signup" />
         <Route element={<AppPage />} path="/app" />
+        <Route element={<ContactNewPage />} path="/app/contacts/new" />
+        <Route element={<ContactEditPage />} path="/app/contacts/:id/edit" />
         <Route element={<SettingsPage />} path="/app/settings" />
       </Routes>
     </BrowserRouter>

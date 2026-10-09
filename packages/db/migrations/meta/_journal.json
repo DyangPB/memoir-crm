@@ -15,6 +15,13 @@
       "when": 1791526087678,
       "tag": "0001_little_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791529829784,
+      "tag": "0002_early_arachne",
+      "breakpoints": true
     }
   ]
 }

@@ -86,3 +86,34 @@ export const verifications = sqliteTable(
   },
   (table) => [index("verifications_identifier_idx").on(table.identifier)],
 );
+
+export const contacts = sqliteTable(
+  "contacts",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    emails: text("emails", { mode: "json" }).$type<string[]>().notNull().default([]),
+    phones: text("phones", { mode: "json" }).$type<string[]>().notNull().default([]),
+    socialLinks: text("social_links", { mode: "json" })
+      .$type<{ label: string; url: string }[]>()
+      .notNull()
+      .default([]),
+    birthday: text("birthday"),
+    howWeMet: text("how_we_met"),
+    customFields: text("custom_fields", { mode: "json" })
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("contacts_userId_idx").on(table.userId)],
+);
