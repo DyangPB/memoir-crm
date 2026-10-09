@@ -19,6 +19,7 @@ export function toContact(
     socialLinks: row.socialLinks,
     birthday: row.birthday,
     howWeMet: row.howWeMet,
+    customFields: row.customFields,
     labels: contactLabelsList,
     lastInteractionAt,
     createdAt: row.createdAt.toISOString(),

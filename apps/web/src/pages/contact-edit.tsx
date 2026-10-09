@@ -1,4 +1,4 @@
-import type { Contact, ContactInput } from "@memoir/core";
+import type { Contact, ContactWriteInput, FieldDefinition } from "@memoir/core";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 
@@ -6,7 +6,7 @@ import { AppHeader } from "../components/app-header";
 import { ContactForm } from "../components/contact-form";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
-import { deleteContact, getContact, updateContact } from "../lib/api";
+import { deleteContact, getContact, listFieldDefinitions, updateContact } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 
 export function ContactEditPage() {
@@ -14,6 +14,7 @@ export function ContactEditPage() {
   const { data: session, isPending } = authClient.useSession();
   const navigate = useNavigate();
   const [contact, setContact] = useState<Contact | null>(null);
+  const [definitions, setDefinitions] = useState<FieldDefinition[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
@@ -26,27 +27,33 @@ export function ContactEditPage() {
 
     let active = true;
 
-    void getContact(id).then((result) => {
+    void Promise.all([getContact(id), listFieldDefinitions()]).then(([contactResult, fieldsResult]) => {
       if (!active) {
         return;
       }
 
-      if (result.ok) {
-        setContact(result.value);
+      if (!contactResult.ok) {
+        if (contactResult.status === 401) {
+          void navigate("/login");
+          return;
+        }
+
+        if (contactResult.status === 404) {
+          void navigate("/app");
+          return;
+        }
+
+        setLoadError(contactResult.message);
         return;
       }
 
-      if (result.status === 401) {
-        void navigate("/login");
+      if (!fieldsResult.ok) {
+        setLoadError("That didn't load. Refresh and try again.");
         return;
       }
 
-      if (result.status === 404) {
-        void navigate("/app");
-        return;
-      }
-
-      setLoadError(result.message);
+      setContact(contactResult.value);
+      setDefinitions(fieldsResult.value);
     });
 
     return () => {
@@ -73,13 +80,13 @@ export function ContactEditPage() {
     );
   }
 
-  if (contact === null) {
+  if (contact === null || definitions === null) {
     return <PageLoading label="Fetching this contact" />;
   }
 
   const firstName = contact.name.split(" ")[0] ?? contact.name;
 
-  async function handleSubmit(values: ContactInput) {
+  async function handleSubmit(values: ContactWriteInput) {
     if (contact === null) {
       return;
     }
@@ -127,6 +134,7 @@ export function ContactEditPage() {
 
         <ContactForm
           cancelHref={`/app/contacts/${contact.id}`}
+          definitions={definitions}
           error={formError}
           initialValues={{
             name: contact.name,
@@ -135,6 +143,7 @@ export function ContactEditPage() {
             socialLinks: contact.socialLinks,
             birthday: contact.birthday,
             howWeMet: contact.howWeMet,
+            customFields: contact.customFields,
           }}
           onSubmit={handleSubmit}
           pendingLabel="Saving changes"

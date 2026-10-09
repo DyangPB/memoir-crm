@@ -1,3 +1,4 @@
+import type { CustomFieldValues } from "./custom-field";
 import type { Label } from "./label";
 
 export type SocialLink = {
@@ -14,7 +15,12 @@ export type ContactInput = {
   howWeMet: string | null;
 };
 
+export type ContactWriteInput = ContactInput & {
+  customFields: CustomFieldValues;
+};
+
 export type Contact = ContactInput & {
+  customFields: CustomFieldValues;
   id: string;
   labels: Label[];
   lastInteractionAt: string | null;

@@ -1,6 +1,8 @@
 import type {
   Contact,
-  ContactInput,
+  ContactWriteInput,
+  FieldDefinitionInput,
+  FieldDefinitionSummary,
   Interaction,
   InteractionInput,
   LabelSummary,
@@ -74,7 +76,7 @@ export async function getContact(id: string): Promise<ApiResult<Contact>> {
   return result.ok ? { ok: true, value: result.value.contact } : result;
 }
 
-export async function createContact(input: ContactInput): Promise<ApiResult<Contact>> {
+export async function createContact(input: ContactWriteInput): Promise<ApiResult<Contact>> {
   const result = await request<{ contact: Contact }>("/api/contacts", {
     method: "POST",
     body: JSON.stringify(input),
@@ -83,7 +85,10 @@ export async function createContact(input: ContactInput): Promise<ApiResult<Cont
   return result.ok ? { ok: true, value: result.value.contact } : result;
 }
 
-export async function updateContact(id: string, input: ContactInput): Promise<ApiResult<Contact>> {
+export async function updateContact(
+  id: string,
+  input: ContactWriteInput,
+): Promise<ApiResult<Contact>> {
   const result = await request<{ contact: Contact }>(`/api/contacts/${id}`, {
     method: "PUT",
     body: JSON.stringify(input),
@@ -208,4 +213,37 @@ export async function setContactLabels(
   });
 
   return result.ok ? { ok: true, value: result.value.contact } : result;
+}
+
+export async function listFieldDefinitions(): Promise<ApiResult<FieldDefinitionSummary[]>> {
+  const result = await request<{ fields: FieldDefinitionSummary[] }>("/api/fields");
+
+  return result.ok ? { ok: true, value: result.value.fields } : result;
+}
+
+export async function createFieldDefinition(
+  input: FieldDefinitionInput,
+): Promise<ApiResult<FieldDefinitionSummary>> {
+  const result = await request<{ field: FieldDefinitionSummary }>("/api/fields", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return result.ok ? { ok: true, value: result.value.field } : result;
+}
+
+export async function updateFieldDefinition(
+  id: string,
+  input: FieldDefinitionInput,
+): Promise<ApiResult<FieldDefinitionSummary>> {
+  const result = await request<{ field: FieldDefinitionSummary }>(`/api/fields/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+
+  return result.ok ? { ok: true, value: result.value.field } : result;
+}
+
+export async function deleteFieldDefinition(id: string): Promise<ApiResult<null>> {
+  return request<null>(`/api/fields/${id}`, { method: "DELETE" });
 }

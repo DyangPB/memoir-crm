@@ -1,28 +1,196 @@
-import type { ContactInput, SocialLink } from "@memoir/core";
+import type {
+  ContactWriteInput,
+  CustomFieldValues,
+  FieldDefinition,
+  SocialLink,
+} from "@memoir/core";
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { Select } from "./ui/select";
 import { Textarea } from "./ui/textarea";
 
-export const emptyContactInput: ContactInput = {
+export const emptyContactInput: ContactWriteInput = {
   name: "",
   emails: [],
   phones: [],
   socialLinks: [],
   birthday: null,
   howWeMet: null,
+  customFields: {},
 };
 
 type ContactFormProps = {
-  initialValues: ContactInput;
+  initialValues: ContactWriteInput;
+  definitions: FieldDefinition[];
   submitLabel: string;
   pendingLabel: string;
   cancelHref: string;
   error: string | null;
-  onSubmit: (values: ContactInput) => Promise<void>;
+  onSubmit: (values: ContactWriteInput) => Promise<void>;
 };
+
+function stringValue(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function numberValue(value: unknown): string {
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  return stringValue(value);
+}
+
+function multiSelectValue(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+type CustomFieldControlProps = {
+  definition: FieldDefinition;
+  value: unknown;
+  onChange: (value: unknown) => void;
+};
+
+function CustomFieldControl({ definition, value, onChange }: CustomFieldControlProps) {
+  const id = `custom-field-${definition.id}`;
+
+  switch (definition.type) {
+    case "text":
+      return (
+        <Input
+          id={id}
+          onChange={(event) => onChange(event.target.value)}
+          value={stringValue(value)}
+        />
+      );
+    case "number":
+      return (
+        <Input
+          className="w-48"
+          id={id}
+          onChange={(event) => onChange(event.target.value)}
+          step="any"
+          type="number"
+          value={numberValue(value)}
+        />
+      );
+    case "date":
+      return (
+        <Input
+          className="w-48"
+          id={id}
+          onChange={(event) => onChange(event.target.value)}
+          type="date"
+          value={stringValue(value)}
+        />
+      );
+    case "long-text":
+      return (
+        <Textarea
+          id={id}
+          onChange={(event) => onChange(event.target.value)}
+          rows={3}
+          value={stringValue(value)}
+        />
+      );
+    case "boolean":
+      return (
+        <label className="flex items-center gap-2 text-body-md text-ink-secondary">
+          <input
+            checked={value === true}
+            className="accent-primary"
+            id={id}
+            onChange={(event) => onChange(event.target.checked)}
+            type="checkbox"
+          />
+          Yes
+        </label>
+      );
+    case "url":
+      return (
+        <Input
+          id={id}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="https://example.com"
+          type="url"
+          value={stringValue(value)}
+        />
+      );
+    case "single-select":
+      return (
+        <Select id={id} onChange={(event) => onChange(event.target.value)} value={stringValue(value)}>
+          <option value="">Not set</option>
+          {definition.options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </Select>
+      );
+    case "multi-select": {
+      const picked = multiSelectValue(value);
+
+      return (
+        <div className="flex flex-col gap-1.5">
+          {definition.options.map((option) => (
+            <label
+              className="flex items-center gap-2 text-body-md text-ink-secondary"
+              key={option}
+            >
+              <input
+                checked={picked.includes(option)}
+                className="accent-primary"
+                onChange={(event) => {
+                  onChange(
+                    event.target.checked
+                      ? [...picked, option]
+                      : picked.filter((item) => item !== option),
+                  );
+                }}
+                type="checkbox"
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+      );
+    }
+  }
+}
+
+function valuesForSubmit(
+  definitions: FieldDefinition[],
+  customFields: CustomFieldValues,
+): CustomFieldValues {
+  const values: CustomFieldValues = {};
+
+  for (const definition of definitions) {
+    const value = customFields[definition.id];
+
+    if (value === undefined) {
+      continue;
+    }
+
+    if (definition.type === "number" && typeof value === "string") {
+      const trimmed = value.trim();
+
+      if (trimmed === "") {
+        continue;
+      }
+
+      const parsed = Number(trimmed);
+      values[definition.id] = Number.isNaN(parsed) ? trimmed : parsed;
+      continue;
+    }
+
+    values[definition.id] = value;
+  }
+
+  return values;
+}
 
 type StringListFieldProps = {
   legend: string;
@@ -78,6 +246,7 @@ function StringListField({ legend, addLabel, type, values, onChange }: StringLis
 
 export function ContactForm({
   initialValues,
+  definitions,
   submitLabel,
   pendingLabel,
   cancelHref,
@@ -90,10 +259,15 @@ export function ContactForm({
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(initialValues.socialLinks);
   const [birthday, setBirthday] = useState(initialValues.birthday ?? "");
   const [howWeMet, setHowWeMet] = useState(initialValues.howWeMet ?? "");
+  const [customFields, setCustomFields] = useState<CustomFieldValues>(initialValues.customFields);
   const [submitting, setSubmitting] = useState(false);
 
   function replaceLink(index: number, link: SocialLink) {
     setSocialLinks(socialLinks.map((item, itemIndex) => (itemIndex === index ? link : item)));
+  }
+
+  function setCustomFieldValue(fieldId: string, value: unknown) {
+    setCustomFields({ ...customFields, [fieldId]: value });
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -110,6 +284,7 @@ export function ContactForm({
         ),
         birthday: birthday === "" ? null : birthday,
         howWeMet: howWeMet.trim() === "" ? null : howWeMet,
+        customFields: valuesForSubmit(definitions, customFields),
       });
     } finally {
       setSubmitting(false);
@@ -212,6 +387,31 @@ export function ContactForm({
           value={howWeMet}
         />
       </div>
+
+      {definitions.length > 0 && (
+        <div className="flex flex-col gap-4">
+          <h2 className="text-heading-sm text-ink">Custom fields</h2>
+          {definitions.map((definition) => (
+            <div className="flex flex-col gap-1.5" key={definition.id}>
+              {definition.type === "multi-select" ? (
+                <p className="text-caption text-ink-mute">{definition.name}</p>
+              ) : (
+                <label
+                  className="text-caption text-ink-mute"
+                  htmlFor={`custom-field-${definition.id}`}
+                >
+                  {definition.name}
+                </label>
+              )}
+              <CustomFieldControl
+                definition={definition}
+                onChange={(value) => setCustomFieldValue(definition.id, value)}
+                value={customFields[definition.id]}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
       {error !== null && (
         <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>

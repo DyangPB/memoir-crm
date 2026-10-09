@@ -1,4 +1,4 @@
-import { buildSearchQuery, parseContactInput } from "@memoir/core";
+import { buildSearchQuery, parseContactInput, parseCustomFieldValues } from "@memoir/core";
 import { contactLabels, contacts, labels } from "@memoir/db";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
@@ -15,10 +15,31 @@ import {
   type ContactRow,
 } from "../lib/contacts";
 import { createDb } from "../lib/db";
+import { listFieldDefinitions } from "../lib/fields";
 import { findOwnedLabel } from "../lib/labels";
 import { getSessionUser } from "../lib/session";
 
 export const contactsRoutes = new Hono<{ Bindings: Env }>();
+
+async function parseContactBody(env: Env, userId: string, body: unknown) {
+  const parsed = parseContactInput(body);
+
+  if (!parsed.ok) {
+    return { ok: false as const, message: parsed.message };
+  }
+
+  const definitions = await listFieldDefinitions(env, userId);
+  const customFields = parseCustomFieldValues(
+    definitions,
+    (body as Record<string, unknown>).customFields,
+  );
+
+  if (!customFields.ok) {
+    return { ok: false as const, message: customFields.message };
+  }
+
+  return { ok: true as const, contact: parsed.contact, customFields: customFields.values };
+}
 
 contactsRoutes.get("/contacts", async (c) => {
   const user = await getSessionUser(c.env, c.req.raw);
@@ -76,7 +97,7 @@ contactsRoutes.post("/contacts", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const parsed = parseContactInput(await c.req.json().catch(() => null));
+  const parsed = await parseContactBody(c.env, user.id, await c.req.json().catch(() => null));
 
   if (!parsed.ok) {
     return c.json({ error: parsed.message }, 400);
@@ -92,7 +113,7 @@ contactsRoutes.post("/contacts", async (c) => {
     socialLinks: parsed.contact.socialLinks,
     birthday: parsed.contact.birthday,
     howWeMet: parsed.contact.howWeMet,
-    customFields: {},
+    customFields: parsed.customFields,
     createdAt: now,
     updatedAt: now,
   };
@@ -135,7 +156,7 @@ contactsRoutes.put("/contacts/:id", async (c) => {
     return c.json({ error: "That contact isn't here." }, 404);
   }
 
-  const parsed = parseContactInput(await c.req.json().catch(() => null));
+  const parsed = await parseContactBody(c.env, user.id, await c.req.json().catch(() => null));
 
   if (!parsed.ok) {
     return c.json({ error: parsed.message }, 400);
@@ -145,7 +166,7 @@ contactsRoutes.put("/contacts/:id", async (c) => {
 
   await createDb(c.env)
     .update(contacts)
-    .set({ ...parsed.contact, updatedAt })
+    .set({ ...parsed.contact, customFields: parsed.customFields, updatedAt })
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
 
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, id);
@@ -153,7 +174,7 @@ contactsRoutes.put("/contacts/:id", async (c) => {
 
   return c.json({
     contact: toContact(
-      { ...existing, ...parsed.contact, updatedAt },
+      { ...existing, ...parsed.contact, customFields: parsed.customFields, updatedAt },
       lastInteractionAt,
       contactLabelsList,
     ),

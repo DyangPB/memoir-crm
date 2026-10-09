@@ -196,6 +196,38 @@ export const labels = sqliteTable(
   (table) => [uniqueIndex("labels_userId_name_unique").on(table.userId, table.name)],
 );
 
+export const fieldDefinitions = sqliteTable(
+  "field_definitions",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    type: text("type", {
+      enum: [
+        "text",
+        "number",
+        "date",
+        "single-select",
+        "multi-select",
+        "long-text",
+        "boolean",
+        "url",
+      ],
+    }).notNull(),
+    options: text("options", { mode: "json" }).$type<string[]>().notNull().default([]),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [uniqueIndex("field_definitions_userId_name_unique").on(table.userId, table.name)],
+);
+
 export const contactLabels = sqliteTable(
   "contact_labels",
   {

@@ -3,6 +3,7 @@ import {
   interactionTypeLabel,
   lastInteractionDate,
   type Contact,
+  type FieldDefinition,
   type Interaction,
   type InteractionInput,
   type LabelSummary,
@@ -26,6 +27,7 @@ import {
   deleteInteraction,
   deleteNote,
   getContact,
+  listFieldDefinitions,
   listInteractions,
   listLabels,
   listNotes,
@@ -43,6 +45,41 @@ const typeGlyphs = {
   other: Circle,
 } as const;
 
+function CustomFieldValue({
+  definition,
+  value,
+}: {
+  definition: FieldDefinition;
+  value: unknown;
+}) {
+  if (definition.type === "url" && typeof value === "string") {
+    return (
+      <a
+        className="text-body-md text-primary hover:underline"
+        href={value}
+        rel="noreferrer"
+        target="_blank"
+      >
+        {value}
+      </a>
+    );
+  }
+
+  if (definition.type === "date" && typeof value === "string") {
+    return <p className="text-body-md text-ink-secondary">{formatDay(value)}</p>;
+  }
+
+  const text = Array.isArray(value)
+    ? value.join(", ")
+    : value === true
+      ? "Yes"
+      : value === false
+        ? "No"
+        : String(value);
+
+  return <p className="whitespace-pre-wrap text-body-md text-ink-secondary">{text}</p>;
+}
+
 export function ContactDetailPage() {
   const { id } = useParams();
   const { data: session, isPending } = authClient.useSession();
@@ -50,6 +87,7 @@ export function ContactDetailPage() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [interactions, setInteractions] = useState<Interaction[] | null>(null);
   const [notes, setNotes] = useState<Note[] | null>(null);
+  const [fieldDefinitions, setFieldDefinitions] = useState<FieldDefinition[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
@@ -73,8 +111,14 @@ export function ContactDetailPage() {
 
     let active = true;
 
-    void Promise.all([getContact(id), listInteractions(id), listNotes(id), listLabels()]).then(
-      ([contactResult, interactionsResult, notesResult, labelsResult]) => {
+    void Promise.all([
+      getContact(id),
+      listInteractions(id),
+      listNotes(id),
+      listLabels(),
+      listFieldDefinitions(),
+    ]).then(
+      ([contactResult, interactionsResult, notesResult, labelsResult, fieldsResult]) => {
         if (!active) {
           return;
         }
@@ -94,7 +138,7 @@ export function ContactDetailPage() {
           return;
         }
 
-        if (!interactionsResult.ok || !notesResult.ok || !labelsResult.ok) {
+        if (!interactionsResult.ok || !notesResult.ok || !labelsResult.ok || !fieldsResult.ok) {
           setLoadError("That didn't load. Refresh and try again.");
           return;
         }
@@ -103,6 +147,7 @@ export function ContactDetailPage() {
         setInteractions(interactionsResult.value);
         setNotes(notesResult.value);
         setAllLabels(labelsResult.value);
+        setFieldDefinitions(fieldsResult.value);
       },
     );
 
@@ -352,7 +397,7 @@ export function ContactDetailPage() {
     );
   }
 
-  if (contact === null || interactions === null || notes === null) {
+  if (contact === null || interactions === null || notes === null || fieldDefinitions === null) {
     return <PageLoading label="Fetching this contact" />;
   }
 
@@ -556,6 +601,25 @@ export function ContactDetailPage() {
                   </p>
                 </div>
               )}
+              {fieldDefinitions.map((definition) => {
+                const value = contact.customFields[definition.id];
+
+                if (
+                  value === undefined ||
+                  value === null ||
+                  value === "" ||
+                  (Array.isArray(value) && value.length === 0)
+                ) {
+                  return null;
+                }
+
+                return (
+                  <div className="flex flex-col gap-0.5" key={definition.id}>
+                    <p className="text-micro-cap uppercase text-ink-mute">{definition.name}</p>
+                    <CustomFieldValue definition={definition} value={value} />
+                  </div>
+                );
+              })}
             </section>
 
             <section className="flex flex-col gap-3">
