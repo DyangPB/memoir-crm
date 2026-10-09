@@ -26,6 +26,16 @@ const NAME_MAX_LENGTH = 200;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const EMAIL_PATTERN = /^\S+@\S+$/;
 
+export function isIsoDay(value: string): boolean {
+  if (!DATE_PATTERN.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
 }
@@ -124,9 +134,8 @@ export function parseContactInput(input: unknown): ContactParseResult {
     }
 
     const trimmed = birthdayRaw.trim();
-    const date = new Date(`${trimmed}T00:00:00.000Z`);
 
-    if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== trimmed) {
+    if (!isIsoDay(trimmed)) {
       return { ok: false, message: "That birthday isn't a real date." };
     }
 

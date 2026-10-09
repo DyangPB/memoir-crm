@@ -20,7 +20,7 @@ function ContactRow({ contact }: { contact: Contact }) {
     <li>
       <Link
         className="flex items-center gap-3 rounded-sm px-2 py-3 transition-colors hover:bg-primary-bg-subdued"
-        to={`/app/contacts/${contact.id}/edit`}
+        to={`/app/contacts/${contact.id}`}
       >
         <LetterAvatar name={contact.name} />
         <span className="flex min-w-0 flex-1 flex-col">

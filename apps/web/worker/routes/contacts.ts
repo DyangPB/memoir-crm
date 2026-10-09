@@ -1,40 +1,17 @@
-import { parseContactInput, type Contact } from "@memoir/core";
+import { parseContactInput } from "@memoir/core";
 import { contacts } from "@memoir/db";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
+import {
+  findOwnedContact,
+  lastInteractionDates,
+  latestInteractionOn,
+  toContact,
+  type ContactRow,
+} from "../lib/contacts";
 import { createDb } from "../lib/db";
 import { getSessionUser } from "../lib/session";
-
-type ContactRow = typeof contacts.$inferSelect;
-
-function toContact(row: ContactRow): Contact {
-  return {
-    id: row.id,
-    name: row.name,
-    emails: row.emails,
-    phones: row.phones,
-    socialLinks: row.socialLinks,
-    birthday: row.birthday,
-    howWeMet: row.howWeMet,
-    lastInteractionAt: null,
-    createdAt: row.createdAt.toISOString(),
-  };
-}
-
-async function findOwnedContact(
-  env: Env,
-  userId: string,
-  contactId: string,
-): Promise<ContactRow | null> {
-  const rows = await createDb(env)
-    .select()
-    .from(contacts)
-    .where(and(eq(contacts.id, contactId), eq(contacts.userId, userId)))
-    .limit(1);
-
-  return rows[0] ?? null;
-}
 
 export const contactsRoutes = new Hono<{ Bindings: Env }>();
 
@@ -45,13 +22,14 @@ contactsRoutes.get("/contacts", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
+  const lastByContact = await lastInteractionDates(c.env, user.id);
   const rows = await createDb(c.env)
     .select()
     .from(contacts)
     .where(eq(contacts.userId, user.id))
     .orderBy(sql`lower(${contacts.name})`);
 
-  return c.json({ contacts: rows.map(toContact) });
+  return c.json({ contacts: rows.map((row) => toContact(row, lastByContact.get(row.id) ?? null)) });
 });
 
 contactsRoutes.post("/contacts", async (c) => {
@@ -84,7 +62,7 @@ contactsRoutes.post("/contacts", async (c) => {
 
   await createDb(c.env).insert(contacts).values(row);
 
-  return c.json({ contact: toContact(row) }, 201);
+  return c.json({ contact: toContact(row, null) }, 201);
 });
 
 contactsRoutes.get("/contacts/:id", async (c) => {
@@ -100,7 +78,9 @@ contactsRoutes.get("/contacts/:id", async (c) => {
     return c.json({ error: "That contact isn't here." }, 404);
   }
 
-  return c.json({ contact: toContact(row) });
+  const lastInteractionAt = await latestInteractionOn(c.env, user.id, row.id);
+
+  return c.json({ contact: toContact(row, lastInteractionAt) });
 });
 
 contactsRoutes.put("/contacts/:id", async (c) => {
@@ -130,7 +110,11 @@ contactsRoutes.put("/contacts/:id", async (c) => {
     .set({ ...parsed.contact, updatedAt })
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
 
-  return c.json({ contact: toContact({ ...existing, ...parsed.contact, updatedAt }) });
+  const lastInteractionAt = await latestInteractionOn(c.env, user.id, id);
+
+  return c.json({
+    contact: toContact({ ...existing, ...parsed.contact, updatedAt }, lastInteractionAt),
+  });
 });
 
 contactsRoutes.delete("/contacts/:id", async (c) => {

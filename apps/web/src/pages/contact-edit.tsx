@@ -96,7 +96,7 @@ export function ContactEditPage() {
       return;
     }
 
-    void navigate("/app");
+    void navigate(`/app/contacts/${contact.id}`);
   }
 
   async function handleRemove() {
@@ -126,7 +126,7 @@ export function ContactEditPage() {
         </div>
 
         <ContactForm
-          cancelHref="/app"
+          cancelHref={`/app/contacts/${contact.id}`}
           error={formError}
           initialValues={{
             name: contact.name,
