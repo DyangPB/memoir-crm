@@ -5,10 +5,11 @@ import {
   type Contact,
   type Interaction,
   type InteractionInput,
+  type LabelSummary,
   type Note,
 } from "@memoir/core";
 import { Circle, Coffee, MessageCircle, Phone } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
@@ -17,14 +18,18 @@ import { LetterAvatar } from "../components/letter-avatar";
 import { NoteForm } from "../components/note-form";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 import {
   createInteraction,
+  createLabel,
   createNote,
   deleteInteraction,
   deleteNote,
   getContact,
   listInteractions,
+  listLabels,
   listNotes,
+  setContactLabels,
   updateInteraction,
   updateNote,
 } from "../lib/api";
@@ -55,6 +60,12 @@ export function ContactDetailPage() {
   const [confirmingNoteId, setConfirmingNoteId] = useState<string | null>(null);
   const [noteError, setNoteError] = useState<string | null>(null);
 
+  const [allLabels, setAllLabels] = useState<LabelSummary[] | null>(null);
+  const [newLabelName, setNewLabelName] = useState("");
+  const [labelError, setLabelError] = useState<string | null>(null);
+  const [addingLabel, setAddingLabel] = useState(false);
+  const [togglingLabel, setTogglingLabel] = useState(false);
+
   useEffect(() => {
     if (session === null || id === undefined) {
       return;
@@ -62,8 +73,8 @@ export function ContactDetailPage() {
 
     let active = true;
 
-    void Promise.all([getContact(id), listInteractions(id), listNotes(id)]).then(
-      ([contactResult, interactionsResult, notesResult]) => {
+    void Promise.all([getContact(id), listInteractions(id), listNotes(id), listLabels()]).then(
+      ([contactResult, interactionsResult, notesResult, labelsResult]) => {
         if (!active) {
           return;
         }
@@ -83,7 +94,7 @@ export function ContactDetailPage() {
           return;
         }
 
-        if (!interactionsResult.ok || !notesResult.ok) {
+        if (!interactionsResult.ok || !notesResult.ok || !labelsResult.ok) {
           setLoadError("That didn't load. Refresh and try again.");
           return;
         }
@@ -91,6 +102,7 @@ export function ContactDetailPage() {
         setContact(contactResult.value);
         setInteractions(interactionsResult.value);
         setNotes(notesResult.value);
+        setAllLabels(labelsResult.value);
       },
     );
 
@@ -249,6 +261,76 @@ export function ContactDetailPage() {
 
     setConfirmingNoteId(null);
     await refreshNotes();
+  }
+
+  async function applyLabelIds(labelIds: string[]) {
+    if (contact === null) {
+      return;
+    }
+
+    const result = await setContactLabels(contact.id, labelIds);
+
+    if (!result.ok) {
+      if (result.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setLabelError(result.message);
+      return;
+    }
+
+    setLabelError(null);
+    setContact(result.value);
+  }
+
+  async function handleToggleLabel(labelId: string) {
+    if (contact === null) {
+      return;
+    }
+
+    setTogglingLabel(true);
+    const current = contact.labels.map((label) => label.id);
+    const next = current.includes(labelId)
+      ? current.filter((id) => id !== labelId)
+      : [...current, labelId];
+
+    await applyLabelIds(next);
+    setTogglingLabel(false);
+  }
+
+  async function handleAddLabel(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (contact === null) {
+      return;
+    }
+
+    const name = newLabelName.trim();
+
+    if (name === "") {
+      return;
+    }
+
+    setAddingLabel(true);
+    const created = await createLabel(name);
+
+    if (!created.ok) {
+      setAddingLabel(false);
+
+      if (created.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setLabelError(created.message);
+      return;
+    }
+
+    setAllLabels([...(allLabels ?? []), created.value]);
+    setNewLabelName("");
+    await applyLabelIds([...contact.labels.map((label) => label.id), created.value.id]);
+    setAddingLabel(false);
   }
 
   if (isPending) {
@@ -473,6 +555,63 @@ export function ContactDetailPage() {
                     {contact.howWeMet}
                   </p>
                 </div>
+              )}
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h2 className="text-heading-lg text-ink">Labels</h2>
+
+              {contact.labels.length === 0 ? (
+                <p className="text-caption text-ink-mute">No labels yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {contact.labels.map((label) => (
+                    <span
+                      className="rounded-full bg-primary-bg-subdued px-2 py-1 text-micro-cap uppercase text-primary"
+                      key={label.id}
+                    >
+                      {label.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {allLabels !== null && allLabels.length > 0 && (
+                <div className="flex flex-col gap-1.5">
+                  {allLabels.map((label) => (
+                    <label
+                      className="flex items-center gap-2 text-body-md text-ink-secondary"
+                      key={label.id}
+                    >
+                      <input
+                        checked={contact.labels.some((item) => item.id === label.id)}
+                        className="accent-primary"
+                        disabled={togglingLabel}
+                        onChange={() => void handleToggleLabel(label.id)}
+                        type="checkbox"
+                      />
+                      {label.name}
+                    </label>
+                  ))}
+                </div>
+              )}
+
+              <form className="flex gap-2" onSubmit={handleAddLabel}>
+                <Input
+                  aria-label="New label"
+                  onChange={(event) => setNewLabelName(event.target.value)}
+                  placeholder="New label"
+                  value={newLabelName}
+                />
+                <Button disabled={addingLabel} type="submit" variant="secondary">
+                  {addingLabel ? "Adding" : "Add"}
+                </Button>
+              </form>
+
+              {labelError !== null && (
+                <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
+                  {labelError}
+                </p>
               )}
             </section>
 

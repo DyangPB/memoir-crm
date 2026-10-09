@@ -3,6 +3,7 @@ import type {
   ContactInput,
   Interaction,
   InteractionInput,
+  LabelSummary,
   Note,
   NoteInput,
 } from "@memoir/core";
@@ -47,8 +48,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<ApiResult<T
   return { ok: true, value: (await response.json()) as T };
 }
 
-export async function listContacts(): Promise<ApiResult<Contact[]>> {
-  const result = await request<{ contacts: Contact[] }>("/api/contacts");
+export async function listContacts(params?: {
+  q?: string;
+  label?: string;
+}): Promise<ApiResult<Contact[]>> {
+  const search = new URLSearchParams();
+
+  if (params?.q !== undefined && params.q !== "") {
+    search.set("q", params.q);
+  }
+
+  if (params?.label !== undefined) {
+    search.set("label", params.label);
+  }
+
+  const suffix = search.toString() === "" ? "" : `?${search.toString()}`;
+  const result = await request<{ contacts: Contact[] }>(`/api/contacts${suffix}`);
 
   return result.ok ? { ok: true, value: result.value.contacts } : result;
 }
@@ -153,4 +168,44 @@ export async function updateNote(
 
 export async function deleteNote(contactId: string, noteId: string): Promise<ApiResult<null>> {
   return request<null>(`/api/contacts/${contactId}/notes/${noteId}`, { method: "DELETE" });
+}
+
+export async function listLabels(): Promise<ApiResult<LabelSummary[]>> {
+  const result = await request<{ labels: LabelSummary[] }>("/api/labels");
+
+  return result.ok ? { ok: true, value: result.value.labels } : result;
+}
+
+export async function createLabel(name: string): Promise<ApiResult<LabelSummary>> {
+  const result = await request<{ label: LabelSummary }>("/api/labels", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+
+  return result.ok ? { ok: true, value: result.value.label } : result;
+}
+
+export async function updateLabel(id: string, name: string): Promise<ApiResult<LabelSummary>> {
+  const result = await request<{ label: LabelSummary }>(`/api/labels/${id}`, {
+    method: "PUT",
+    body: JSON.stringify({ name }),
+  });
+
+  return result.ok ? { ok: true, value: result.value.label } : result;
+}
+
+export async function deleteLabel(id: string): Promise<ApiResult<null>> {
+  return request<null>(`/api/labels/${id}`, { method: "DELETE" });
+}
+
+export async function setContactLabels(
+  contactId: string,
+  labelIds: string[],
+): Promise<ApiResult<Contact>> {
+  const result = await request<{ contact: Contact }>(`/api/contacts/${contactId}/labels`, {
+    method: "PUT",
+    body: JSON.stringify({ labelIds }),
+  });
+
+  return result.ok ? { ok: true, value: result.value.contact } : result;
 }

@@ -1,3 +1,5 @@
+import type { Label } from "./label";
+
 export type SocialLink = {
   label: string;
   url: string;
@@ -14,6 +16,7 @@ export type ContactInput = {
 
 export type Contact = ContactInput & {
   id: string;
+  labels: Label[];
   lastInteractionAt: string | null;
   createdAt: string;
 };

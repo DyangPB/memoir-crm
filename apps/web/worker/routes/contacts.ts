@@ -1,16 +1,21 @@
-import { parseContactInput } from "@memoir/core";
-import { contacts } from "@memoir/db";
-import { and, eq, sql } from "drizzle-orm";
+import { buildSearchQuery, parseContactInput } from "@memoir/core";
+import { contactLabels, contacts, labels } from "@memoir/db";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 import {
+  contactIdsMatching,
+  contactIdsWithLabel,
   findOwnedContact,
+  labelsByContact,
+  labelsForContact,
   lastInteractionDates,
   latestInteractionOn,
   toContact,
   type ContactRow,
 } from "../lib/contacts";
 import { createDb } from "../lib/db";
+import { findOwnedLabel } from "../lib/labels";
 import { getSessionUser } from "../lib/session";
 
 export const contactsRoutes = new Hono<{ Bindings: Env }>();
@@ -22,14 +27,46 @@ contactsRoutes.get("/contacts", async (c) => {
     return c.json({ error: "Unauthorized" }, 401);
   }
 
-  const lastByContact = await lastInteractionDates(c.env, user.id);
+  const match = buildSearchQuery(c.req.query("q") ?? "");
+  const labelId = c.req.query("label");
+  let idFilter: Set<string> | null = null;
+
+  if (match !== null) {
+    idFilter = await contactIdsMatching(c.env, match);
+  }
+
+  if (labelId !== undefined) {
+    const label = await findOwnedLabel(c.env, user.id, labelId);
+    const labelIds = label === null ? new Set<string>() : await contactIdsWithLabel(c.env, labelId);
+
+    idFilter =
+      idFilter === null
+        ? labelIds
+        : new Set([...idFilter].filter((contactId) => labelIds.has(contactId)));
+  }
+
+  if (idFilter !== null && idFilter.size === 0) {
+    return c.json({ contacts: [] });
+  }
+
   const rows = await createDb(c.env)
     .select()
     .from(contacts)
-    .where(eq(contacts.userId, user.id))
+    .where(
+      idFilter === null
+        ? eq(contacts.userId, user.id)
+        : and(eq(contacts.userId, user.id), inArray(contacts.id, [...idFilter])),
+    )
     .orderBy(sql`lower(${contacts.name})`);
 
-  return c.json({ contacts: rows.map((row) => toContact(row, lastByContact.get(row.id) ?? null)) });
+  const lastByContact = await lastInteractionDates(c.env, user.id);
+  const labelsMap = await labelsByContact(c.env, user.id);
+
+  return c.json({
+    contacts: rows.map((row) =>
+      toContact(row, lastByContact.get(row.id) ?? null, labelsMap.get(row.id) ?? []),
+    ),
+  });
 });
 
 contactsRoutes.post("/contacts", async (c) => {
@@ -62,7 +99,7 @@ contactsRoutes.post("/contacts", async (c) => {
 
   await createDb(c.env).insert(contacts).values(row);
 
-  return c.json({ contact: toContact(row, null) }, 201);
+  return c.json({ contact: toContact(row, null, []) }, 201);
 });
 
 contactsRoutes.get("/contacts/:id", async (c) => {
@@ -79,8 +116,9 @@ contactsRoutes.get("/contacts/:id", async (c) => {
   }
 
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, row.id);
+  const contactLabelsList = await labelsForContact(c.env, user.id, row.id);
 
-  return c.json({ contact: toContact(row, lastInteractionAt) });
+  return c.json({ contact: toContact(row, lastInteractionAt, contactLabelsList) });
 });
 
 contactsRoutes.put("/contacts/:id", async (c) => {
@@ -111,10 +149,64 @@ contactsRoutes.put("/contacts/:id", async (c) => {
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
 
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, id);
+  const contactLabelsList = await labelsForContact(c.env, user.id, id);
 
   return c.json({
-    contact: toContact({ ...existing, ...parsed.contact, updatedAt }, lastInteractionAt),
+    contact: toContact(
+      { ...existing, ...parsed.contact, updatedAt },
+      lastInteractionAt,
+      contactLabelsList,
+    ),
   });
+});
+
+contactsRoutes.put("/contacts/:id/labels", async (c) => {
+  const user = await getSessionUser(c.env, c.req.raw);
+
+  if (user === null) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const id = c.req.param("id");
+  const contact = await findOwnedContact(c.env, user.id, id);
+
+  if (contact === null) {
+    return c.json({ error: "That contact isn't here." }, 404);
+  }
+
+  const body = (await c.req.json().catch(() => null)) as { labelIds?: unknown } | null;
+  const rawIds = body?.labelIds;
+
+  if (!Array.isArray(rawIds) || !rawIds.every((value) => typeof value === "string")) {
+    return c.json({ error: "Send the labels as a list of ids." }, 400);
+  }
+
+  const labelIds = [...new Set(rawIds as string[])];
+  const db = createDb(c.env);
+
+  if (labelIds.length > 0) {
+    const owned = await db
+      .select({ id: labels.id })
+      .from(labels)
+      .where(and(eq(labels.userId, user.id), inArray(labels.id, labelIds)));
+
+    if (owned.length !== labelIds.length) {
+      return c.json({ error: "One of those labels isn't yours." }, 400);
+    }
+  }
+
+  await db.delete(contactLabels).where(eq(contactLabels.contactId, contact.id));
+
+  if (labelIds.length > 0) {
+    await db
+      .insert(contactLabels)
+      .values(labelIds.map((labelId) => ({ contactId: contact.id, labelId })));
+  }
+
+  const contactLabelsList = await labelsForContact(c.env, user.id, contact.id);
+  const lastInteractionAt = await latestInteractionOn(c.env, user.id, contact.id);
+
+  return c.json({ contact: toContact(contact, lastInteractionAt, contactLabelsList) });
 });
 
 contactsRoutes.delete("/contacts/:id", async (c) => {

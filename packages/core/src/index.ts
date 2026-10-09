@@ -20,3 +20,10 @@ export {
   type InteractionType,
 } from "./interaction";
 export { parseNoteInput, type Note, type NoteInput, type NoteParseResult } from "./note";
+export {
+  parseLabelInput,
+  type Label,
+  type LabelParseResult,
+  type LabelSummary,
+} from "./label";
+export { buildSearchQuery } from "./search";
