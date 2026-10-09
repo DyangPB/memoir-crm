@@ -12,6 +12,9 @@ const buttonVariants = cva(
         primary: "bg-primary text-primary-foreground hover:bg-primary-press",
         secondary: "border border-primary bg-background text-primary hover:bg-canvas-soft",
         ghost: "text-ink-secondary hover:bg-canvas-soft",
+        onDark: "bg-canvas text-ocean-deep hover:bg-canvas-soft",
+        onDarkOutline: "border border-on-primary/40 text-on-primary hover:bg-on-primary/10",
+        danger: "bg-danger text-danger-foreground hover:bg-danger/90",
       },
       size: {
         default: "h-10 px-4",

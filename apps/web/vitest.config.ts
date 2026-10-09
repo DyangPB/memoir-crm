@@ -10,7 +10,10 @@ export default defineConfig({
     cloudflareTest(async () => ({
       wrangler: { configPath: "./wrangler.jsonc" },
       miniflare: {
-        bindings: { TEST_MIGRATIONS: await readD1Migrations(migrationsPath) },
+        bindings: {
+          BETTER_AUTH_SECRET: "K8sJ2mQ4vX1pR7wZ9tY3nB6cD0fG5hL8jM2sV4x",
+          TEST_MIGRATIONS: await readD1Migrations(migrationsPath),
+        },
       },
     })),
   ],
