@@ -459,7 +459,7 @@ export function SettingsPage() {
           <div className="flex flex-col gap-1">
             <h2 className="text-heading-md text-ink">Labels</h2>
             <p className="text-caption text-ink-mute">
-              Group your contacts and filter the home list by them.
+              Group your contacts and filter the contact list by them.
             </p>
           </div>
 

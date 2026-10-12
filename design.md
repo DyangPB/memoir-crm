@@ -98,8 +98,8 @@ Fraunces and Inter are both open-source (Google Fonts). If Fraunces is unavailab
 
 ### Grid & Container
 - Brand pages center in a ~1200px container; the airmail edge extends edge-to-edge above.
-- The app uses a master-detail shell: a 360px contact list rail left, detail pane right (80ch max for prose fields).
-- Contact detail lays out as a two-column grid: timeline thread (dominant, left) + sidebar (contact facts, custom fields, labels, reminders).
+- The app is four full-page surfaces under one shared header: Dashboard, Contacts, Reminders, Settings.
+- The Contacts page is a single list column. Contact detail is two independently scrolling panes: the main column (timeline thread, then Notes, prose capped at 80ch) and a reference sidebar (contact facts, custom fields, labels, Important Dates). Page chrome stays pinned; the page itself does not scroll.
 
 ### Whitespace Philosophy
 Paper needs room to breathe. Brand sections keep 96px gaps; the app tightens to 16–24px between related controls. The contact detail page is the product's calmest surface: one thread, one sidebar, generous vertical rhythm on the timeline.
@@ -168,10 +168,25 @@ The brand uses **contact-sheet composites** — real screenshots of the app's ti
 - Background `{colors.canvas}`, text `{colors.ink}`, type `{typography.body-md}`, padding `{spacing.sm} {spacing.md}`, rounded `{rounded.sm}`, 1px `{colors.hairline-input}` border.
 - Focus state `text-input-focused`: border swaps to `{colors.primary}`, plus a 2px offset focus ring in `{colors.primary}` at 3:1 contrast.
 
+**`date-field`** — the app's only date control (birthday, date custom fields, Interaction date, Reminder due date, Important Date).
+- The trigger keeps the `text-input` look: `{colors.canvas}` background, 1px `{colors.hairline-input}` border, `{rounded.sm}`, `{typography.body-md}` value, and a 16px `Calendar` glyph in `{colors.ink-mute}` at the right. Focus matches `text-input-focused`.
+- The panel is a Level 2 surface: `{colors.canvas}`, 1px `{colors.hairline}`, `{rounded.lg}`, `{spacing.md}` padding, Level 2 shadow.
+- Month and year are dropdowns in the panel caption, so a birthday decades back is two picks instead of dozens. Weekday labels are `{typography.micro-cap}` `{colors.ink-mute}`; day cells are `{typography.body-tabular}`.
+- Today carries a 1px `{colors.primary}` ring; the selected day is a `{colors.primary}` fill with `{colors.on-primary}` text; hover is `{colors.primary-bg-subdued}`. Amber never appears in the panel.
+
+**`select-field`** — the app's only select control (Interaction type, single-select custom fields, field type in settings).
+- Trigger and focus identical to `date-field`, with a chevron in `{colors.ink-mute}` instead of the calendar glyph.
+- Panel identical to `date-field`'s. The highlighted option is `{colors.primary-bg-subdued}` with `{colors.ink}` text; the selected option carries a `{colors.primary}` check. An empty option ("Not set") is `{colors.ink-mute}`.
+
 ### Navigation
 
 **`nav-bar-on-paper`** — top nav floating over the airmail hero.
 - Background `{colors.canvas}`, text `{colors.ink}`, padding `{spacing.lg} {spacing.xl}`. Serif wordmark left, primary nav center, sign-in + one filled `button-primary-pill` right.
+
+**`back-to-parent`** — the way back from a surface one level deep (contact detail, new and edit; Reminders).
+- An inline control at the left of the page title: a 16px `ArrowLeft` in `{colors.ink-mute}` plus a label in `{typography.body-md}` `{colors.ink-secondary}`, naming the destination ("Back to Contacts", "Back to Dashboard").
+- Hover: label `{colors.ink}` on a `{colors.canvas-soft}` background at `{rounded.sm}`. Hit area at least 44×44px.
+- Never a pill button, and never on a top-level surface. Below Desktop it moves to its own row above the title.
 
 ### Pills, Tags, and Chips
 
@@ -200,6 +215,16 @@ The brand uses **contact-sheet composites** — real screenshots of the app's ti
 **`footer-on-paper`** — site-wide footer.
 - Background `{colors.canvas}`, text `{colors.ink-mute}`, type `{typography.caption}`, padding `{spacing.huge} {spacing.xl}`. Serif wordmark, 3–4 link columns, small legal row.
 
+### Dashboard
+
+The app's landing surface at `/app`, a `max-w-3xl` column of three `card-feature-light` blocks in this order, each with a `{typography.heading-lg}` heading and a quiet text link to the surface that owns the full list:
+
+1. **Waiting on you** — Reminders due and overdue: a `{typography.body-tabular}` count line, then `chip-reminder-due` and `chip-reminder-overdue` chips, each naming the Contact.
+2. **Coming up** — Important Dates in the next 30 days: amber markers only, timing in `{typography.body-tabular}` ("in 6 days"), ages as "turning 34" for birthdays in `{typography.caption}`.
+3. **People to catch up with** — Contacts quiet for more than 30 days: the `{typography.numeral}` days-since count with its "days since you talked" caption. The numeral stays ink here; amber appears only when that Contact has an overdue Reminder.
+
+Empty states teach the space instead of nagging. This surface is the app's only "what needs you now" view; the Reminders page remains the place to work through the full list.
+
 ## Do's and Don'ts
 
 ### Do
@@ -226,9 +251,9 @@ The brand uses **contact-sheet composites** — real screenshots of the app's ti
 
 | Name | Width | Key Changes |
 |---|---|---|
-| Wide | ≥ 1440px | Full airmail edge; contact detail shows timeline + sidebar at full width |
-| Desktop | 1024–1440px | Default content max-width; master-detail shell with 360px rail |
-| Tablet | 768–1023px | Rail collapses to 280px; detail sidebar stacks below the thread |
+| Wide | ≥ 1440px | Full airmail edge; contact detail shows both panes at full width |
+| Desktop | 1024–1440px | Default content max-width; contact detail keeps both panes |
+| Tablet | 768–1023px | The page back control moves to its own row above the title; the detail sidebar stacks below the main column |
 | Mobile | < 768px | List-first: contact list fills the screen, detail replaces it (push navigation); display drops 56 → 32px; airmail edge re-tiles |
 
 ### Touch Targets
@@ -266,9 +291,14 @@ Memoir speaks like a thoughtful friend writing a letter: plain-spoken, second pe
 | Hero CTA / secondary | "Try the demo" / "Create your account" |
 | Empty contact list | "Your people, all in one place. Add your first contact, and Memoir will help you stay in touch." |
 | Empty timeline | "Nothing logged yet. Add a call, a coffee, a message: anything that keeps the thread alive." |
-| Reminders strip | "2 reminders this week" · "1 birthday" · chip: "Call Bob" / "14 days overdue" |
+| Dashboard, no contacts yet | Same copy as the empty contact list, plus one "Add contact" primary pill |
+| Dashboard · Waiting on you | "2 due · 1 overdue" · chips: "Call Bob" / "14 days overdue" · empty: "Nothing is waiting." |
+| Dashboard · Coming up | "6 birthdays and dates in the next 30 days" · rows: "turning 34", "in 6 days" · empty: "Nothing in the next 30 days." |
+| Dashboard · People to catch up with | rows: the days-since numeral over "days since you talked" · empty: "You are up to date with everyone." |
+| Dashboard links out | "See everything" to Reminders · "All contacts" to the contact list |
+| Back control | "Back to Contacts" on contact pages · "Back to Dashboard" on Reminders |
 | Days-since numeral label | "days since you talked" |
-| Loading | "Fetching your people", "Saving changes", "Logging the coffee" |
+| Loading | "Fetching your people", "Fetching your dashboard", "Saving changes", "Logging the coffee" |
 | Success | "Saved." / "Interaction logged." |
 | Delete contact | "Remove Bob from Memoir? You'll lose their timeline and notes. This can't be undone." Buttons: "Remove Bob" / "Keep Bob" |
 | MCP key revoked | "Key revoked. Existing sessions stop working immediately." |

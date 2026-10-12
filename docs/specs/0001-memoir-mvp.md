@@ -6,7 +6,7 @@ People lose track of the people who matter. They forget birthdays, can't remembe
 
 ## Solution
 
-**Memoir** is a web app where each user keeps a private set of Contacts. Every contact carries rich detail (custom fields), a chronological Timeline of typed Interactions, freeform Notes, flat Labels, and Reminders — one-off prompts plus yearly recurring Important Dates such as birthdays. The app opens on a list-first home with a reminders strip, a dedicated reminders page, and a contact detail page built around a timeline thread. Full-text search (D1 FTS5) and label filters make people findable. An MCP server lets AI assistants read contacts and log interactions on the user's behalf, with destructive operations gated by client-side confirmation. Sign-in is email/password plus Google OAuth. There is open signup and a one-click demo account pre-seeded with fictional data. The whole app deploys as one Cloudflare Workers app (Vite plugin) with D1 and per-user Durable Objects for the reminder engine, on the free tier.
+**Memoir** is a web app where each user keeps a private set of Contacts. Every contact carries rich detail (custom fields), a chronological Timeline of typed Interactions, freeform Notes, flat Labels, and Reminders — one-off prompts plus yearly recurring Important Dates such as birthdays. The app opens on a dashboard of what needs you now: Reminders due and overdue, Important Dates coming up within 30 days, and Contacts you have not talked to in a while. The contact list has its own page at `/app/contacts`, there is a dedicated reminders page, and the contact detail page is built around a timeline thread. Full-text search (D1 FTS5) and label filters make people findable. An MCP server lets AI assistants read contacts and log interactions on the user's behalf, with destructive operations gated by client-side confirmation. Sign-in is email/password plus Google OAuth. There is open signup and a one-click demo account pre-seeded with fictional data. The whole app deploys as one Cloudflare Workers app (Vite plugin) with D1 and per-user Durable Objects for the reminder engine, on the free tier.
 
 ## User Stories
 
@@ -46,7 +46,7 @@ People lose track of the people who matter. They forget birthdays, can't remembe
 34. As a user, I want reminders to become overdue when their date passes, so that I see what slipped.
 35. As a user, I want important dates (birthdays, anniversaries) to recur yearly, so that I am reminded every year.
 36. As a user, I want a contact's birthday to feed their important dates automatically, so that I don't enter it twice.
-37. As a user, I want to see due and upcoming reminders in a strip on my home screen, so that I notice them without navigating.
+37. As a user, I want my home screen to be a dashboard of what needs me now (Reminders due and overdue, Important Dates coming up, and Contacts I have not talked to in a while), so that I see where to put my attention without navigating.
 38. As a user, I want a dedicated reminders page showing due, overdue, upcoming, and birthdays this week, so that I can plan my reach-outs.
 39. As a user, I want reminders to change state even while I'm not using the app, so that everything is correct when I return.
 40. As a user, I want to manage my profile in settings, so that my account is mine.
@@ -61,6 +61,8 @@ People lose track of the people who matter. They forget birthdays, can't remembe
 49. As a user, I want destructive MCP operations (deletes) to prompt me for confirmation, so that an assistant cannot silently remove my data.
 50. As a user, I want a revoked key to stop working immediately, so that a leaked key is harmless.
 51. As a demo user, I want a populated account (fictional contacts, interactions, reminders), so that I can see the product working.
+52. As a user, I want the full contact list on a page of its own, with search and label filters, so that finding someone is one step from anywhere.
+53. As a user, I want a back control on a contact's pages that returns me to the contact list, so that I never have to reach for the browser's back button.
 
 ## Implementation Decisions
 
@@ -74,6 +76,8 @@ People lose track of the people who matter. They forget birthdays, can't remembe
 - **Contact deletion** uses a confirmation dialog restating the action (per `design.md` surface copy), not undo.
 - **Demo account**: a regular account seeded with deterministic fictional contacts, interactions, and reminders. The same seed data doubles as test fixtures.
 - **Landing**: product-first hero per `design.md` — headline "A memoir of everyone you know.", subline "A personal CRM for the people who matter.", contact-sheet composite beside it, one "Try the demo" primary pill.
+- **Dashboard home**: `/app` is the Dashboard (Reminders due and overdue, Important Dates within 30 days, Contacts not talked to in 30 days). The contact list lives at `/app/contacts`, and a back control on contact pages returns there. See ADR-0004.
+- **Form controls**: date fields and selects are Radix primitives (`@radix-ui/react-popover`, `@radix-ui/react-select`) with `react-day-picker` for the calendar, styled with `design.md` tokens rather than a component theme. Native date inputs and native selects are not used for these fields.
 - **CI (GitHub Actions)**: Vitest (with miniflare) plus typecheck on every push and PR; `wrangler deploy` on merge to `main`.
 - **Platform constraints are design inputs**: 100K requests/day, 5M D1 reads and 100K D1 writes per day, 10 ms CPU per request on the free tier. Requests are kept lean; password hashing, JSON handling, and the alarm sweep all fit the CPU budget.
 
@@ -83,6 +87,7 @@ People lose track of the people who matter. They forget birthdays, can't remembe
 - **Secondary seam: pure logic in `packages/core`.** Custom-field validation, reminder schedule math (next-due computation, yearly roll-forward, overdue classification), and days-since computation are unit-tested directly as pure functions with no IO.
 - **What makes a good test**: it asserts external behavior (what the user or an MCP client can observe), not implementation details. No tests of internal Worker wiring; no implementation-internal snapshots. Use realistic data extremes: long names, many labels, empty timelines, overdue and not-yet-due reminders.
 - **Prior art**: greenfield repo, no existing tests. Follow standard Vitest + miniflare patterns; the demo seed data is the shared fixture set.
+- **Dashboard derivation lives in `packages/core`**: which Contacts count as slipping (the 30-day threshold), the 30-day Important Date look-ahead, and the birthday window are pure functions unit-tested there. The dashboard page assembles them and is not a new test seam.
 
 ## Out of Scope
 
@@ -94,10 +99,12 @@ People lose track of the people who matter. They forget birthdays, can't remembe
 - Workers Paid tier and billing
 - Offline/PWA behavior and mobile apps
 - Blog post and video walkthrough (the documentation deliverable is README + ADRs + architecture doc)
+- Typed date entry (typing a date rather than picking it), and marking a Contact's existing Important Dates inside the date panel
+- `design.md`'s desktop master-detail rail (parked, see ADR-0004)
 
 ## Further Notes
 
 - **Vocabulary**: use the `GLOSSARY.md` terms exactly — Contact, Interaction, Note, Reminder, Important Date, Label, Custom Field, Field Definition — never their avoided synonyms.
 - **Design authority**: `design.md` defines the palette (ocean `#0e5f82`, warm paper, amber for reminders only), type system (Fraunces display, Inter UI), signature components (airmail edge, timeline thread, days-since numeral), and the warm-letter voice with per-surface copy.
-- **ADRs**: 0001 (all-in Cloudflare, free tier), 0002 (PBKDF2 hashing), 0003 (per-user DO alarm reminders) constrain this work; any contradiction must be surfaced, not silently overridden.
+- **ADRs**: 0001 (all-in Cloudflare, free tier), 0002 (PBKDF2 hashing), 0003 (per-user DO alarm reminders), 0004 (dashboard home) constrain this work; any contradiction must be surfaced, not silently overridden.
 - **Name**: the product is Memoir. A "MemoIR CRM" exists in a different niche (investor relations); no action needed, noted for the write-up.

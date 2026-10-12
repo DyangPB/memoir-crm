@@ -7,6 +7,7 @@ import { AppPage } from "./pages/app";
 import { ContactDetailPage } from "./pages/contact-detail";
 import { ContactEditPage } from "./pages/contact-edit";
 import { ContactNewPage } from "./pages/contact-new";
+import { ContactsPage } from "./pages/contacts";
 import { LoginPage } from "./pages/login";
 import { RemindersPage } from "./pages/reminders";
 import { SettingsPage } from "./pages/settings";
@@ -28,6 +29,7 @@ createRoot(root).render(
         <Route element={<SignupPage />} path="/signup" />
         <Route element={<AppPage />} path="/app" />
         <Route element={<RemindersPage />} path="/app/reminders" />
+        <Route element={<ContactsPage />} path="/app/contacts" />
         <Route element={<ContactNewPage />} path="/app/contacts/new" />
         <Route element={<ContactDetailPage />} path="/app/contacts/:id" />
         <Route element={<ContactEditPage />} path="/app/contacts/:id/edit" />

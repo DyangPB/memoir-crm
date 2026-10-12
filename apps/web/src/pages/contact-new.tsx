@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { BackToParent } from "../components/back-to-parent";
 import { ContactForm, emptyContactInput } from "../components/contact-form";
 import { PageLoading } from "../components/page-loading";
 import { createContact, listFieldDefinitions } from "../lib/api";
@@ -66,7 +67,7 @@ export function ContactNewPage() {
       return;
     }
 
-    void navigate("/app");
+    void navigate("/app/contacts");
   }
 
   if (loadError !== null) {
@@ -88,12 +89,15 @@ export function ContactNewPage() {
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
       <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-12">
-        <div className="flex flex-col gap-1">
-          <p className="text-micro-cap uppercase text-ink-mute">New contact</p>
-          <h1 className="font-display text-display-md text-ink">Add a contact</h1>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <BackToParent label="Back to Contacts" to="/app/contacts" />
+          <div className="flex flex-col gap-1">
+            <p className="text-micro-cap uppercase text-ink-mute">New contact</p>
+            <h1 className="font-display text-display-md text-ink">Add a contact</h1>
+          </div>
         </div>
         <ContactForm
-          cancelHref="/app"
+          cancelHref="/app/contacts"
           definitions={definitions}
           error={error}
           initialValues={emptyContactInput}
