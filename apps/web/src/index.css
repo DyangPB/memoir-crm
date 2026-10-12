@@ -17,15 +17,17 @@
   --color-primary: #0e5f82;
   --color-primary-press: #0a4a66;
   --color-ocean-deep: #0c3a54;
-  --color-primary-soft: #1a8cba;
+  --color-primary-soft: #05b2dc;
   --color-primary-bg-subdued: #d9eaf2;
-  --color-on-primary: #fdfbf6;
+  --color-on-primary: #fefefa;
 
-  --color-amber: #b07018;
+  --color-amber: #8a5c00;
   --color-amber-bg: #f5e6c8;
+  --color-amber-fill: #fbaf00;
 
-  --color-success: #2e7d4f;
+  --color-success: #38701a;
   --color-success-bg: #ddeddc;
+  --color-success-fill: #63c132;
   --color-warning: #a46a1a;
   --color-warning-bg: #f5e6c8;
   --color-danger: #b3402e;

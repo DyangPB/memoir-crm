@@ -21,13 +21,16 @@ Typography pairs a literary serif with a working sans. **Fraunces** (display, we
 
 > **Source surfaces:** landing (`/`), app dashboard, contact list, contact detail.
 
+> **Accent palette.** The accent and semantic accents come from the project's coolors set: ocean-deep `#0c3a54`, ocean-soft `#05b2dc`, amber-fill `#fbaf00`, success-fill `#63c132`, on-primary `#fefefa`. Where a color has to carry text, the token is derived from its seed so it clears 4.5:1 against its background: amber `#8a5c00` on `{colors.amber-bg}`, success `#38701a` on `#ddeddc`. Bright seeds are for fills, dots, and markers, never for text.
+
 ### Brand & Accent
 - **Ocean** (`{colors.primary}` — `#0e5f82`): The brand's signature CTA color. Filled-pill button, link emphasis, focus rings, timeline dots.
 - **Ocean Press** (`{colors.primary-press}` — `#0a4a66`): Pressed-state lift of the primary.
 - **Ocean Deep** (`{colors.ocean-deep}` — `#0c3a54`): Deep water. Fill of dark surfaces, the featured pricing tier, and the auth page background.
-- **Ocean Soft** (`{colors.primary-soft}` — `#1a8cba`): Lighter ocean used in product-UI accents and chart highlights.
+- **Ocean Soft** (`{colors.primary-soft}` — `#05b2dc`): Lighter ocean used in product-UI accents and chart highlights. Bright by design: fills, dots, and chart marks only, never text.
 - **Ocean Subdued** (`{colors.primary-bg-subdued}` — `#d9eaf2`): Pale ocean fill for soft tags and selected rows.
-- **Amber** (`{colors.amber}` — `#b07018`): The reminder color. Due chips, Important Date markers, timeline birthday dots. Never a button, never decoration.
+- **Amber** (`{colors.amber}` — `#8a5c00`): The reminder color as text. Due chips, overdue copy, Important Date labels. 4.7:1 on `{colors.amber-bg}`. Never a button, never decoration.
+- **Amber Fill** (`{colors.amber-fill}` — `#fbaf00`): The reminder color as a mark. Timeline birthday dots, Important Date markers, section accents. Never carries text.
 - **Amber Soft** (`{colors.amber-bg}` — `#f5e6c8`): Reminder chip background.
 
 ### Surface
@@ -41,10 +44,10 @@ Typography pairs a literary serif with a working sans. **Fraunces** (display, we
 - **Ink** (`{colors.ink}` — `#2b2418`): Default body text. Warm near-black, never pure black, never navy.
 - **Ink Secondary** (`{colors.ink-secondary}` — `#4d4432`): Secondary text on paper.
 - **Ink Mute** (`{colors.ink-mute}` — `#7c7158`): Helper text, captions, table labels.
-- **On Primary** (`{colors.on-primary}` — `#fdfbf6`): Text on ocean and deep-water surfaces.
+- **On Primary** (`{colors.on-primary}` — `#fefefa`): Text on ocean and deep-water surfaces.
 
 ### Semantic (product UI only)
-- **Success** (`{colors.success}` — `#2e7d4f`), bg `#ddeddc` — saved, done states.
+- **Success** (`{colors.success}` — `#38701a`), fill `{colors.success-fill}` (`#63c132`), bg `#ddeddc` — saved, done states. The fill takes the green mark; the text token stays dark enough to read.
 - **Warning** (`{colors.warning}` — `#a46a1a`), bg `#f5e6c8` — approaching-due reminders.
 - **Danger** (`{colors.danger}` — `#b3402e`), bg `#f6dcd5` — overdue reminders, destructive actions.
 

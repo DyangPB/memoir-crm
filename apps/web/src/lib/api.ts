@@ -3,6 +3,9 @@ import type {
   ContactWriteInput,
   FieldDefinitionInput,
   FieldDefinitionSummary,
+  ImportantDate,
+  ImportantDateInput,
+  ImportantDateWithContact,
   Interaction,
   InteractionInput,
   LabelSummary,
@@ -292,4 +295,43 @@ export async function deleteReminder(
   reminderId: string,
 ): Promise<ApiResult<null>> {
   return request<null>(`/api/contacts/${contactId}/reminders/${reminderId}`, { method: "DELETE" });
+}
+
+export async function listImportantDates(): Promise<ApiResult<ImportantDateWithContact[]>> {
+  const result = await request<{ importantDates: ImportantDateWithContact[] }>(
+    "/api/important-dates",
+  );
+
+  return result.ok ? { ok: true, value: result.value.importantDates } : result;
+}
+
+export async function listContactImportantDates(
+  contactId: string,
+): Promise<ApiResult<ImportantDate[]>> {
+  const result = await request<{ importantDates: ImportantDate[] }>(
+    `/api/contacts/${contactId}/important-dates`,
+  );
+
+  return result.ok ? { ok: true, value: result.value.importantDates } : result;
+}
+
+export async function createImportantDate(
+  contactId: string,
+  input: ImportantDateInput,
+): Promise<ApiResult<ImportantDate>> {
+  const result = await request<{ importantDate: ImportantDate }>(
+    `/api/contacts/${contactId}/important-dates`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+
+  return result.ok ? { ok: true, value: result.value.importantDate } : result;
+}
+
+export async function deleteImportantDate(
+  contactId: string,
+  importantDateId: string,
+): Promise<ApiResult<null>> {
+  return request<null>(`/api/contacts/${contactId}/important-dates/${importantDateId}`, {
+    method: "DELETE",
+  });
 }

@@ -204,6 +204,33 @@ export const reminders = sqliteTable(
   ],
 );
 
+export const importantDates = sqliteTable(
+  "important_dates",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    fallsOn: text("falls_on").notNull(),
+    source: text("source", { enum: ["manual", "birthday"] }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("important_dates_userId_idx").on(table.userId),
+    index("important_dates_contactId_idx").on(table.contactId),
+  ],
+);
+
 export const labels = sqliteTable(
   "labels",
   {
