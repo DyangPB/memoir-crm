@@ -24,6 +24,18 @@ export {
 } from "./custom-field";
 export { daysSince } from "./days-since";
 export {
+  daysUntilOccurrence,
+  importantDateYears,
+  nextOccurrence,
+  occursWithinDays,
+  parseImportantDateInput,
+  type ImportantDate,
+  type ImportantDateInput,
+  type ImportantDateParseResult,
+  type ImportantDateSource,
+  type ImportantDateWithContact,
+} from "./important-date";
+export {
   interactionTypeLabel,
   interactionTypes,
   isInteractionType,

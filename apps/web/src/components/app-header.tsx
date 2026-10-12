@@ -23,6 +23,9 @@ export function AppHeader({ email }: AppHeaderProps) {
       </Link>
       <div className="flex items-center gap-4">
         <span className="text-caption text-ink-mute">{email}</span>
+        <Link className="text-caption text-ink-mute hover:text-ink" to="/app/reminders">
+          Reminders
+        </Link>
         <Link className="text-caption text-ink-mute hover:text-ink" to="/app/settings">
           Settings
         </Link>

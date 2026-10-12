@@ -1,9 +1,12 @@
 import {
   daysSince,
+  importantDateYears,
   interactionTypeLabel,
   lastInteractionDate,
   type Contact,
   type FieldDefinition,
+  type ImportantDate,
+  type ImportantDateInput,
   type Interaction,
   type InteractionInput,
   type LabelSummary,
@@ -16,6 +19,8 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { ImportantDateForm } from "../components/important-date-form";
+import { ImportantDateMarker } from "../components/important-date-marker";
 import { InteractionForm } from "../components/interaction-form";
 import { LetterAvatar } from "../components/letter-avatar";
 import { NoteForm } from "../components/note-form";
@@ -24,14 +29,17 @@ import { ReminderForm } from "../components/reminder-form";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import {
+  createImportantDate,
   createInteraction,
   createLabel,
   createNote,
   createReminder,
+  deleteImportantDate,
   deleteInteraction,
   deleteNote,
   deleteReminder,
   getContact,
+  listContactImportantDates,
   listContactReminders,
   listFieldDefinitions,
   listInteractions,
@@ -97,6 +105,7 @@ export function ContactDetailPage() {
   const [interactions, setInteractions] = useState<Interaction[] | null>(null);
   const [notes, setNotes] = useState<Note[] | null>(null);
   const [reminders, setReminders] = useState<Reminder[] | null>(null);
+  const [importantDates, setImportantDates] = useState<ImportantDate[] | null>(null);
   const [fieldDefinitions, setFieldDefinitions] = useState<FieldDefinition[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -110,6 +119,9 @@ export function ContactDetailPage() {
 
   const [confirmingReminderId, setConfirmingReminderId] = useState<string | null>(null);
   const [reminderError, setReminderError] = useState<string | null>(null);
+
+  const [confirmingImportantDateId, setConfirmingImportantDateId] = useState<string | null>(null);
+  const [importantDateError, setImportantDateError] = useState<string | null>(null);
 
   const [allLabels, setAllLabels] = useState<LabelSummary[] | null>(null);
   const [newLabelName, setNewLabelName] = useState("");
@@ -129,6 +141,7 @@ export function ContactDetailPage() {
       listInteractions(id),
       listNotes(id),
       listContactReminders(id),
+      listContactImportantDates(id),
       listLabels(),
       listFieldDefinitions(),
     ]).then(
@@ -137,6 +150,7 @@ export function ContactDetailPage() {
         interactionsResult,
         notesResult,
         remindersResult,
+        importantDatesResult,
         labelsResult,
         fieldsResult,
       ]) => {
@@ -163,6 +177,7 @@ export function ContactDetailPage() {
           !interactionsResult.ok ||
           !notesResult.ok ||
           !remindersResult.ok ||
+          !importantDatesResult.ok ||
           !labelsResult.ok ||
           !fieldsResult.ok
         ) {
@@ -174,6 +189,7 @@ export function ContactDetailPage() {
         setInteractions(interactionsResult.value);
         setNotes(notesResult.value);
         setReminders(remindersResult.value);
+        setImportantDates(importantDatesResult.value);
         setAllLabels(labelsResult.value);
         setFieldDefinitions(fieldsResult.value);
       },
@@ -411,6 +427,60 @@ export function ContactDetailPage() {
     await refreshReminders();
   }
 
+  async function refreshImportantDates() {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await listContactImportantDates(id);
+
+    if (result.ok) {
+      setImportantDates(result.value);
+    }
+  }
+
+  async function handleAddImportantDate(values: ImportantDateInput) {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await createImportantDate(id, values);
+
+    if (!result.ok) {
+      if (result.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setImportantDateError(result.message);
+      return;
+    }
+
+    setImportantDateError(null);
+    await refreshImportantDates();
+  }
+
+  async function handleDeleteImportantDate(importantDateId: string) {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await deleteImportantDate(id, importantDateId);
+
+    if (!result.ok && result.status !== 404) {
+      if (result.status === 401) {
+        void navigate("/login");
+        return;
+      }
+
+      setImportantDateError(result.message);
+      return;
+    }
+
+    setConfirmingImportantDateId(null);
+    await refreshImportantDates();
+  }
+
   async function applyLabelIds(labelIds: string[]) {
     if (contact === null) {
       return;
@@ -505,6 +575,7 @@ export function ContactDetailPage() {
     interactions === null ||
     notes === null ||
     reminders === null ||
+    importantDates === null ||
     fieldDefinitions === null
   ) {
     return <PageLoading label="Fetching this contact" />;
@@ -857,6 +928,73 @@ export function ContactDetailPage() {
                           <Button
                             onClick={() => {
                               setConfirmingReminderId(reminder.id);
+                            }}
+                            variant="ghost"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section className="flex flex-col gap-4">
+              <h2 className="text-heading-lg text-ink">Important dates</h2>
+
+              <ImportantDateForm
+                error={importantDateError}
+                onSubmit={handleAddImportantDate}
+              />
+
+              {importantDates.length === 0 ? (
+                <p className="text-body-md text-ink-mute">
+                  No important dates yet. Add one here, and it comes around every year.
+                </p>
+              ) : (
+                <ul className="flex flex-col gap-4">
+                  {importantDates.map((importantDate) => (
+                    <li className="flex flex-col gap-1.5" key={importantDate.id}>
+                      <p className="text-body-md text-ink-secondary">{importantDate.name}</p>
+                      <span className="flex flex-wrap items-center gap-2">
+                        <ImportantDateMarker fallsOn={importantDate.fallsOn} now={now} />
+                        <span className="text-caption tabular-nums text-ink-mute">
+                          {importantDateYears(importantDate.fallsOn, now)}{" "}
+                          {importantDate.source === "birthday" ? "turning" : "years"}
+                        </span>
+                      </span>
+                      {importantDate.source === "birthday" ? (
+                        <p className="text-caption text-ink-mute">
+                          Comes from this contact's birthday.
+                        </p>
+                      ) : confirmingImportantDateId === importantDate.id ? (
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="text-caption text-ink-mute">
+                            Delete "{importantDate.name}" from this contact? Other contacts keep
+                            theirs.
+                          </span>
+                          <Button
+                            onClick={() => handleDeleteImportantDate(importantDate.id)}
+                            variant="danger"
+                          >
+                            Delete date
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              setConfirmingImportantDateId(null);
+                            }}
+                            variant="ghost"
+                          >
+                            Keep it
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => {
+                              setConfirmingImportantDateId(importantDate.id);
                             }}
                             variant="ghost"
                           >

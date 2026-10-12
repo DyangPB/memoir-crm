@@ -16,6 +16,7 @@ import {
 } from "../lib/contacts";
 import { createDb } from "../lib/db";
 import { listFieldDefinitions } from "../lib/fields";
+import { syncBirthdayImportantDate } from "../lib/important-dates";
 import { findOwnedLabel } from "../lib/labels";
 import { getSessionUser } from "../lib/session";
 
@@ -119,6 +120,7 @@ contactsRoutes.post("/contacts", async (c) => {
   };
 
   await createDb(c.env).insert(contacts).values(row);
+  await syncBirthdayImportantDate(c.env, user.id, row.id, row.birthday);
 
   return c.json({ contact: toContact(row, null, []) }, 201);
 });
@@ -168,6 +170,7 @@ contactsRoutes.put("/contacts/:id", async (c) => {
     .update(contacts)
     .set({ ...parsed.contact, customFields: parsed.customFields, updatedAt })
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
+  await syncBirthdayImportantDate(c.env, user.id, id, parsed.contact.birthday);
 
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, id);
   const contactLabelsList = await labelsForContact(c.env, user.id, id);
