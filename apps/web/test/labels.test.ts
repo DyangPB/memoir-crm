@@ -167,7 +167,7 @@ describe("labels", () => {
     expect(rename.status).toBe(404);
   });
 
-  it("filters the home list by label through the query string", async () => {
+  it("filters the contact list by label through the query string", async () => {
     const cookie = await signInAs("labels-filter@example.com");
     const work = await createLabel(cookie, "work");
     const bob = await createContact(cookie, "Bob Nguyen");

@@ -19,6 +19,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { BackToParent } from "../components/back-to-parent";
 import { ImportantDateForm } from "../components/important-date-form";
 import { ImportantDateMarker } from "../components/important-date-marker";
 import { InteractionForm } from "../components/interaction-form";
@@ -591,24 +592,27 @@ export function ContactDetailPage() {
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-12">
-        <div className="flex flex-wrap items-start justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <LetterAvatar name={contact.name} />
-            <div className="flex flex-col gap-0.5">
-              <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
-              <h1 className="font-display text-display-lg text-ink">{contact.name}</h1>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
+          <BackToParent label="Back to Contacts" to="/app/contacts" />
+          <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <LetterAvatar name={contact.name} />
+              <div className="flex flex-col gap-0.5">
+                <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
+                <h1 className="font-display text-display-lg text-ink">{contact.name}</h1>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-5">
-            {days !== null && (
-              <span className="flex flex-col items-end">
-                <span className="font-display text-numeral tabular-nums text-ink">{days}</span>
-                <span className="text-caption text-ink-mute">days since you talked</span>
-              </span>
-            )}
-            <Button asChild variant="secondary">
-              <Link to={`/app/contacts/${contact.id}/edit`}>Edit</Link>
-            </Button>
+            <div className="flex items-center gap-5">
+              {days !== null && (
+                <span className="flex flex-col items-end">
+                  <span className="font-display text-numeral tabular-nums text-ink">{days}</span>
+                  <span className="text-caption text-ink-mute">days since you talked</span>
+                </span>
+              )}
+              <Button asChild variant="secondary">
+                <Link to={`/app/contacts/${contact.id}/edit`}>Edit</Link>
+              </Button>
+            </div>
           </div>
         </div>
 

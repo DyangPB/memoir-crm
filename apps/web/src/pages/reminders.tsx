@@ -9,6 +9,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { BackToParent } from "../components/back-to-parent";
 import { ImportantDateMarker } from "../components/important-date-marker";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
@@ -181,10 +182,8 @@ export function RemindersPage() {
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
         <main className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-6 py-12">
+          <BackToParent label="Back to Dashboard" to="/app" />
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
-          <Button asChild variant="ghost">
-            <Link to="/app">Back to your people</Link>
-          </Button>
         </main>
       </div>
     );
@@ -217,11 +216,9 @@ export function RemindersPage() {
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
       <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <BackToParent label="Back to Dashboard" to="/app" />
           <h1 className="font-display text-display-md text-ink">What's waiting</h1>
-          <Button asChild variant="ghost">
-            <Link to="/app">Back to your people</Link>
-          </Button>
         </div>
 
         {error !== null && (

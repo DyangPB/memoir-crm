@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { BackToParent } from "../components/back-to-parent";
 import { ContactForm } from "../components/contact-form";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
@@ -120,16 +121,19 @@ export function ContactEditPage() {
       return;
     }
 
-    void navigate("/app");
+    void navigate("/app/contacts");
   }
 
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
       <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-12">
-        <div className="flex flex-col gap-1">
-          <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
-          <h1 className="font-display text-display-md text-ink">Edit {firstName}</h1>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <BackToParent label="Back to Contacts" to="/app/contacts" />
+          <div className="flex flex-col gap-1">
+            <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
+            <h1 className="font-display text-display-md text-ink">Edit {firstName}</h1>
+          </div>
         </div>
 
         <ContactForm
