@@ -8,6 +8,7 @@ import { ContactDetailPage } from "./pages/contact-detail";
 import { ContactEditPage } from "./pages/contact-edit";
 import { ContactNewPage } from "./pages/contact-new";
 import { LoginPage } from "./pages/login";
+import { RemindersPage } from "./pages/reminders";
 import { SettingsPage } from "./pages/settings";
 import { SignupPage } from "./pages/signup";
 import "./index.css";
@@ -26,6 +27,7 @@ createRoot(root).render(
         <Route element={<LoginPage />} path="/login" />
         <Route element={<SignupPage />} path="/signup" />
         <Route element={<AppPage />} path="/app" />
+        <Route element={<RemindersPage />} path="/app/reminders" />
         <Route element={<ContactNewPage />} path="/app/contacts/new" />
         <Route element={<ContactDetailPage />} path="/app/contacts/:id" />
         <Route element={<ContactEditPage />} path="/app/contacts/:id/edit" />

@@ -50,6 +50,13 @@
       "when": 1791537582909,
       "tag": "0006_tiny_fallen_one",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791792180690,
+      "tag": "0007_spotty_baron_strucker",
+      "breakpoints": true
     }
   ]
 }
