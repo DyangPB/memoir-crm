@@ -32,6 +32,10 @@ _Avoid_: Memo, comment (use Note)
 The chronological list of a contact's Interactions, shown on the contact's page.
 _Avoid_: Feed, activity log (use Timeline)
 
+**Dashboard**:
+The app's landing surface. What needs you now: Reminders due and overdue, Important Dates coming up, and Contacts you have not talked to in a while.
+_Avoid_: Home, feed, overview (use Dashboard)
+
 **Reminder**:
 A dated, one-off prompt to re-engage with a contact ("call Bob by October 20"). Hangs off a Contact. A reminder is pending until ticked off, then becomes done (or overdue past its date).
 _Avoid_: Task, follow-up (use Reminder)

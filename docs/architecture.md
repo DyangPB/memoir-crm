@@ -19,13 +19,14 @@ A personal CRM: private per-user accounts, warm-paper identity, all-in on Cloudf
 |---|---|
 | `/` | Landing: product-first hero ("A memoir of everyone you know."), contact-sheet composite, "Try the demo" |
 | `/login` · `/signup` | Auth (plus Better Auth's `/api/auth/*`) |
-| `/app` | List-first home: contact list + reminders strip |
-| `/app/contacts/:id` | Contact detail: timeline thread + sidebar (facts, custom fields, labels, reminders, notes) |
+| `/app` | Dashboard: Reminders due and overdue, Important Dates coming up, Contacts slipping |
+| `/app/contacts` | Contact list: search + label filters (moved off `/app`, see ADR-0004) |
+| `/app/contacts/:id` | Contact detail: timeline thread and Notes in the main column, reference sidebar (facts, custom fields, labels, Important Dates) |
 | `/app/reminders` | Reminder monitor: due, overdue, upcoming, birthdays this week |
 | `/app/settings` | Profile, MCP API keys, custom fields, labels, danger zone |
 | `/mcp` | MCP streamable-HTTP endpoint (same Worker) |
 
-Label filtering is a `?label=` query parameter on `/app`; labels have no dedicated pages.
+Label filtering is a `?label=` query parameter on `/app/contacts`; labels have no dedicated pages.
 
 ## Data model (D1)
 
@@ -68,14 +69,17 @@ One Durable Object per user holds the due-event schedule. Its single alarm point
 | 19 | Name | Memoir (MemoIR CRM exists in a different niche) |
 | 20 | Docs | README + ADRs + architecture doc |
 | 21 | Visual identity | Warm paper + ocean blue; Fraunces + Inter; airmail edge |
-| 22 | App home | List-first with reminders strip |
+| 22 | App home | List-first with reminders strip (superseded by 27) |
 | 23 | Landing | Product-first hero |
 | 24 | Voice | Warm letter |
 | 25 | Hero headline | "A memoir of everyone you know." |
 | 26 | Routes | `/app` shell; dedicated `/app/reminders` |
+| 27 | App home (revisited) | Dashboard at `/app`; contact list at `/app/contacts` (ADR-0004) |
+| 28 | Form controls | Radix primitives + `react-day-picker`, styled with design.md tokens |
 
 ## ADRs
 
 - [0001 — All-in Cloudflare](adr/0001-cloudflare-all-in.md)
 - [0002 — PBKDF2 hashing](adr/0002-pbkdf2-password-hashing.md)
 - [0003 — DO alarm reminders](adr/0003-durable-object-alarm-reminders.md)
+- [0004 — Dashboard home](adr/0004-dashboard-home.md)
