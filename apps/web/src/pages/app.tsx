@@ -21,16 +21,18 @@ import { cn } from "../lib/utils";
 
 type DashboardCardProps = {
   title: string;
+  linkLabel: string;
+  linkTo: string;
   children: ReactNode;
 };
 
-function DashboardCard({ title, children }: DashboardCardProps) {
+function DashboardCard({ title, linkLabel, linkTo, children }: DashboardCardProps) {
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-hairline p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 className="text-heading-lg text-ink">{title}</h2>
-        <Link className="text-caption text-ink-mute hover:text-ink" to="/app/reminders">
-          See everything
+        <Link className="text-caption text-ink-mute hover:text-ink" to={linkTo}>
+          {linkLabel}
         </Link>
       </div>
       {children}
@@ -88,6 +90,16 @@ function ComingUpRow({
       </Link>
     </li>
   );
+}
+
+function comingUpCountLine(importantDates: ImportantDateWithContact[], now: Date): string {
+  const count =
+    importantDates.length === 1
+      ? "1 birthday or date in the next 30 days"
+      : `${importantDates.length} birthdays and dates in the next 30 days`;
+  const next = importantDates[0];
+
+  return next === undefined ? count : `${count} · next: ${importantDateTiming(next.fallsOn, now)}`;
 }
 
 export function AppPage() {
@@ -169,6 +181,14 @@ export function AppPage() {
   );
   const overdue = waiting.filter((reminder) => reminder.status === "overdue").length;
   const due = waiting.length - overdue;
+  const waitingContactIds = new Set(waiting.map((reminder) => reminder.contactId));
+  const waitingCountLine = [
+    due > 0 ? `${due} due` : null,
+    overdue > 0 ? `${overdue} overdue` : null,
+    `${contacts.length - waitingContactIds.size} of ${contacts.length} contacts up to date`,
+  ]
+    .filter((part) => part !== null)
+    .join(" · ");
   const comingUp = importantDates
     .filter((importantDate) =>
       occursWithinDays(importantDate.fallsOn, now, UPCOMING_WINDOW_DAYS),
@@ -197,15 +217,17 @@ export function AppPage() {
           </div>
         ) : (
           <>
-            <DashboardCard title="Waiting on you">
+            <DashboardCard
+              linkLabel="See everything"
+              linkTo="/app/reminders"
+              title="Waiting on you"
+            >
               {waiting.length === 0 ? (
                 <p className="text-body-md text-ink-secondary">Nothing is waiting.</p>
               ) : (
                 <>
                   <p className="text-body-tabular tabular-nums text-ink-mute">
-                    {due > 0 && `${due} due`}
-                    {due > 0 && overdue > 0 && " · "}
-                    {overdue > 0 && `${overdue} overdue`}
+                    {waitingCountLine}
                   </p>
                   <ul className="flex flex-wrap gap-2">
                     {waiting.map((reminder) => (
@@ -216,15 +238,17 @@ export function AppPage() {
               )}
             </DashboardCard>
 
-            <DashboardCard title="Coming up">
+            <DashboardCard
+              linkLabel="All contacts"
+              linkTo="/app/contacts"
+              title="Coming up"
+            >
               {comingUp.length === 0 ? (
                 <p className="text-body-md text-ink-secondary">Nothing in the next 30 days.</p>
               ) : (
                 <>
                   <p className="text-body-tabular tabular-nums text-ink-mute">
-                    {comingUp.length === 1
-                      ? "1 birthday or date in the next 30 days"
-                      : `${comingUp.length} birthdays and dates in the next 30 days`}
+                    {comingUpCountLine(comingUp, now)}
                   </p>
                   <ul className="flex flex-col divide-y divide-hairline">
                     {comingUp.map((importantDate) => (
