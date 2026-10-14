@@ -2,12 +2,12 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 
-import { App } from "./App";
 import { AppPage } from "./pages/app";
 import { ContactDetailPage } from "./pages/contact-detail";
 import { ContactEditPage } from "./pages/contact-edit";
 import { ContactNewPage } from "./pages/contact-new";
 import { ContactsPage } from "./pages/contacts";
+import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { RemindersPage } from "./pages/reminders";
 import { SettingsPage } from "./pages/settings";
@@ -24,7 +24,7 @@ createRoot(root).render(
   <StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route element={<App />} path="/" />
+        <Route element={<LandingPage />} path="/" />
         <Route element={<LoginPage />} path="/login" />
         <Route element={<SignupPage />} path="/signup" />
         <Route element={<AppPage />} path="/app" />

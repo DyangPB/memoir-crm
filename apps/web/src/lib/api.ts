@@ -335,3 +335,14 @@ export async function deleteImportantDate(
     method: "DELETE",
   });
 }
+
+export type DemoStart = {
+  email: string;
+  contacts: number;
+};
+
+export async function startDemo(): Promise<ApiResult<DemoStart>> {
+  const result = await request<{ demo: DemoStart }>("/api/demo", { method: "POST" });
+
+  return result.ok ? { ok: true, value: result.value.demo } : result;
+}
