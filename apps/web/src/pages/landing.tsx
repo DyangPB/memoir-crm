@@ -114,10 +114,10 @@ export function LandingPage() {
             <ContactSheet
               alt="A timeline thread of calls, messages, a meeting, and a note"
               className="mx-auto w-full max-w-[342px]"
-              height={456}
+              height={496}
               loading="lazy"
               src={contactThreadMobile}
-              width={342}
+              width={390}
             />
           </div>
           <div className="hidden lg:block">
@@ -125,7 +125,7 @@ export function LandingPage() {
               <PaperStack className="w-full">
                 <ContactSheet
                   alt="The contact list in Memoir, with the days since you talked"
-                  height={560}
+                  height={577}
                   loading="lazy"
                   src={contactsList}
                   width={576}
@@ -133,11 +133,11 @@ export function LandingPage() {
               </PaperStack>
               <ContactSheet
                 alt="A timeline thread: calls, messages, a meeting, and a note"
-                className="w-full max-w-[548px] self-end"
-                height={456}
+                className="w-full max-w-[409px] self-end"
+                height={496}
                 loading="lazy"
                 src={contactThread}
-                width={548}
+                width={409}
               />
             </div>
           </div>
@@ -153,19 +153,19 @@ export function LandingPage() {
               <ContactSheet
                 alt="A timeline thread of calls, messages, a meeting, and a note"
                 className="mx-auto w-full max-w-[342px]"
-                height={456}
+                height={496}
                 loading="lazy"
                 src={contactThreadMobile}
-                width={342}
+                width={390}
               />
             </div>
             <ContactSheet
               alt="A timeline thread of calls, messages, a meeting, and a note"
-              className="hidden w-full max-w-[548px] md:block"
-              height={456}
+              className="hidden w-full max-w-[409px] md:block"
+              height={496}
               loading="lazy"
               src={contactThread}
-              width={548}
+              width={409}
             />
           </Feature>
         </div>
@@ -179,18 +179,18 @@ export function LandingPage() {
           <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start sm:gap-4">
             <ContactSheet
               alt="A contact's details, including birthday, how you met, and custom fields"
-              height={800}
+              height={840}
               loading="lazy"
               src={contactDetails}
-              width={260}
+              width={308}
             />
             <ContactSheet
               alt="Labels applied to a contact"
               className="sm:mt-16 sm:-rotate-[0.6deg]"
-              height={257}
+              height={297}
               loading="lazy"
               src={contactLabels}
-              width={260}
+              width={308}
             />
           </div>
         </Feature>
@@ -205,19 +205,19 @@ export function LandingPage() {
               <ContactSheet
                 alt="Overdue and due reminders, each naming the contact"
                 className="mx-auto w-full max-w-[342px]"
-                height={440}
+                height={447}
                 loading="lazy"
                 src={remindersDueMobile}
-                width={342}
+                width={390}
               />
             </div>
             <ContactSheet
               alt="Overdue and due reminders, each naming the contact"
               className="hidden w-full max-w-[576px] md:block"
-              height={390}
+              height={400}
               loading="lazy"
               src={remindersDue}
-              width={720}
+              width={768}
             />
           </Feature>
         </div>
