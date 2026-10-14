@@ -83,3 +83,4 @@ One Durable Object per user holds the due-event schedule. Its single alarm point
 - [0002 — PBKDF2 hashing](adr/0002-pbkdf2-password-hashing.md)
 - [0003 — DO alarm reminders](adr/0003-durable-object-alarm-reminders.md)
 - [0004 — Dashboard home](adr/0004-dashboard-home.md)
+- [0005 — Demo account](adr/0005-demo-account.md)

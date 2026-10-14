@@ -24,6 +24,17 @@ export {
 } from "./custom-field";
 export { daysSince } from "./days-since";
 export {
+  buildDemoSeed,
+  type DemoContact,
+  type DemoFieldDefinition,
+  type DemoImportantDate,
+  type DemoInteraction,
+  type DemoLabel,
+  type DemoNote,
+  type DemoReminder,
+  type DemoSeed,
+} from "./demo";
+export {
   BIRTHDAY_WINDOW_DAYS,
   daysUntilOccurrence,
   importantDateYears,
