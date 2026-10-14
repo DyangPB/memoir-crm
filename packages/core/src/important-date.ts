@@ -92,6 +92,12 @@ export function daysUntilOccurrence(fallsOn: string, now: Date): number {
   return Math.round(gap / MS_PER_DAY);
 }
 
+/** How many days ahead the Reminders page's "Birthdays this week" section looks. */
+export const BIRTHDAY_WINDOW_DAYS = 7;
+
+/** How many days ahead the Dashboard's Coming up block looks for Important Dates. */
+export const UPCOMING_WINDOW_DAYS = 30;
+
 /** True when the next yearly occurrence lands within `days` days of today, today included. */
 export function occursWithinDays(fallsOn: string, now: Date, days: number): boolean {
   return daysUntilOccurrence(fallsOn, now) <= days;

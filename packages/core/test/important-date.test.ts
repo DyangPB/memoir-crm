@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BIRTHDAY_WINDOW_DAYS,
   daysUntilOccurrence,
   importantDateYears,
   nextOccurrence,
   occursWithinDays,
   parseImportantDateInput,
+  UPCOMING_WINDOW_DAYS,
 } from "../src/important-date";
 
 describe("parseImportantDateInput", () => {
@@ -135,6 +137,34 @@ describe("occursWithinDays", () => {
   it("treats a zero-day window as today only", () => {
     expect(occursWithinDays("1990-10-12", now, 0)).toBe(true);
     expect(occursWithinDays("1990-10-13", now, 0)).toBe(false);
+  });
+});
+
+describe("upcoming window", () => {
+  const now = new Date("2026-10-12T08:00:00.000Z");
+
+  it("includes today", () => {
+    expect(occursWithinDays("1990-10-12", now, UPCOMING_WINDOW_DAYS)).toBe(true);
+  });
+
+  it("includes the thirtieth day", () => {
+    expect(occursWithinDays("1990-11-11", now, UPCOMING_WINDOW_DAYS)).toBe(true);
+  });
+
+  it("excludes the thirty-first day", () => {
+    expect(occursWithinDays("1990-11-12", now, UPCOMING_WINDOW_DAYS)).toBe(false);
+  });
+});
+
+describe("birthday window", () => {
+  const now = new Date("2026-10-12T08:00:00.000Z");
+
+  it("includes the seventh day", () => {
+    expect(occursWithinDays("1990-10-19", now, BIRTHDAY_WINDOW_DAYS)).toBe(true);
+  });
+
+  it("excludes the eighth day", () => {
+    expect(occursWithinDays("1990-10-20", now, BIRTHDAY_WINDOW_DAYS)).toBe(false);
   });
 });
 
