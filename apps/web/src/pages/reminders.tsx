@@ -1,4 +1,5 @@
 import {
+  BIRTHDAY_WINDOW_DAYS,
   importantDateYears,
   nextOccurrence,
   occursWithinDays,
@@ -15,7 +16,6 @@ import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
 import { listImportantDates, listOpenReminders, tickReminder } from "../lib/api";
 import { authClient } from "../lib/auth-client";
-import { BIRTHDAY_WINDOW_DAYS } from "../lib/important-dates";
 import { reminderChipClass, reminderTiming } from "../lib/reminders";
 import { cn } from "../lib/utils";
 

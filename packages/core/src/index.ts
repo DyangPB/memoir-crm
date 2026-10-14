@@ -24,11 +24,13 @@ export {
 } from "./custom-field";
 export { daysSince } from "./days-since";
 export {
+  BIRTHDAY_WINDOW_DAYS,
   daysUntilOccurrence,
   importantDateYears,
   nextOccurrence,
   occursWithinDays,
   parseImportantDateInput,
+  UPCOMING_WINDOW_DAYS,
   type ImportantDate,
   type ImportantDateInput,
   type ImportantDateParseResult,

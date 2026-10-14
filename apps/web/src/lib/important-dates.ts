@@ -1,22 +1,20 @@
-import { daysUntilOccurrence, nextOccurrence } from "@memoir/core";
+import { daysUntilOccurrence, nextOccurrence, UPCOMING_WINDOW_DAYS } from "@memoir/core";
 
 import { formatDay } from "./format";
-
-export const BIRTHDAY_WINDOW_DAYS = 7;
 
 export function importantDateTiming(fallsOn: string, now: Date): string {
   const days = daysUntilOccurrence(fallsOn, now);
 
   if (days === 0) {
-    return "Today";
+    return "today";
   }
 
   if (days === 1) {
-    return "Tomorrow";
+    return "tomorrow";
   }
 
-  if (days <= 30) {
-    return `In ${days} days`;
+  if (days <= UPCOMING_WINDOW_DAYS) {
+    return `in ${days} days`;
   }
 
   return formatDay(nextOccurrence(fallsOn, now));
