@@ -288,20 +288,20 @@ export function SettingsPage() {
       <AppHeader email={session.user.email} />
       <main className="mx-auto flex max-w-xl flex-col gap-8 px-6 py-16">
         <div className="flex flex-col gap-2">
-          <p className="text-micro-cap uppercase text-ink-mute">Settings</p>
-          <h1 className="font-display text-display-md text-ink">Your account</h1>
+          <p className="text-label-md uppercase tracking-wider text-ink-mute">Settings</p>
+          <h1 className="font-display text-display-lg text-ink">Your account</h1>
         </div>
 
-        <section className="flex flex-col gap-1 rounded-lg border border-hairline p-6">
-          <h2 className="text-heading-md text-ink">Profile</h2>
+        <section className="flex flex-col gap-1 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+          <h2 className="font-display text-headline-sm text-ink">Profile</h2>
           <p className="text-body-md text-ink-secondary">
             {session.user.name} · {session.user.email}
           </p>
         </section>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-hairline p-6">
+        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
           <div className="flex flex-col gap-1">
-            <h2 className="text-heading-md text-ink">Custom fields</h2>
+            <h2 className="font-display text-headline-sm text-ink">Custom fields</h2>
             <p className="text-caption text-ink-mute">
               Track the details that matter to you. Every contact can carry a value for each field.
             </p>
@@ -455,9 +455,9 @@ export function SettingsPage() {
           )}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-hairline p-6">
+        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
           <div className="flex flex-col gap-1">
-            <h2 className="text-heading-md text-ink">Labels</h2>
+            <h2 className="font-display text-headline-sm text-ink">Labels</h2>
             <p className="text-caption text-ink-mute">
               Group your contacts and filter the contact list by them.
             </p>
@@ -570,9 +570,9 @@ export function SettingsPage() {
           )}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 p-6">
+        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-6 shadow-card">
           <div className="flex flex-col gap-1">
-            <h2 className="text-heading-md text-danger">Delete your account</h2>
+            <h2 className="font-display text-headline-sm text-danger">Delete your account</h2>
             <p className="text-body-md text-ink-secondary">
               Deleting your account removes everything: contacts, timeline, notes, reminders. This
               can't be undone.

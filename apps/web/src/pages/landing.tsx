@@ -65,7 +65,7 @@ export function LandingPage() {
       <AirmailEdge />
       <header className="sticky top-0 z-20 border-b border-hairline bg-canvas">
         <nav className="mx-auto grid w-full max-w-6xl grid-cols-2 items-center gap-4 px-6 py-4 md:grid-cols-3">
-          <Link className="font-display text-heading-lg text-ink" to="/">
+          <Link className="font-display text-headline-md tracking-tight text-ink" to="/">
             Memoir
           </Link>
           <div className="hidden items-center justify-center gap-6 md:flex">
@@ -236,7 +236,7 @@ export function LandingPage() {
       <footer className="px-6 py-16">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 md:flex-row md:justify-between">
           <div className="flex flex-col gap-2">
-            <p className="font-display text-heading-lg text-ink">Memoir</p>
+            <p className="font-display text-headline-md tracking-tight text-ink">Memoir</p>
             <p className="text-caption text-ink-mute">A personal CRM for the people who matter.</p>
           </div>
           <div className="flex gap-16">

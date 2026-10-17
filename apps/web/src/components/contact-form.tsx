@@ -390,7 +390,7 @@ export function ContactForm({
 
       {definitions.length > 0 && (
         <div className="flex flex-col gap-4">
-          <h2 className="text-heading-sm text-ink">Custom fields</h2>
+          <h2 className="font-display text-headline-sm text-ink">Custom fields</h2>
           {definitions.map((definition) => (
             <div className="flex flex-col gap-1.5" key={definition.id}>
               {definition.type === "multi-select" ? (

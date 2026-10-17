@@ -131,8 +131,8 @@ export function ContactEditPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <BackToParent label="Back to Contacts" to="/app/contacts" />
           <div className="flex flex-col gap-1">
-            <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
-            <h1 className="font-display text-display-md text-ink">Edit {firstName}</h1>
+            <p className="text-label-md uppercase tracking-wider text-ink-mute">Contact</p>
+            <h1 className="font-display text-display-lg text-ink">Edit {firstName}</h1>
           </div>
         </div>
 
@@ -154,10 +154,10 @@ export function ContactEditPage() {
           submitLabel="Save changes"
         />
 
-        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 p-6">
+        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-6 shadow-card">
           {!confirmingRemoval ? (
             <>
-              <h2 className="text-heading-md text-ink">Remove {firstName}</h2>
+              <h2 className="font-display text-headline-sm text-ink">Remove {firstName}</h2>
               <Button
                 className="self-start"
                 onClick={() => {
