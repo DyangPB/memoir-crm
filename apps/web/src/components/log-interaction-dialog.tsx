@@ -15,10 +15,11 @@ type LogInteractionDialogProps = {
 };
 
 function LogInteractionBody({
+  titleId,
   contacts,
   onClose,
   onLogged,
-}: Omit<LogInteractionDialogProps, "open">) {
+}: Omit<LogInteractionDialogProps, "open"> & { titleId: string }) {
   const id = useId();
   const [contactId, setContactId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,9 @@ function LogInteractionBody({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="font-display text-headline-sm text-ink">Log interaction</h2>
+        <h2 className="font-display text-headline-sm text-ink" id={titleId}>
+          Log interaction
+        </h2>
         <button
           aria-label="Close"
           className="-mr-2 -mt-1 flex size-9 items-center justify-center rounded-sm text-ink-mute transition-colors hover:bg-canvas-soft hover:text-ink"
@@ -91,6 +94,7 @@ export function LogInteractionDialog({
   onClose,
   onLogged,
 }: LogInteractionDialogProps) {
+  const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -109,6 +113,7 @@ export function LogInteractionDialog({
 
   return (
     <dialog
+      aria-labelledby={titleId}
       className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-hairline bg-canvas p-6 shadow-panel backdrop:bg-ink/40"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
@@ -118,7 +123,15 @@ export function LogInteractionDialog({
       onClose={onClose}
       ref={dialogRef}
     >
-      {open && <LogInteractionBody contacts={contacts} onClose={onClose} onLogged={onLogged} />}
+      {open && (
+        // Mounted only while open so each opening starts with a blank form.
+        <LogInteractionBody
+          contacts={contacts}
+          onClose={onClose}
+          onLogged={onLogged}
+          titleId={titleId}
+        />
+      )}
     </dialog>
   );
 }

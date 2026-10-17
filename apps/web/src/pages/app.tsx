@@ -1,4 +1,5 @@
 import {
+  CATCH_UP_AFTER_DAYS,
   contactsToCatchUp,
   importantDateYears,
   interactionTypeLabel,
@@ -152,8 +153,8 @@ function CatchUpCard({ contact }: { contact: Contact & { daysSince: number } }) 
 function comingUpCountLine(importantDates: ImportantDateWithContact[], now: Date): string {
   const count =
     importantDates.length === 1
-      ? "1 birthday or date in the next 30 days"
-      : `${importantDates.length} birthdays and dates in the next 30 days`;
+      ? `1 birthday or date in the next ${UPCOMING_WINDOW_DAYS} days`
+      : `${importantDates.length} birthdays and dates in the next ${UPCOMING_WINDOW_DAYS} days`;
   const next = importantDates[0];
 
   return next === undefined ? count : `${count} · next: ${importantDateTiming(next.fallsOn, now)}`;
@@ -168,10 +169,11 @@ function OnThisDayStrip({ memory }: { memory: OnThisDay }) {
           On this day · {memory.yearsAgo === 1 ? "1 year ago" : `${memory.yearsAgo} years ago`}
         </p>
         <p className="font-display text-headline-sm text-ink">
-          {memory.note ?? `${interactionTypeLabel(memory.type)} with ${memory.contactName}`}
+          {memory.note ?? `In touch with ${memory.contactName}`}
         </p>
         <p className="text-caption text-ink-mute">
-          {memory.contactName} · {formatDay(memory.occurredOn)}
+          {interactionTypeLabel(memory.type)} with {memory.contactName} ·{" "}
+          {formatDay(memory.occurredOn)}
         </p>
         <Link
           className="inline-flex w-fit items-center gap-1 text-label-lg text-primary hover:text-primary-press"
@@ -341,7 +343,7 @@ export function AppPage() {
               title="Coming up"
             >
               {comingUp.length === 0 ? (
-                <p className="text-body-md text-ink-secondary">Nothing in the next 30 days.</p>
+                <p className="text-body-md text-ink-secondary">Nothing in the next {UPCOMING_WINDOW_DAYS} days.</p>
               ) : (
                 <>
                   <p className="text-body-tabular tabular-nums text-ink-mute">
@@ -368,7 +370,7 @@ export function AppPage() {
               ) : (
                 <>
                   <p className="text-body-tabular tabular-nums text-ink-mute">
-                    Contacts quiet for more than 30 days
+                    Contacts quiet for more than {CATCH_UP_AFTER_DAYS} days
                   </p>
                   <ul className="grid gap-3 sm:grid-cols-2">
                     {catchUp.map((contact) => (
