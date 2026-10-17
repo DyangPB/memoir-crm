@@ -2,6 +2,7 @@ import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { betterAuth } from "better-auth";
 
 import { authSchema, createDb } from "./db";
+import { deleteUserMedia } from "./media";
 import { hashPassword, verifyPassword } from "./password";
 
 export function createAuth(env: Env, requestUrl: string) {
@@ -16,7 +17,12 @@ export function createAuth(env: Env, requestUrl: string) {
       password: { hash: hashPassword, verify: verifyPassword },
     },
     user: {
-      deleteUser: { enabled: true },
+      deleteUser: {
+        enabled: true,
+        afterDelete: async (user) => {
+          await deleteUserMedia(env, user.id);
+        },
+      },
     },
     socialProviders:
       env.GOOGLE_CLIENT_ID !== undefined && env.GOOGLE_CLIENT_SECRET !== undefined
@@ -24,6 +30,9 @@ export function createAuth(env: Env, requestUrl: string) {
             google: {
               clientId: env.GOOGLE_CLIENT_ID,
               clientSecret: env.GOOGLE_CLIENT_SECRET,
+              // Calendar sync needs a refresh token, which Google only gives on consent.
+              accessType: "offline",
+              prompt: "consent",
             },
           }
         : undefined,

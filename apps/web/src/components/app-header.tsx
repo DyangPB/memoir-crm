@@ -12,6 +12,7 @@ const navItems = [
   { label: "Dashboard", to: "/app", end: true },
   { label: "Contacts", to: "/app/contacts", end: false },
   { label: "Reminders", to: "/app/reminders", end: false },
+  { label: "Calendar", to: "/app/calendar", end: false },
   { label: "Settings", to: "/app/settings", end: false },
 ] as const;
 

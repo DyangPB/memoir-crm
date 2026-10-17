@@ -12,6 +12,7 @@ import {
   toImportantDate,
   type ImportantDateRow,
 } from "../lib/important-dates";
+import { syncSoon } from "../lib/google/queue";
 import { getSessionUser } from "../lib/session";
 
 export const importantDatesRoutes = new Hono<{ Bindings: Env }>();
@@ -76,6 +77,7 @@ importantDatesRoutes.post("/contacts/:contactId/important-dates", async (c) => {
   };
 
   await createDb(c.env).insert(importantDates).values(row);
+  syncSoon(c, user.id);
 
   return c.json({ importantDate: toImportantDate(row) }, 201);
 });
@@ -106,6 +108,7 @@ importantDatesRoutes.delete(
           eq(importantDates.userId, user.id),
         ),
       );
+    syncSoon(c, user.id);
 
     return c.body(null, 204);
   },

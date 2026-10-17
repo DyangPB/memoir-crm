@@ -1,9 +1,10 @@
-import { buildDemoSeed } from "@memoir/core";
+import { buildDemoSeed, type DemoSeed } from "@memoir/core";
 import {
   contactLabels,
   contacts,
   fieldDefinitions,
   importantDates,
+  interactionAttachments,
   interactions,
   labels,
   notes,
@@ -14,7 +15,9 @@ import {
 import { eq } from "drizzle-orm";
 
 import { createAuth } from "./auth";
+import { inChunks } from "./chunks";
 import { createDb } from "./db";
+import { attachmentKey, deleteUserMedia, photoKey } from "./media";
 import { reminderEngine } from "./reminders";
 
 export const DEMO_EMAIL = "demo@memoir.example";
@@ -38,14 +41,61 @@ async function findUserId(env: Env, email: string): Promise<string | null> {
   return rows[0]?.id ?? null;
 }
 
+/** D1 allows 100 bound variables per statement; a contact row binds 13 of them. */
+const CONTACTS_PER_INSERT = 7;
+
+async function storeDemoFiles(env: Env, userId: string, seed: DemoSeed): Promise<void> {
+  const puts: Promise<unknown>[] = [];
+
+  for (const contact of seed.contacts) {
+    if (contact.photo !== null) {
+      puts.push(
+        env.MEDIA.put(photoKey(userId, contact.id), contact.photo.bytes, {
+          httpMetadata: { contentType: contact.photo.contentType },
+        }),
+      );
+    }
+
+    for (const interaction of contact.interactions) {
+      for (const attachment of interaction.attachments) {
+        puts.push(
+          env.MEDIA.put(attachmentKey(userId, attachment.id), attachment.bytes, {
+            httpMetadata: { contentType: attachment.contentType },
+          }),
+        );
+      }
+    }
+  }
+
+  await Promise.all(puts);
+}
+
 /**
- * Replaces the demo user's rows with a fresh seed in one D1 transaction, so a
- * visitor always lands on the same address book and never on another visitor's
+ * Replaces the demo user's files, then its rows in one D1 batch, with a fresh seed,
+ * so a visitor always lands on the same address book and never on another visitor's
  * edits. Returns how many contacts the seed holds.
  */
 async function reseedDemoAccount(env: Env, userId: string, now: Date): Promise<number> {
   const seed = buildDemoSeed(now);
   const db = createDb(env);
+  const contactRows = seed.contacts.map((contact) => ({
+    id: contact.id,
+    userId,
+    name: contact.name,
+    emails: contact.emails,
+    phones: contact.phones,
+    socialLinks: contact.socialLinks,
+    birthday: contact.birthday,
+    howWeMet: contact.howWeMet,
+    location: contact.location,
+    roleCompany: contact.roleCompany,
+    timezone: contact.timezone,
+    photoKey: contact.photo === null ? null : photoKey(userId, contact.id),
+    customFields: contact.customFields,
+  }));
+
+  await deleteUserMedia(env, userId);
+  await storeDemoFiles(env, userId, seed);
 
   await db.batch([
     db.delete(contacts).where(eq(contacts.userId, userId)),
@@ -56,19 +106,7 @@ async function reseedDemoAccount(env: Env, userId: string, now: Date): Promise<n
       .insert(fieldDefinitions)
       .values(seed.fieldDefinitions.map((field) => ({ ...field, userId }))),
     db.insert(labels).values(seed.labels.map((label) => ({ ...label, userId }))),
-    db.insert(contacts).values(
-      seed.contacts.map((contact) => ({
-        id: contact.id,
-        userId,
-        name: contact.name,
-        emails: contact.emails,
-        phones: contact.phones,
-        socialLinks: contact.socialLinks,
-        birthday: contact.birthday,
-        howWeMet: contact.howWeMet,
-        customFields: contact.customFields,
-      })),
-    ),
+    ...inChunks(contactRows, CONTACTS_PER_INSERT).map((rows) => db.insert(contacts).values(rows)),
     db.insert(interactions).values(
       seed.contacts.flatMap((contact) =>
         contact.interactions.map((entry) => ({
@@ -79,6 +117,22 @@ async function reseedDemoAccount(env: Env, userId: string, now: Date): Promise<n
           occurredOn: entry.occurredOn,
           note: entry.note,
         })),
+      ),
+    ),
+    db.insert(interactionAttachments).values(
+      seed.contacts.flatMap((contact) =>
+        contact.interactions.flatMap((interaction) =>
+          interaction.attachments.map((attachment) => ({
+            id: attachment.id,
+            userId,
+            contactId: contact.id,
+            interactionId: interaction.id,
+            objectKey: attachmentKey(userId, attachment.id),
+            fileName: attachment.fileName,
+            contentType: attachment.contentType,
+            size: attachment.bytes.length,
+          })),
+        ),
       ),
     ),
     db.insert(notes).values(

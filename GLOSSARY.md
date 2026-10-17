@@ -59,3 +59,19 @@ _Avoid_: Tag, group, category (use Label)
 **Field Definition**:
 A user's declaration of a Custom Field: its name, its type (text, number, date, single-select, multi-select, long text, boolean, URL), and for selects, its options. Stored per user; values live on each Contact.
 _Avoid_: Field schema, custom column, property definition
+
+**Photo**:
+The picture of a Contact, uploaded by the user and shown in place of their letter avatar. At most one per Contact; replacing it removes the old one. Contacts without one keep the letter avatar.
+_Avoid_: Avatar image, profile picture, headshot (use Photo; "letter avatar" is the fallback)
+
+**Attachment**:
+A file added to an Interaction: images show inline in the Timeline, anything else is a download. Belongs to one Interaction and goes with it when the Interaction or its Contact is deleted.
+_Avoid_: Upload, document, media (use Attachment for the file, Photo for a Contact's picture)
+
+**Memoir calendar**:
+The secondary Google calendar named "Memoir" that Memoir creates in a connected Google account. Every dated Reminder and Important Date is mirrored there, in both directions, so they show on the user's phone. A birthday goes one way only (Memoir's version wins), and a done Reminder has no event. Disconnecting stops the syncing and leaves the calendar in Google.
+_Avoid_: Sync calendar, Memoir feed
+
+**Google layer**:
+Events from the Google calendars the user chose to show on the Calendar, read-only beside Memoir's own items. Never includes the Memoir calendar itself.
+_Avoid_: Imported calendar, external events

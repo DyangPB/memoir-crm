@@ -9,6 +9,7 @@ A personal CRM: private per-user accounts, warm-paper identity, all-in on Cloudf
 - **API**: Hono on Workers
 - **Data**: D1 (SQLite) via Drizzle; FTS5 for full-text search; JSON columns for custom field values
 - **Auth**: Better Auth (email/password + Google OAuth), PBKDF2/WebCrypto hashing, sessions in D1
+- **Google Calendar**: optional two-way sync through the same Google OAuth client, asked for with the `calendar` scope and offline access (a refresh token, kept in the `accounts` table). Memoir adds a "Memoir" calendar to the user's Google account and mirrors Reminders and Important Dates there; `/api/google/*` connects, picks display calendars, and syncs. Sync runs when a Reminder or date changes, when the Calendar opens, and on request; there is no background job. All Google access sits behind `worker/lib/google/client.ts`, which tests replace with a fake.
 - **Reminders**: per-user Durable Object alarms
 - **MCP server**: streamable HTTP on `/mcp`, per-user API keys, destructive tools gated by MCP elicitation
 - **Repo**: pnpm monorepo — `apps/web`, `packages/core`, `packages/db`; GitHub Actions (Vitest + miniflare, then `wrangler deploy`)
@@ -68,7 +69,7 @@ One Durable Object per user holds the due-event schedule. Its single alarm point
 | 18 | Access | Open signup + one-click demo with seed data |
 | 19 | Name | Memoir (MemoIR CRM exists in a different niche) |
 | 20 | Docs | README + ADRs + architecture doc |
-| 21 | Visual identity | Warm paper + ocean blue; Fraunces + Inter; airmail edge |
+| 21 | Visual identity | Warm paper + ocean blue; Newsreader + Inter; airmail edge |
 | 22 | App home | List-first with reminders strip (superseded by 27) |
 | 23 | Landing | Product-first hero |
 | 24 | Voice | Warm letter |

@@ -28,6 +28,9 @@ vi.mock("../lib/api", () => {
     listContactReminders: ok([]),
     listContactImportantDates: ok([]),
     listFieldDefinitions: ok([]),
+    photoUrl: (contactId: string) => `/api/contacts/${contactId}/photo`,
+    attachmentUrl: (contactId: string, interactionId: string, attachmentId: string) =>
+      `/api/contacts/${contactId}/interactions/${interactionId}/attachments/${attachmentId}`,
   };
 });
 
@@ -40,6 +43,10 @@ function contact(id: string, name: string): Contact {
     socialLinks: [],
     birthday: null,
     howWeMet: null,
+    location: null,
+    roleCompany: null,
+    timezone: null,
+    photoVersion: null,
     cadenceDays: null,
     cadenceTracked: true,
     customFields: {},

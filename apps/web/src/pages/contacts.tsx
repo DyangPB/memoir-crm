@@ -5,7 +5,7 @@ import { Link, NavLink, Navigate, Outlet, useLocation, useParams, useSearchParam
 import { AppHeader } from "../components/app-header";
 import { CadenceHealthPill } from "../components/cadence-health-pill";
 import { DaysSince } from "../components/days-since";
-import { LetterAvatar } from "../components/letter-avatar";
+import { ContactAvatar } from "../components/contact-avatar";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -37,7 +37,7 @@ function ContactRow({ contact, search }: { contact: Contact; search: string }) {
         }
         to={{ pathname: `/app/contacts/${contact.id}`, search }}
       >
-        <LetterAvatar name={contact.name} />
+        <ContactAvatar contact={contact} />
         <span className="flex min-w-0 flex-1 flex-col">
           <span className="truncate font-display text-contact-name text-ink">{contact.name}</span>
           {caption !== null && (

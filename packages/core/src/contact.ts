@@ -15,6 +15,10 @@ export type ContactInput = CadenceSettings & {
   socialLinks: SocialLink[];
   birthday: string | null;
   howWeMet: string | null;
+  location: string | null;
+  roleCompany: string | null;
+  /** A canonical IANA timezone name such as "Europe/Lisbon". */
+  timezone: string | null;
 };
 
 export type ContactWriteInput = ContactInput & {
@@ -26,6 +30,11 @@ export type Contact = ContactInput & {
   id: string;
   labels: Label[];
   lastInteractionAt: string | null;
+  /**
+   * Null when the Contact has no photo. Otherwise a number that changes whenever the
+   * photo does, so a cached image is replaced; the photo is served from `/api/contacts/:id/photo`.
+   */
+  photoVersion: number | null;
   /** Target interval in days after the override and global default; null when opted out. */
   effectiveCadenceDays: number | null;
   createdAt: string;
@@ -36,6 +45,8 @@ export type ContactParseResult =
   | { ok: false; message: string };
 
 const NAME_MAX_LENGTH = 200;
+const PROFILE_TEXT_MAX_LENGTH = 200;
+const TIMEZONE_MESSAGE = "That timezone isn't one I know. Use a name like Europe/Lisbon.";
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const EMAIL_PATTERN = /^\S+@\S+$/;
 
@@ -94,6 +105,60 @@ function parseSocialLinks(value: unknown): { ok: true; links: SocialLink[] } | {
   }
 
   return { ok: true, links };
+}
+
+function parseProfileText(
+  value: unknown,
+  labels: { notText: string; tooLong: string },
+): { ok: true; text: string | null } | { ok: false; message: string } {
+  if (value === undefined || value === null) {
+    return { ok: true, text: null };
+  }
+
+  if (typeof value !== "string") {
+    return { ok: false, message: labels.notText };
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed.length > PROFILE_TEXT_MAX_LENGTH) {
+    return { ok: false, message: labels.tooLong };
+  }
+
+  return { ok: true, text: trimmed === "" ? null : trimmed };
+}
+
+/** The canonical name of an IANA timezone, or null when the runtime doesn't know it. */
+export function canonicalTimezone(value: string): string | null {
+  try {
+    return new Intl.DateTimeFormat("en-US", { timeZone: value }).resolvedOptions().timeZone;
+  } catch {
+    return null;
+  }
+}
+
+function parseTimezone(
+  value: unknown,
+): { ok: true; timezone: string | null } | { ok: false; message: string } {
+  if (value === undefined || value === null) {
+    return { ok: true, timezone: null };
+  }
+
+  if (typeof value !== "string") {
+    return { ok: false, message: TIMEZONE_MESSAGE };
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed === "") {
+    return { ok: true, timezone: null };
+  }
+
+  const canonical = canonicalTimezone(trimmed);
+
+  return canonical === null
+    ? { ok: false, message: TIMEZONE_MESSAGE }
+    : { ok: true, timezone: canonical };
 }
 
 export function parseContactInput(input: unknown): ContactParseResult {
@@ -163,6 +228,30 @@ export function parseContactInput(input: unknown): ContactParseResult {
 
   const howWeMet = typeof howWeMetRaw === "string" && howWeMetRaw.trim() !== "" ? howWeMetRaw.trim() : null;
 
+  const location = parseProfileText(record.location, {
+    notText: "Location needs to be text.",
+    tooLong: "That location is too long. Keep it under 200 characters.",
+  });
+
+  if (!location.ok) {
+    return { ok: false, message: location.message };
+  }
+
+  const roleCompany = parseProfileText(record.roleCompany, {
+    notText: "Role or company needs to be text.",
+    tooLong: "That role or company is too long. Keep it under 200 characters.",
+  });
+
+  if (!roleCompany.ok) {
+    return { ok: false, message: roleCompany.message };
+  }
+
+  const timezone = parseTimezone(record.timezone);
+
+  if (!timezone.ok) {
+    return { ok: false, message: timezone.message };
+  }
+
   const cadence = parseCadenceInput(record);
 
   if (!cadence.ok) {
@@ -178,6 +267,9 @@ export function parseContactInput(input: unknown): ContactParseResult {
       socialLinks: socialLinks.links,
       birthday,
       howWeMet,
+      location: location.text,
+      roleCompany: roleCompany.text,
+      timezone: timezone.timezone,
       ...cadence.cadence,
     },
   };

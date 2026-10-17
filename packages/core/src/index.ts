@@ -1,4 +1,20 @@
 export {
+  calendarItemTitle,
+  calendarRange,
+  calendarViews,
+  expandImportantDates,
+  googleEventDays,
+  groupItemsByDay,
+  monthGrid,
+  parseCalendarRange,
+  stepAnchor,
+  weekOf,
+  type CalendarItem,
+  type CalendarRange,
+  type CalendarRangeParseResult,
+  type CalendarView,
+} from "./calendar";
+export {
   cadenceHealth,
   contactsToCatchUp,
   DEFAULT_CADENCE_DAYS,
@@ -37,8 +53,38 @@ export {
 } from "./custom-field";
 export { daysSince } from "./days-since";
 export {
+  fromGoogleEvent,
+  GOOGLE_CALENDAR_SCOPE,
+  planSync,
+  toGoogleEvent,
+  type GoogleEventDraft,
+  type GoogleStatus,
+  type MirrorItem,
+  type MirrorKind,
+  type MirrorMode,
+  type RemoteEvent,
+  type SyncAction,
+  type SyncLink,
+  type SyncPlanInput,
+} from "./google-sync";
+export { addDays, weekdayOf } from "./iso-day";
+export { localTime } from "./local-time";
+export {
+  ATTACHMENT_MAX_BYTES,
+  isInlineImage,
+  PHOTO_MAX_BYTES,
+  validateAttachment,
+  validatePhoto,
+  type AttachmentFile,
+  type AttachmentValidation,
+  type MediaFile,
+  type PhotoValidation,
+} from "./media";
+export {
   buildDemoSeed,
+  type DemoAttachment,
   type DemoContact,
+  type DemoFile,
   type DemoFieldDefinition,
   type DemoImportantDate,
   type DemoInteraction,
@@ -68,6 +114,7 @@ export {
   lastInteractionDate,
   parseInteractionInput,
   type Interaction,
+  type InteractionAttachment,
   type InteractionInput,
   type InteractionParseResult,
   type InteractionType,
@@ -77,13 +124,25 @@ export { pickOnThisDay, type OnThisDay } from "./on-this-day";
 export {
   nextReminderEvent,
   parseReminderInput,
+  parseRescheduleInput,
   reminderStatusAt,
   type Reminder,
   type ReminderInput,
   type ReminderParseResult,
   type ReminderStatus,
   type ReminderWithContact,
+  type RescheduleParseResult,
 } from "./reminder";
+export { parseQuickDate, type QuickDateResult } from "./quick-date";
+export {
+  importantDateSection,
+  importantDatesInTab,
+  reminderInTab,
+  reminderSection,
+  reminderTabs,
+  type ReminderSection,
+  type ReminderTab,
+} from "./reminder-view";
 export {
   parseLabelInput,
   type Label,

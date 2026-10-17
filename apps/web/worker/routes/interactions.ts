@@ -1,51 +1,18 @@
-import {
-  isIsoDay,
-  parseInteractionInput,
-  pickOnThisDay,
-  type Interaction,
-  type OnThisDay,
-} from "@memoir/core";
+import { isIsoDay, parseInteractionInput, pickOnThisDay, type OnThisDay } from "@memoir/core";
 import { contacts, interactions } from "@memoir/db";
 import { and, desc, eq, like } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { findOwnedContact } from "../lib/contacts";
 import { createDb } from "../lib/db";
+import {
+  attachmentsByInteraction,
+  findOwnedInteraction,
+  toInteraction,
+  type InteractionRow,
+} from "../lib/interactions";
+import { attachmentKeysForInteraction, deleteObjects } from "../lib/media";
 import { getSessionUser } from "../lib/session";
-
-type InteractionRow = typeof interactions.$inferSelect;
-
-function toInteraction(row: InteractionRow): Interaction {
-  return {
-    id: row.id,
-    contactId: row.contactId,
-    type: row.type,
-    occurredOn: row.occurredOn,
-    note: row.note,
-    createdAt: row.createdAt.toISOString(),
-  };
-}
-
-async function findOwnedInteraction(
-  env: Env,
-  userId: string,
-  contactId: string,
-  interactionId: string,
-): Promise<InteractionRow | null> {
-  const rows = await createDb(env)
-    .select()
-    .from(interactions)
-    .where(
-      and(
-        eq(interactions.id, interactionId),
-        eq(interactions.contactId, contactId),
-        eq(interactions.userId, userId),
-      ),
-    )
-    .limit(1);
-
-  return rows[0] ?? null;
-}
 
 export const interactionsRoutes = new Hono<{ Bindings: Env }>();
 
@@ -97,7 +64,11 @@ interactionsRoutes.get("/contacts/:contactId/interactions", async (c) => {
     .where(and(eq(interactions.userId, user.id), eq(interactions.contactId, contact.id)))
     .orderBy(desc(interactions.occurredOn), desc(interactions.createdAt));
 
-  return c.json({ interactions: rows.map(toInteraction) });
+  const attachments = await attachmentsByInteraction(c.env, user.id, { contactId: contact.id });
+
+  return c.json({
+    interactions: rows.map((row) => toInteraction(row, attachments.get(row.id) ?? [])),
+  });
 });
 
 interactionsRoutes.post("/contacts/:contactId/interactions", async (c) => {
@@ -170,7 +141,14 @@ interactionsRoutes.put("/contacts/:contactId/interactions/:interactionId", async
       ),
     );
 
-  return c.json({ interaction: toInteraction({ ...existing, ...parsed.interaction, updatedAt }) });
+  const attachments = await attachmentsByInteraction(c.env, user.id, { interactionId });
+
+  return c.json({
+    interaction: toInteraction(
+      { ...existing, ...parsed.interaction, updatedAt },
+      attachments.get(interactionId) ?? [],
+    ),
+  });
 });
 
 interactionsRoutes.delete("/contacts/:contactId/interactions/:interactionId", async (c) => {
@@ -188,6 +166,8 @@ interactionsRoutes.delete("/contacts/:contactId/interactions/:interactionId", as
     return c.json({ error: "That interaction isn't here." }, 404);
   }
 
+  const fileKeys = await attachmentKeysForInteraction(c.env, user.id, interactionId);
+
   await createDb(c.env)
     .delete(interactions)
     .where(
@@ -197,6 +177,8 @@ interactionsRoutes.delete("/contacts/:contactId/interactions/:interactionId", as
         eq(interactions.userId, user.id),
       ),
     );
+
+  await deleteObjects(c.env, fileKeys);
 
   return c.body(null, 204);
 });

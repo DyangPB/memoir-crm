@@ -10,6 +10,7 @@ import { Navigate, useNavigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { DefaultCadenceForm } from "../components/default-cadence-form";
+import { GoogleCalendarSection } from "../components/google-calendar-section";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
@@ -337,6 +338,8 @@ export function SettingsPage() {
             <DefaultCadenceForm days={defaultCadenceDays} onSave={handleSaveCadence} />
           </section>
         )}
+
+        <GoogleCalendarSection />
 
         <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
           <div className="flex flex-col gap-1">

@@ -121,6 +121,11 @@ export const contacts = sqliteTable(
       .default([]),
     birthday: text("birthday"),
     howWeMet: text("how_we_met"),
+    location: text("location"),
+    roleCompany: text("role_company"),
+    timezone: text("timezone"),
+    /** R2 object key of the Contact's photo; null when there is none. */
+    photoKey: text("photo_key"),
     customFields: text("custom_fields", { mode: "json" })
       .$type<Record<string, unknown>>()
       .notNull()
@@ -162,6 +167,80 @@ export const interactions = sqliteTable(
   (table) => [
     index("interactions_userId_idx").on(table.userId),
     index("interactions_contactId_idx").on(table.contactId),
+  ],
+);
+
+export const googleConnections = sqliteTable("google_connections", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** The secondary "Memoir" calendar Memoir created in the user's Google account. */
+  memoirCalendarId: text("memoir_calendar_id").notNull(),
+  /** Google calendars shown as read-only layers on the Calendar. */
+  selectedCalendarIds: text("selected_calendar_ids", { mode: "json" })
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+  /** Google's incremental sync token for the Memoir calendar; null forces a full listing. */
+  syncToken: text("sync_token"),
+  lastSyncedAt: integer("last_synced_at", { mode: "timestamp_ms" }),
+  lastError: text("last_error"),
+  /** While in the future, a sync is running; a second one asks for a rerun instead. */
+  syncLockedUntil: integer("sync_locked_until", { mode: "timestamp_ms" }),
+  resyncRequested: integer("resync_requested", { mode: "boolean" }).default(false).notNull(),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+});
+
+export const googleEventLinks = sqliteTable(
+  "google_event_links",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind", { enum: ["reminder", "important-date"] }).notNull(),
+    /** The Reminder or Important Date's id; kept even after the row is deleted. */
+    itemId: text("item_id").notNull(),
+    eventId: text("event_id").notNull(),
+    /** The text and day last synced, to tell a real change in Memoir from housekeeping. */
+    title: text("title").notNull(),
+    date: text("date").notNull(),
+    remoteUpdated: integer("remote_updated").notNull(),
+  },
+  (table) => [
+    uniqueIndex("google_event_links_item_idx").on(table.userId, table.kind, table.itemId),
+    uniqueIndex("google_event_links_event_idx").on(table.userId, table.eventId),
+  ],
+);
+
+export const interactionAttachments = sqliteTable(
+  "interaction_attachments",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    interactionId: text("interaction_id")
+      .notNull()
+      .references(() => interactions.id, { onDelete: "cascade" }),
+    /** R2 object key holding the file's bytes. */
+    objectKey: text("object_key").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index("interaction_attachments_userId_idx").on(table.userId),
+    index("interaction_attachments_interactionId_idx").on(table.interactionId),
+    index("interaction_attachments_contactId_idx").on(table.contactId),
   ],
 );
 

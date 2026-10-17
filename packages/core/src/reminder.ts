@@ -51,6 +51,25 @@ export function parseReminderInput(input: unknown): ReminderParseResult {
   return { ok: true, reminder: { body, dueOn } };
 }
 
+export type RescheduleParseResult =
+  | { ok: true; dueOn: string }
+  | { ok: false; message: string };
+
+export function parseRescheduleInput(input: unknown): RescheduleParseResult {
+  if (typeof input !== "object" || input === null) {
+    return { ok: false, message: "Send the new date as JSON." };
+  }
+
+  const dueOn = (input as Record<string, unknown>).dueOn;
+  const trimmed = typeof dueOn === "string" ? dueOn.trim() : "";
+
+  if (!isIsoDay(trimmed)) {
+    return { ok: false, message: "Reminders need a real date." };
+  }
+
+  return { ok: true, dueOn: trimmed };
+}
+
 const MS_PER_DAY = 86_400_000;
 
 function startOfDueDay(dueOn: string): number {

@@ -1,6 +1,8 @@
 import type {
   CadenceHealth,
+  CalendarItem,
   Contact,
+  GoogleStatus,
   ContactWriteInput,
   FieldDefinitionInput,
   FieldDefinitionSummary,
@@ -13,6 +15,7 @@ import type {
   Note,
   NoteInput,
   OnThisDay,
+  InteractionAttachment,
   Reminder,
   ReminderInput,
   ReminderWithContact,
@@ -295,6 +298,25 @@ export async function listOpenReminders(): Promise<ApiResult<ReminderWithContact
   return result.ok ? { ok: true, value: result.value.reminders } : result;
 }
 
+export async function listDoneReminders(): Promise<ApiResult<ReminderWithContact[]>> {
+  const result = await request<{ reminders: ReminderWithContact[] }>("/api/reminders?status=done");
+
+  return result.ok ? { ok: true, value: result.value.reminders } : result;
+}
+
+export async function rescheduleReminder(
+  contactId: string,
+  reminderId: string,
+  dueOn: string,
+): Promise<ApiResult<Reminder>> {
+  const result = await request<{ reminder: Reminder }>(
+    `/api/contacts/${contactId}/reminders/${reminderId}`,
+    { method: "PATCH", body: JSON.stringify({ dueOn }) },
+  );
+
+  return result.ok ? { ok: true, value: result.value.reminder } : result;
+}
+
 export async function listContactReminders(contactId: string): Promise<ApiResult<Reminder[]>> {
   const result = await request<{ reminders: Reminder[] }>(`/api/contacts/${contactId}/reminders`);
 
@@ -380,4 +402,82 @@ export async function startDemo(): Promise<ApiResult<DemoStart>> {
   const result = await request<{ demo: DemoStart }>("/api/demo", { method: "POST" });
 
   return result.ok ? { ok: true, value: result.value.demo } : result;
+}
+
+export function photoUrl(contactId: string, version?: number): string {
+  return `/api/contacts/${contactId}/photo${version === undefined ? "" : `?v=${version}`}`;
+}
+
+export function attachmentUrl(
+  contactId: string,
+  interactionId: string,
+  attachmentId: string,
+): string {
+  return `/api/contacts/${contactId}/interactions/${interactionId}/attachments/${attachmentId}`;
+}
+
+export async function uploadPhoto(contactId: string, file: File): Promise<ApiResult<Contact>> {
+  const result = await request<{ contact: Contact }>(photoUrl(contactId), {
+    method: "PUT",
+    body: file,
+    headers: { "content-type": file.type },
+  });
+
+  return result.ok ? { ok: true, value: result.value.contact } : result;
+}
+
+export async function deletePhoto(contactId: string): Promise<ApiResult<null>> {
+  return request<null>(photoUrl(contactId), { method: "DELETE" });
+}
+
+export async function uploadAttachment(
+  contactId: string,
+  interactionId: string,
+  file: File,
+): Promise<ApiResult<InteractionAttachment>> {
+  const result = await request<{ attachment: InteractionAttachment }>(
+    `/api/contacts/${contactId}/interactions/${interactionId}/attachments?name=${encodeURIComponent(file.name)}`,
+    { method: "POST", body: file, headers: { "content-type": file.type } },
+  );
+
+  return result.ok ? { ok: true, value: result.value.attachment } : result;
+}
+
+export async function deleteAttachment(
+  contactId: string,
+  interactionId: string,
+  attachmentId: string,
+): Promise<ApiResult<null>> {
+  return request<null>(attachmentUrl(contactId, interactionId, attachmentId), {
+    method: "DELETE",
+  });
+}
+
+export async function listCalendar(from: string, to: string): Promise<ApiResult<CalendarItem[]>> {
+  const result = await request<{ items: CalendarItem[] }>(`/api/calendar?from=${from}&to=${to}`);
+
+  return result.ok ? { ok: true, value: result.value.items } : result;
+}
+
+export async function getGoogleStatus(): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/status");
+}
+
+export async function connectGoogle(): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/connection", { method: "POST" });
+}
+
+export async function disconnectGoogle(): Promise<ApiResult<null>> {
+  return request<null>("/api/google/connection", { method: "DELETE" });
+}
+
+export async function setGoogleCalendars(calendarIds: string[]): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/calendars", {
+    method: "PUT",
+    body: JSON.stringify({ calendarIds }),
+  });
+}
+
+export async function syncGoogleNow(): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/sync", { method: "POST" });
 }

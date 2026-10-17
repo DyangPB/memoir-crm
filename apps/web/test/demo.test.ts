@@ -213,6 +213,64 @@ describe("demo account", () => {
     expect(datesBody.importantDates.filter((date) => date.source === "manual")).toHaveLength(1);
   });
 
+  it("seeds profile fields, photos, and attachments", async () => {
+    const cookie = await startDemo();
+    const seed = buildDemoSeed(new Date());
+    const contacts = await listContacts(cookie);
+    const amara = contacts.find((contact) => contact.id === "demo-contact-amara");
+    const devon = contacts.find((contact) => contact.id === "demo-contact-devon");
+
+    expect(amara).toMatchObject({
+      location: "Lisbon, Portugal",
+      roleCompany: "Editor at Marginalia Press",
+      timezone: "Europe/Lisbon",
+      photoVersion: expect.any(Number),
+    });
+    expect(devon).toMatchObject({ location: null, timezone: null, photoVersion: null });
+    expect(contacts.filter((contact) => contact.photoVersion !== null)).toHaveLength(
+      seed.contacts.filter((contact) => contact.photo !== null).length,
+    );
+
+    const photo = await api("GET", "/api/contacts/demo-contact-amara/photo", undefined, cookie);
+    expect(photo.status).toBe(200);
+    expect(photo.headers.get("content-type")).toBe("image/png");
+    expect(new Uint8Array(await photo.arrayBuffer())).toEqual(
+      seed.contacts.find((contact) => contact.id === "demo-contact-amara")?.photo?.bytes,
+    );
+
+    const timeline = await api("GET", "/api/contacts/demo-contact-farida/interactions", undefined, cookie);
+    const { interactions } = (await timeline.json()) as { interactions: Interaction[] };
+    const files = interactions.flatMap((interaction) => interaction.attachments);
+
+    expect(files.map((file) => file.contentType).sort()).toEqual(["image/png", "text/plain"]);
+
+    const image = files.find((file) => file.contentType === "image/png");
+    const download = await api(
+      "GET",
+      `/api/contacts/demo-contact-farida/interactions/${image?.interactionId}/attachments/${image?.id}`,
+      undefined,
+      cookie,
+    );
+    expect(download.status).toBe(200);
+    expect((await download.arrayBuffer()).byteLength).toBe(image?.size);
+  });
+
+  it("replaces the demo's files on every visit instead of piling them up", async () => {
+    await startDemo();
+    const cookie = await startDemo();
+    const row = await env.DB.prepare("SELECT id FROM users WHERE email = ?")
+      .bind(DEMO_EMAIL)
+      .first<{ id: string }>();
+    const seed = buildDemoSeed(new Date());
+    const expected =
+      seed.contacts.filter((contact) => contact.photo !== null).length +
+      seed.contacts.flatMap((contact) => contact.interactions.flatMap((entry) => entry.attachments)).length;
+    const listed = await env.MEDIA.list({ prefix: `${row?.id}/` });
+
+    expect(cookie).not.toBe("");
+    expect(listed.objects).toHaveLength(expected);
+  });
+
   it("hands back a clean address book on every visit", async () => {
     const cookie = await startDemo();
     const seed = buildDemoSeed(new Date());

@@ -14,6 +14,7 @@ import {
 import { interactionTypes, parseInteractionInput } from "../src/interaction";
 import { parseLabelInput } from "../src/label";
 import { parseNoteInput } from "../src/note";
+import { validateAttachment, validatePhoto } from "../src/media";
 import { parseReminderInput, reminderStatusAt } from "../src/reminder";
 
 const NOW = new Date("2026-10-12T08:00:00.000Z");
@@ -54,6 +55,9 @@ describe("demo seed validity", () => {
           socialLinks: contact.socialLinks,
           birthday: contact.birthday,
           howWeMet: contact.howWeMet,
+          location: contact.location,
+          roleCompany: contact.roleCompany,
+          timezone: contact.timezone,
           cadenceDays: null,
           cadenceTracked: true,
         },
@@ -291,5 +295,57 @@ describe("demo seed determinism", () => {
       seed.fieldDefinitions.map((field) => field.id),
     );
     expect(later.labels.map((label) => label.id)).toEqual(seed.labels.map((label) => label.id));
+  });
+});
+
+describe("demo seed profile and media coverage", () => {
+  it("gives several contacts a location, role/company, and timezone", () => {
+    expect(seed.contacts.filter((contact) => contact.location !== null).length).toBeGreaterThanOrEqual(5);
+    expect(seed.contacts.filter((contact) => contact.roleCompany !== null).length).toBeGreaterThanOrEqual(4);
+    expect(seed.contacts.filter((contact) => contact.timezone !== null).length).toBeGreaterThanOrEqual(5);
+    expect(seed.contacts.some((contact) => contact.timezone === null)).toBe(true);
+  });
+
+  it("gives some contacts a photo and leaves others to the letter avatar", () => {
+    const withPhoto = seed.contacts.filter((contact) => contact.photo !== null);
+
+    expect(withPhoto.length).toBeGreaterThanOrEqual(3);
+    expect(withPhoto.length).toBeLessThan(seed.contacts.length);
+
+    for (const contact of withPhoto) {
+      expect(
+        validatePhoto({
+          contentType: contact.photo?.contentType ?? "",
+          size: contact.photo?.bytes.length ?? 0,
+        }).ok,
+      ).toBe(true);
+    }
+  });
+
+  it("attaches both an inline image and a download-only file to some interactions", () => {
+    const attachments = seed.contacts.flatMap((contact) =>
+      contact.interactions.flatMap((interaction) => interaction.attachments),
+    );
+
+    expect(attachments.some((attachment) => attachment.contentType === "image/png")).toBe(true);
+    expect(attachments.some((attachment) => attachment.contentType !== "image/png")).toBe(true);
+    expect(new Set(attachments.map((attachment) => attachment.id)).size).toBe(attachments.length);
+
+    for (const attachment of attachments) {
+      expect(
+        validateAttachment({
+          fileName: attachment.fileName,
+          contentType: attachment.contentType,
+          size: attachment.bytes.length,
+        }),
+      ).toEqual({
+        ok: true,
+        attachment: {
+          fileName: attachment.fileName,
+          contentType: attachment.contentType,
+          size: attachment.bytes.length,
+        },
+      });
+    }
   });
 });

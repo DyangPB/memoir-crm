@@ -15,7 +15,7 @@ import { Link, Navigate } from "react-router";
 import { AppHeader } from "../components/app-header";
 import { DaysSince } from "../components/days-since";
 import { Icon } from "../components/icon";
-import { LetterAvatar } from "../components/letter-avatar";
+import { ContactAvatar } from "../components/contact-avatar";
 import { LogInteractionDialog } from "../components/log-interaction-dialog";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
@@ -141,7 +141,7 @@ function CatchUpCard({ contact }: { contact: Contact & { daysSince: number } }) 
         className="flex h-full items-center gap-4 rounded-lg border border-hairline p-4 transition-colors hover:bg-canvas-soft"
         to={`/app/contacts/${contact.id}`}
       >
-        <LetterAvatar name={contact.name} />
+        <ContactAvatar contact={contact} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate font-display text-contact-name text-ink">{contact.name}</span>
           <DaysSince
