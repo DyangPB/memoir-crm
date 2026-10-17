@@ -11,6 +11,7 @@ import type {
   LabelSummary,
   Note,
   NoteInput,
+  OnThisDay,
   Reminder,
   ReminderInput,
   ReminderWithContact,
@@ -125,6 +126,14 @@ export async function createInteraction(
   );
 
   return result.ok ? { ok: true, value: result.value.interaction } : result;
+}
+
+export async function getOnThisDay(today: string): Promise<ApiResult<OnThisDay | null>> {
+  const result = await request<{ onThisDay: OnThisDay | null }>(
+    `/api/interactions/on-this-day?date=${today}`,
+  );
+
+  return result.ok ? { ok: true, value: result.value.onThisDay } : result;
 }
 
 export async function updateInteraction(

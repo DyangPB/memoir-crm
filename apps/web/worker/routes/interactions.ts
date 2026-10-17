@@ -1,6 +1,12 @@
-import { parseInteractionInput, type Interaction } from "@memoir/core";
-import { interactions } from "@memoir/db";
-import { and, desc, eq } from "drizzle-orm";
+import {
+  isIsoDay,
+  parseInteractionInput,
+  pickOnThisDay,
+  type Interaction,
+  type OnThisDay,
+} from "@memoir/core";
+import { contacts, interactions } from "@memoir/db";
+import { and, desc, eq, like } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { findOwnedContact } from "../lib/contacts";
@@ -42,6 +48,35 @@ async function findOwnedInteraction(
 }
 
 export const interactionsRoutes = new Hono<{ Bindings: Env }>();
+
+// The client sends its own local day: the server has no idea what day it is for the user.
+interactionsRoutes.get("/interactions/on-this-day", async (c) => {
+  const user = await getSessionUser(c.env, c.req.raw);
+
+  if (user === null) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const today = c.req.query("date") ?? "";
+
+  if (!isIsoDay(today)) {
+    return c.json({ error: "Send today's date as ?date=YYYY-MM-DD." }, 400);
+  }
+
+  const rows = await createDb(c.env)
+    .select({ interaction: interactions, contactName: contacts.name })
+    .from(interactions)
+    .innerJoin(contacts, eq(contacts.id, interactions.contactId))
+    .where(and(eq(interactions.userId, user.id), like(interactions.occurredOn, `%${today.slice(4)}`)))
+    .orderBy(desc(interactions.createdAt));
+
+  const picked = pickOnThisDay(
+    rows.map((row) => ({ ...toInteraction(row.interaction), contactName: row.contactName })),
+    today,
+  );
+
+  return c.json({ onThisDay: picked satisfies OnThisDay | null });
+});
 
 interactionsRoutes.get("/contacts/:contactId/interactions", async (c) => {
   const user = await getSessionUser(c.env, c.req.raw);
