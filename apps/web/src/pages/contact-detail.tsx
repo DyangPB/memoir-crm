@@ -3,6 +3,8 @@ import {
   importantDateYears,
   interactionTypeLabel,
   lastInteractionDate,
+  validateAttachment,
+  validatePhoto,
   type Contact,
   type FieldDefinition,
   type ImportantDate,
@@ -18,12 +20,14 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useOutletContext, useParams } from "react-router";
 
 import { BackToParent } from "../components/back-to-parent";
+import { ContactAvatar } from "../components/contact-avatar";
 import { DaysSince } from "../components/days-since";
 import { Icon } from "../components/icon";
 import { ImportantDateForm } from "../components/important-date-form";
 import { ImportantDateMarker } from "../components/important-date-marker";
+import { AttachButton, AttachmentList } from "../components/interaction-attachments";
 import { InteractionForm } from "../components/interaction-form";
-import { LetterAvatar } from "../components/letter-avatar";
+import { LocalClock } from "../components/local-clock";
 import { NoteForm } from "../components/note-form";
 import { ReminderForm } from "../components/reminder-form";
 import { Button } from "../components/ui/button";
@@ -34,8 +38,10 @@ import {
   createLabel,
   createNote,
   createReminder,
+  deleteAttachment,
   deleteImportantDate,
   deleteInteraction,
+  deletePhoto,
   deleteNote,
   deleteReminder,
   getContact,
@@ -49,6 +55,8 @@ import {
   tickReminder,
   updateInteraction,
   updateNote,
+  uploadAttachment,
+  uploadPhoto,
 } from "../lib/api";
 import { formatDay, todayForDayCounts, todayIsoDay } from "../lib/format";
 import { reminderChipClass, reminderTiming } from "../lib/reminders";
@@ -98,7 +106,14 @@ function CustomFieldValue({
 }
 
 /** The right-hand pane of the Contacts split view: one Contact's profile, Timeline and Notes. */
+/** Remounts per Contact, so nothing from the last one lingers while the next loads. */
 export function ContactDetailPane() {
+  const { id } = useParams();
+
+  return <ContactDetailBody key={id} />;
+}
+
+function ContactDetailBody() {
   const { id } = useParams();
   const location = useLocation();
   const { refreshList } = useOutletContext<ContactsOutletContext>();
@@ -114,6 +129,9 @@ export function ContactDetailPane() {
   const [editingInteractionId, setEditingInteractionId] = useState<string | null>(null);
   const [confirmingInteractionId, setConfirmingInteractionId] = useState<string | null>(null);
   const [interactionError, setInteractionError] = useState<string | null>(null);
+  const [attachingId, setAttachingId] = useState<string | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [confirmingNoteId, setConfirmingNoteId] = useState<string | null>(null);
@@ -290,6 +308,96 @@ export function ContactDetailPane() {
 
     setConfirmingInteractionId(null);
     await refreshInteractions();
+  }
+
+  async function handleAttach(interaction: Interaction, file: File) {
+    if (id === undefined) {
+      return;
+    }
+
+    const checked = validateAttachment({
+      fileName: file.name,
+      contentType: file.type,
+      size: file.size,
+    });
+
+    if (!checked.ok) {
+      setInteractionError(checked.message);
+      return;
+    }
+
+    setAttachingId(interaction.id);
+    const result = await uploadAttachment(id, interaction.id, file);
+    setAttachingId(null);
+
+    if (!result.ok) {
+      setInteractionError(result.message);
+      return;
+    }
+
+    setInteractionError(null);
+    await refreshInteractions();
+  }
+
+  async function handleRemoveAttachment(interaction: Interaction, attachmentId: string) {
+    if (id === undefined) {
+      return;
+    }
+
+    const result = await deleteAttachment(id, interaction.id, attachmentId);
+
+    if (!result.ok && result.status !== 404) {
+      setInteractionError(result.message);
+      return;
+    }
+
+    setInteractionError(null);
+    await refreshInteractions();
+  }
+
+  async function handlePhotoPick(file: File) {
+    if (id === undefined) {
+      return;
+    }
+
+    const checked = validatePhoto({ contentType: file.type, size: file.size });
+
+    if (!checked.ok) {
+      setPhotoError(checked.message);
+      return;
+    }
+
+    setPhotoBusy(true);
+    const result = await uploadPhoto(id, file);
+    setPhotoBusy(false);
+
+    if (!result.ok) {
+      setPhotoError(result.message);
+      return;
+    }
+
+    setPhotoError(null);
+    setContact(result.value);
+    refreshList();
+  }
+
+  async function handlePhotoRemove() {
+    if (id === undefined) {
+      return;
+    }
+
+    setPhotoBusy(true);
+    const result = await deletePhoto(id);
+    setPhotoBusy(false);
+
+    if (!result.ok) {
+      setPhotoError(result.message);
+      return;
+    }
+
+    setPhotoError(null);
+    setContact((current) => (current === null ? current : { ...current, photoVersion: null }));
+    refreshList();
   }
 
   async function handleAddNote(body: string) {
@@ -602,10 +710,37 @@ export function ContactDetailPane() {
         {backToList}
         <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-6">
           <div className="flex items-center gap-4">
-            <LetterAvatar name={contact.name} />
-            <div className="flex flex-col gap-0.5">
+            <ContactAvatar contact={contact} size="lg" />
+            <div className="flex flex-col gap-1">
               <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
               <h1 className="font-display text-display-lg text-ink">{contact.name}</h1>
+              {(contact.roleCompany !== null || contact.location !== null) && (
+                <p className="text-body-md text-ink-secondary">
+                  {[contact.roleCompany, contact.location]
+                    .filter((part): part is string => part !== null)
+                    .join(" · ")}
+                </p>
+              )}
+              {contact.timezone !== null && <LocalClock timezone={contact.timezone} />}
+              <div className="-ml-4 flex items-center gap-1">
+                <AttachButton
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  busy={photoBusy}
+                  label={contact.photoVersion === null ? "Add photo" : "Change photo"}
+                  onPick={(file) => void handlePhotoPick(file)}
+                  pendingLabel="Uploading"
+                />
+                {contact.photoVersion !== null && (
+                  <Button disabled={photoBusy} onClick={() => void handlePhotoRemove()} variant="ghost">
+                    Remove photo
+                  </Button>
+                )}
+              </div>
+              {photoError !== null && (
+                <p className="text-caption text-danger" role="alert">
+                  {photoError}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-5">
@@ -639,7 +774,10 @@ export function ContactDetailPane() {
           </div>
 
           {interactionError !== null && (
-            <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
+            <p
+              className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger"
+              role="alert"
+            >
               {interactionError}
             </p>
           )}
@@ -693,6 +831,13 @@ export function ContactDetailPane() {
                             {interaction.note}
                           </p>
                         )}
+                        <AttachmentList
+                          attachments={interaction.attachments}
+                          contactId={contact.id}
+                          onRemove={(attachment) =>
+                            void handleRemoveAttachment(interaction, attachment.id)
+                          }
+                        />
                         {confirmingInteractionId === interaction.id ? (
                           <div className="flex flex-wrap items-center gap-3">
                             <span className="text-caption text-ink-mute">
@@ -715,6 +860,11 @@ export function ContactDetailPane() {
                           </div>
                         ) : (
                           <div className="flex gap-2">
+                            <AttachButton
+                              ariaLabel={`Attach file to ${interactionTypeLabel(interaction.type)} on ${formatDay(interaction.occurredOn)}`}
+                              busy={attachingId === interaction.id}
+                              onPick={(file) => void handleAttach(interaction, file)}
+                            />
                             <Button
                               onClick={() => {
                                 setEditingInteractionId(interaction.id);

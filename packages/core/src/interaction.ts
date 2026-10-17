@@ -10,9 +10,19 @@ export type InteractionInput = {
   note: string | null;
 };
 
+export type InteractionAttachment = {
+  id: string;
+  interactionId: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  createdAt: string;
+};
+
 export type Interaction = InteractionInput & {
   id: string;
   contactId: string;
+  attachments: InteractionAttachment[];
   createdAt: string;
 };
 

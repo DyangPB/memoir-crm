@@ -36,9 +36,23 @@ export {
   type FieldType,
 } from "./custom-field";
 export { daysSince } from "./days-since";
+export { localTime } from "./local-time";
+export {
+  ATTACHMENT_MAX_BYTES,
+  isInlineImage,
+  PHOTO_MAX_BYTES,
+  validateAttachment,
+  validatePhoto,
+  type AttachmentFile,
+  type AttachmentValidation,
+  type MediaFile,
+  type PhotoValidation,
+} from "./media";
 export {
   buildDemoSeed,
+  type DemoAttachment,
   type DemoContact,
+  type DemoFile,
   type DemoFieldDefinition,
   type DemoImportantDate,
   type DemoInteraction,
@@ -68,6 +82,7 @@ export {
   lastInteractionDate,
   parseInteractionInput,
   type Interaction,
+  type InteractionAttachment,
   type InteractionInput,
   type InteractionParseResult,
   type InteractionType,

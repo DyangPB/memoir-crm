@@ -1,5 +1,6 @@
 import { isIsoDay, type SocialLink } from "./contact";
 import type { CustomFieldValues, FieldType } from "./custom-field";
+import { gradientPng } from "./demo-media";
 import type { ImportantDateSource } from "./important-date";
 import type { InteractionType } from "./interaction";
 import { reminderStatusAt, type ReminderStatus } from "./reminder";
@@ -18,11 +19,22 @@ export type DemoLabel = {
   name: string;
 };
 
+export type DemoFile = {
+  contentType: string;
+  bytes: Uint8Array;
+};
+
+export type DemoAttachment = DemoFile & {
+  id: string;
+  fileName: string;
+};
+
 export type DemoInteraction = {
   id: string;
   type: InteractionType;
   occurredOn: string;
   note: string | null;
+  attachments: DemoAttachment[];
 };
 
 export type DemoNote = {
@@ -52,6 +64,10 @@ export type DemoContact = {
   socialLinks: SocialLink[];
   birthday: string | null;
   howWeMet: string | null;
+  location: string | null;
+  roleCompany: string | null;
+  timezone: string | null;
+  photo: DemoFile | null;
   customFields: CustomFieldValues;
   labelIds: string[];
   interactions: DemoInteraction[];
@@ -104,10 +120,72 @@ const labelIds = {
   bookClub: "demo-label-book-club",
 } as const;
 
+type Rgb = readonly [number, number, number];
+
+type RawAttachment =
+  | { fileName: string; image: [Rgb, Rgb] }
+  | { fileName: string; text: string };
+
 type RawInteraction = {
   type: InteractionType;
   daysAgo: number;
   note: string;
+  attachments?: RawAttachment[];
+};
+
+type Profile = {
+  location?: string;
+  roleCompany?: string;
+  timezone?: string;
+  photo?: [Rgb, Rgb];
+};
+
+const OCEAN: Rgb = [14, 95, 130];
+const AMBER: Rgb = [251, 175, 0];
+const SAND: Rgb = [241, 230, 207];
+const INK: Rgb = [43, 36, 24];
+const MOSS: Rgb = [56, 112, 26];
+const BRICK: Rgb = [179, 64, 46];
+
+/** Location, role/company, timezone, and a stand-in photo for the contacts who have them. */
+const profiles: Record<string, Profile> = {
+  "demo-contact-amara": {
+    location: "Lisbon, Portugal",
+    roleCompany: "Editor at Marginalia Press",
+    timezone: "Europe/Lisbon",
+    photo: [OCEAN, AMBER],
+  },
+  "demo-contact-ben": {
+    location: "Edinburgh, Scotland",
+    roleCompany: "Product designer at Foundry",
+    timezone: "Europe/London",
+    photo: [INK, OCEAN],
+  },
+  "demo-contact-carmen": {
+    location: "Seville, Spain",
+    timezone: "Europe/Madrid",
+    photo: [BRICK, SAND],
+  },
+  "demo-contact-elif": {
+    location: "Ankara, Türkiye",
+    roleCompany: "Ceramicist at Studio Elif",
+    timezone: "Europe/Istanbul",
+  },
+  "demo-contact-farida": {
+    location: "Glasgow, Scotland",
+    roleCompany: "Lecturer at the University of Glasgow",
+    timezone: "Europe/London",
+    photo: [MOSS, SAND],
+  },
+  "demo-contact-gus": { location: "Stockholm, Sweden", timezone: "Europe/Stockholm" },
+  "demo-contact-hana": {
+    location: "Kyoto, Japan",
+    roleCompany: "Tea importer",
+    timezone: "Asia/Tokyo",
+    photo: [AMBER, BRICK],
+  },
+  "demo-contact-ivan": { roleCompany: "Engineer on the harbour project" },
+  "demo-contact-juno": { location: "Toronto, Canada", timezone: "America/Toronto" },
 };
 
 type RawReminder = {
@@ -161,7 +239,12 @@ function demoContacts(now: Date): RawContact[] {
       labelIds: [labelIds.collegeFriends, labelIds.bookClub],
       interactions: [
         { type: "meeting", daysAgo: 41, note: "Book club at hers. She lent me The Dispossessed." },
-        { type: "message", daysAgo: 52, note: "Sent the photographs from the coast walk." },
+        {
+          type: "message",
+          daysAgo: 52,
+          note: "Sent the photographs from the coast walk.",
+          attachments: [{ fileName: "coast-walk.png", image: [OCEAN, MOSS] }],
+        },
       ],
       notes: ["Reading The Dispossessed because of her. Wants to see the Lisbon photographs."],
       reminders: [{ body: "Send Amara the reading list", inDays: 1 }],
@@ -184,6 +267,12 @@ function demoContacts(now: Date): RawContact[] {
           type: "call",
           daysAgo: 3,
           note: "Talked through the flat move. Two places in Leith are still in play.",
+          attachments: [
+            {
+              fileName: "leith-flat-shortlist.txt",
+              text: "Shortlist\n1. Constitution Street, second floor, bay window\n2. Henderson Street, garden flat, needs paint\n",
+            },
+          ],
         },
         { type: "message", daysAgo: 26, note: "He sent the address for Saturday." },
       ],
@@ -248,10 +337,25 @@ function demoContacts(now: Date): RawContact[] {
       },
       labelIds: [labelIds.collegeFriends, labelIds.work, labelIds.bookClub],
       interactions: [
-        { type: "message", daysAgo: 2, note: "Voice note about the wedding in Amman." },
+        {
+          type: "message",
+          daysAgo: 2,
+          note: "Voice note about the wedding in Amman.",
+          attachments: [
+            {
+              fileName: "amman-wedding-plans.txt",
+              text: "Flights: Glasgow to Amman on the 14th\nStaying with her aunt for the first two nights\n",
+            },
+          ],
+        },
         { type: "call", daysAgo: 5, note: "Caught up on her trip plans." },
         { type: "meeting", daysAgo: 40, note: "Coffee before her review." },
-        { type: "other", daysAgo: 150, note: "Posted the photographs from the coast." },
+        {
+          type: "other",
+          daysAgo: 150,
+          note: "Posted the photographs from the coast.",
+          attachments: [{ fileName: "coast-photograph.png", image: [AMBER, OCEAN] }],
+        },
       ],
       notes: [
         "Keen gardener. The balcony tomatoes finally came good this year.",
@@ -327,13 +431,35 @@ function demoContacts(now: Date): RawContact[] {
   ];
 }
 
+function buildAttachment(raw: RawAttachment, id: string): DemoAttachment {
+  if ("image" in raw) {
+    return {
+      id,
+      fileName: raw.fileName,
+      contentType: "image/png",
+      bytes: gradientPng(160, 104, raw.image[0], raw.image[1]),
+    };
+  }
+
+  return {
+    id,
+    fileName: raw.fileName,
+    contentType: "text/plain",
+    bytes: new TextEncoder().encode(raw.text),
+  };
+}
+
 function buildContact(raw: RawContact, now: Date): DemoContact {
   const slug = raw.id.slice("demo-contact-".length);
+  const profile = profiles[raw.id] ?? {};
   const interactions: DemoInteraction[] = (raw.interactions ?? []).map((entry, index) => ({
     id: `demo-interaction-${slug}-${index + 1}`,
     type: entry.type,
     occurredOn: dayOffset(now, -entry.daysAgo),
     note: entry.note,
+    attachments: (entry.attachments ?? []).map((attachment, position) =>
+      buildAttachment(attachment, `demo-attachment-${slug}-${index + 1}-${position + 1}`),
+    ),
   }));
   const notes: DemoNote[] = (raw.notes ?? []).map((body, index) => ({
     id: `demo-note-${slug}-${index + 1}`,
@@ -377,6 +503,16 @@ function buildContact(raw: RawContact, now: Date): DemoContact {
     socialLinks: raw.socialLinks ?? [],
     birthday,
     howWeMet: raw.howWeMet ?? null,
+    location: profile.location ?? null,
+    roleCompany: profile.roleCompany ?? null,
+    timezone: profile.timezone ?? null,
+    photo:
+      profile.photo === undefined
+        ? null
+        : {
+            contentType: "image/png",
+            bytes: gradientPng(96, 96, profile.photo[0], profile.photo[1]),
+          },
     customFields: raw.customFields ?? {},
     labelIds: raw.labelIds ?? [],
     interactions,

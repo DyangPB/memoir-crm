@@ -24,6 +24,9 @@ describe("parseContactInput", () => {
         socialLinks: [{ label: "Instagram", url: "https://instagram.com/bob" }],
         birthday: "1990-05-14",
         howWeMet: "Neighbours in Lisbon",
+        location: null,
+        roleCompany: null,
+        timezone: null,
         cadenceDays: null,
         cadenceTracked: true,
       },
@@ -42,6 +45,9 @@ describe("parseContactInput", () => {
         socialLinks: [],
         birthday: null,
         howWeMet: null,
+        location: null,
+        roleCompany: null,
+        timezone: null,
         cadenceDays: null,
         cadenceTracked: true,
       },
@@ -88,6 +94,9 @@ describe("parseContactInput", () => {
         socialLinks: [],
         birthday: null,
         howWeMet: null,
+        location: null,
+        roleCompany: null,
+        timezone: null,
         cadenceDays: null,
         cadenceTracked: true,
       },
@@ -124,5 +133,79 @@ describe("letterFor", () => {
 
   it("falls back to a question mark for empty names", () => {
     expect(letterFor("   ")).toBe("?");
+  });
+});
+
+describe("parseContactInput profile fields", () => {
+  it("keeps a trimmed location, role/company, and timezone", () => {
+    const result = parseContactInput({
+      name: "Bob Nguyen",
+      location: "  Lisbon, Portugal ",
+      roleCompany: " Engineer at Acme ",
+      timezone: " Europe/Lisbon ",
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      contact: {
+        location: "Lisbon, Portugal",
+        roleCompany: "Engineer at Acme",
+        timezone: "Europe/Lisbon",
+      },
+    });
+  });
+
+  it("leaves them null when absent or blank", () => {
+    expect(parseContactInput({ name: "Ada" })).toMatchObject({
+      ok: true,
+      contact: { location: null, roleCompany: null, timezone: null },
+    });
+    expect(
+      parseContactInput({ name: "Ada", location: "  ", roleCompany: "", timezone: " " }),
+    ).toMatchObject({
+      ok: true,
+      contact: { location: null, roleCompany: null, timezone: null },
+    });
+  });
+
+  it("stores a timezone under its canonical name", () => {
+    expect(parseContactInput({ name: "Ada", timezone: "europe/lisbon" })).toMatchObject({
+      ok: true,
+      contact: { timezone: "Europe/Lisbon" },
+    });
+    expect(parseContactInput({ name: "Ada", timezone: "UTC" })).toMatchObject({
+      ok: true,
+      contact: { timezone: "UTC" },
+    });
+  });
+
+  it("rejects a timezone that isn't an IANA name", () => {
+    const message = "That timezone isn't one I know. Use a name like Europe/Lisbon.";
+
+    expect(parseContactInput({ name: "Ada", timezone: "Mars/Olympus" })).toEqual({
+      ok: false,
+      message,
+    });
+    expect(parseContactInput({ name: "Ada", timezone: "GMT+2" })).toEqual({ ok: false, message });
+    expect(parseContactInput({ name: "Ada", timezone: 7 })).toEqual({ ok: false, message });
+  });
+
+  it("rejects a location or role/company that is too long or not text", () => {
+    expect(parseContactInput({ name: "Ada", location: "x".repeat(201) })).toEqual({
+      ok: false,
+      message: "That location is too long. Keep it under 200 characters.",
+    });
+    expect(parseContactInput({ name: "Ada", roleCompany: "x".repeat(201) })).toEqual({
+      ok: false,
+      message: "That role or company is too long. Keep it under 200 characters.",
+    });
+    expect(parseContactInput({ name: "Ada", location: 4 })).toEqual({
+      ok: false,
+      message: "Location needs to be text.",
+    });
+    expect(parseContactInput({ name: "Ada", roleCompany: 4 })).toEqual({
+      ok: false,
+      message: "Role or company needs to be text.",
+    });
   });
 });

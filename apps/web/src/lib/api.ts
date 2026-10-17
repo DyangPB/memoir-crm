@@ -13,6 +13,7 @@ import type {
   Note,
   NoteInput,
   OnThisDay,
+  InteractionAttachment,
   Reminder,
   ReminderInput,
   ReminderWithContact,
@@ -399,4 +400,53 @@ export async function startDemo(): Promise<ApiResult<DemoStart>> {
   const result = await request<{ demo: DemoStart }>("/api/demo", { method: "POST" });
 
   return result.ok ? { ok: true, value: result.value.demo } : result;
+}
+
+export function photoUrl(contactId: string, version?: number): string {
+  return `/api/contacts/${contactId}/photo${version === undefined ? "" : `?v=${version}`}`;
+}
+
+export function attachmentUrl(
+  contactId: string,
+  interactionId: string,
+  attachmentId: string,
+): string {
+  return `/api/contacts/${contactId}/interactions/${interactionId}/attachments/${attachmentId}`;
+}
+
+export async function uploadPhoto(contactId: string, file: File): Promise<ApiResult<Contact>> {
+  const result = await request<{ contact: Contact }>(photoUrl(contactId), {
+    method: "PUT",
+    body: file,
+    headers: { "content-type": file.type },
+  });
+
+  return result.ok ? { ok: true, value: result.value.contact } : result;
+}
+
+export async function deletePhoto(contactId: string): Promise<ApiResult<null>> {
+  return request<null>(photoUrl(contactId), { method: "DELETE" });
+}
+
+export async function uploadAttachment(
+  contactId: string,
+  interactionId: string,
+  file: File,
+): Promise<ApiResult<InteractionAttachment>> {
+  const result = await request<{ attachment: InteractionAttachment }>(
+    `/api/contacts/${contactId}/interactions/${interactionId}/attachments?name=${encodeURIComponent(file.name)}`,
+    { method: "POST", body: file, headers: { "content-type": file.type } },
+  );
+
+  return result.ok ? { ok: true, value: result.value.attachment } : result;
+}
+
+export async function deleteAttachment(
+  contactId: string,
+  interactionId: string,
+  attachmentId: string,
+): Promise<ApiResult<null>> {
+  return request<null>(attachmentUrl(contactId, interactionId, attachmentId), {
+    method: "DELETE",
+  });
 }

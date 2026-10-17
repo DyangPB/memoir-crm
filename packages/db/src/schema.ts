@@ -121,6 +121,11 @@ export const contacts = sqliteTable(
       .default([]),
     birthday: text("birthday"),
     howWeMet: text("how_we_met"),
+    location: text("location"),
+    roleCompany: text("role_company"),
+    timezone: text("timezone"),
+    /** R2 object key of the Contact's photo; null when there is none. */
+    photoKey: text("photo_key"),
     customFields: text("custom_fields", { mode: "json" })
       .$type<Record<string, unknown>>()
       .notNull()
@@ -162,6 +167,35 @@ export const interactions = sqliteTable(
   (table) => [
     index("interactions_userId_idx").on(table.userId),
     index("interactions_contactId_idx").on(table.contactId),
+  ],
+);
+
+export const interactionAttachments = sqliteTable(
+  "interaction_attachments",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    contactId: text("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    interactionId: text("interaction_id")
+      .notNull()
+      .references(() => interactions.id, { onDelete: "cascade" }),
+    /** R2 object key holding the file's bytes. */
+    objectKey: text("object_key").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    size: integer("size").notNull(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [
+    index("interaction_attachments_userId_idx").on(table.userId),
+    index("interaction_attachments_interactionId_idx").on(table.interactionId),
+    index("interaction_attachments_contactId_idx").on(table.contactId),
   ],
 );
 

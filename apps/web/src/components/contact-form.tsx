@@ -21,6 +21,9 @@ export const emptyContactInput: ContactWriteInput = {
   socialLinks: [],
   birthday: null,
   howWeMet: null,
+  location: null,
+  roleCompany: null,
+  timezone: null,
   cadenceDays: null,
   cadenceTracked: true,
   customFields: {},
@@ -37,6 +40,9 @@ type ContactFormProps = {
   error: string | null;
   onSubmit: (values: ContactWriteInput) => Promise<void>;
 };
+
+const timezoneNames =
+  typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [];
 
 function stringValue(value: unknown): string {
   return typeof value === "string" ? value : "";
@@ -266,6 +272,9 @@ export function ContactForm({
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(initialValues.socialLinks);
   const [birthday, setBirthday] = useState(initialValues.birthday ?? "");
   const [howWeMet, setHowWeMet] = useState(initialValues.howWeMet ?? "");
+  const [location, setLocation] = useState(initialValues.location ?? "");
+  const [roleCompany, setRoleCompany] = useState(initialValues.roleCompany ?? "");
+  const [timezone, setTimezone] = useState(initialValues.timezone ?? "");
   const [cadence, setCadence] = useState<CadenceSettings>({
     cadenceDays: initialValues.cadenceDays,
     cadenceTracked: initialValues.cadenceTracked,
@@ -295,6 +304,9 @@ export function ContactForm({
         ),
         birthday: birthday === "" ? null : birthday,
         howWeMet: howWeMet.trim() === "" ? null : howWeMet,
+        location: location.trim() === "" ? null : location,
+        roleCompany: roleCompany.trim() === "" ? null : roleCompany,
+        timezone: timezone.trim() === "" ? null : timezone,
         ...cadence,
         customFields: valuesForSubmit(definitions, customFields),
       });
@@ -316,6 +328,49 @@ export function ContactForm({
           required
           value={name}
         />
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="flex flex-col gap-1.5">
+          <label className="text-caption text-ink-mute" htmlFor="contact-role-company">
+            Role or company
+          </label>
+          <Input
+            id="contact-role-company"
+            onChange={(event) => setRoleCompany(event.target.value)}
+            placeholder="Engineer at Acme"
+            value={roleCompany}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-caption text-ink-mute" htmlFor="contact-location">
+            Location
+          </label>
+          <Input
+            id="contact-location"
+            onChange={(event) => setLocation(event.target.value)}
+            placeholder="Lisbon, Portugal"
+            value={location}
+          />
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="text-caption text-ink-mute" htmlFor="contact-timezone">
+            Timezone
+          </label>
+          <Input
+            autoComplete="off"
+            id="contact-timezone"
+            list="contact-timezones"
+            onChange={(event) => setTimezone(event.target.value)}
+            placeholder="Europe/Lisbon"
+            value={timezone}
+          />
+          <datalist id="contact-timezones">
+            {timezoneNames.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
+        </div>
       </div>
 
       <StringListField

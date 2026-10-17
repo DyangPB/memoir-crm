@@ -18,6 +18,7 @@ import { createDb } from "../lib/db";
 import { listFieldDefinitions } from "../lib/fields";
 import { syncBirthdayImportantDate } from "../lib/important-dates";
 import { findOwnedLabel } from "../lib/labels";
+import { attachmentKeysForContact, deleteObjects } from "../lib/media";
 import { defaultCadenceDays } from "../lib/settings";
 import { getSessionUser } from "../lib/session";
 
@@ -116,6 +117,10 @@ contactsRoutes.post("/contacts", async (c) => {
     socialLinks: parsed.contact.socialLinks,
     birthday: parsed.contact.birthday,
     howWeMet: parsed.contact.howWeMet,
+    location: parsed.contact.location,
+    roleCompany: parsed.contact.roleCompany,
+    timezone: parsed.contact.timezone,
+    photoKey: null,
     customFields: parsed.customFields,
     cadenceDays: parsed.contact.cadenceDays,
     cadenceTracked: parsed.contact.cadenceTracked,
@@ -269,9 +274,12 @@ contactsRoutes.delete("/contacts/:id", async (c) => {
     return c.json({ error: "That contact isn't here." }, 404);
   }
 
+  const fileKeys = await attachmentKeysForContact(c.env, user.id, id);
+
   await createDb(c.env)
     .delete(contacts)
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
+  await deleteObjects(c.env, existing.photoKey === null ? fileKeys : [existing.photoKey, ...fileKeys]);
 
   return c.body(null, 204);
 });
