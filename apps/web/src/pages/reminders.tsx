@@ -1,73 +1,88 @@
 import {
-  BIRTHDAY_WINDOW_DAYS,
+  importantDateSection,
+  importantDatesInTab,
   importantDateYears,
   nextOccurrence,
-  occursWithinDays,
+  reminderInTab,
+  reminderSection,
+  reminderTabs,
+  type Contact,
   type ImportantDateWithContact,
+  type ReminderInput,
+  type ReminderSection,
+  type ReminderTab,
   type ReminderWithContact,
 } from "@memoir/core";
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { BackToParent } from "../components/back-to-parent";
 import { ImportantDateMarker } from "../components/important-date-marker";
 import { PageLoading } from "../components/page-loading";
-import { Button } from "../components/ui/button";
-import { listImportantDates, listOpenReminders, tickReminder } from "../lib/api";
+import { ReminderQuickAdd } from "../components/reminder-quick-add";
+import { ReminderRow } from "../components/reminder-row";
+import {
+  createReminder,
+  listContacts,
+  listDoneReminders,
+  listImportantDates,
+  listOpenReminders,
+  rescheduleReminder,
+  tickReminder,
+} from "../lib/api";
 import { authClient } from "../lib/auth-client";
-import { reminderChipClass, reminderTiming } from "../lib/reminders";
+import { todayForDayCounts, todayIsoDay } from "../lib/format";
 import { cn } from "../lib/utils";
 
-type UpcomingItem =
+type Item =
   | { key: string; when: string; reminder: ReminderWithContact }
   | { key: string; when: string; importantDate: ImportantDateWithContact };
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-heading-lg text-ink">{title}</h2>
-      <ul className="flex flex-col divide-y divide-hairline overflow-hidden rounded-lg border border-hairline">
-        {children}
-      </ul>
-    </section>
-  );
+const tabLabels: Record<ReminderTab, string> = {
+  all: "All",
+  due: "Due & Overdue",
+  upcoming: "Upcoming",
+  completed: "Completed",
+};
+
+const sectionTitles: Record<ReminderSection, string> = {
+  overdue: "Overdue",
+  "this-week": "Due today & this week",
+  upcoming: "Upcoming",
+  completed: "Completed",
+};
+
+const sectionOrder: ReminderSection[] = ["overdue", "this-week", "upcoming", "completed"];
+
+function sectionChipClass(section: ReminderSection): string {
+  return section === "overdue" ? "bg-danger-bg text-danger" : "bg-amber-soft text-amber";
 }
 
-function ReminderRow({
-  reminder,
-  now,
-  ticking,
-  onTick,
+function Section({
+  section,
+  count,
+  children,
 }: {
-  reminder: ReminderWithContact;
-  now: Date;
-  ticking: boolean;
-  onTick: () => void;
+  section: ReminderSection;
+  count: number;
+  children: ReactNode;
 }) {
   return (
-    <li className="flex items-center justify-between gap-3 px-3 py-2.5">
-      <Link
-        className="flex min-w-0 flex-1 flex-col gap-1.5"
-        to={`/app/contacts/${reminder.contactId}`}
-      >
-        <span className="truncate text-body-md text-ink">{reminder.body}</span>
-        <span className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "rounded-full px-2 py-1 text-micro-cap uppercase tabular-nums",
-              reminderChipClass(reminder.status),
-            )}
-          >
-            {reminderTiming(reminder, now)}
-          </span>
-          <span className="text-caption text-ink-mute">{reminder.contactName}</span>
-        </span>
-      </Link>
-      <Button onClick={onTick} variant="ghost">
-        {ticking ? "Ticking off" : "Tick off"}
-      </Button>
-    </li>
+    <section className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <h2
+          className={cn(
+            "rounded-full px-3 py-0.5 text-micro-cap uppercase",
+            sectionChipClass(section),
+          )}
+        >
+          {sectionTitles[section]}
+        </h2>
+        <span className="text-caption tabular-nums text-ink-mute">{count}</span>
+      </div>
+      <ul className="flex flex-col gap-2">{children}</ul>
+    </section>
   );
 }
 
@@ -83,7 +98,7 @@ function ImportantDateRow({
   return (
     <li>
       <Link
-        className="flex items-center justify-between gap-3 px-3 py-2.5 transition-colors hover:bg-primary-bg-subdued"
+        className="flex items-center justify-between gap-3 rounded-xl border border-hairline bg-canvas p-4 shadow-sm transition-colors hover:border-hairline-input"
         to={`/app/contacts/${importantDate.contactId}`}
       >
         <span className="flex min-w-0 flex-1 flex-col gap-1.5">
@@ -109,9 +124,12 @@ function ImportantDateRow({
 export function RemindersPage() {
   const { data: session, isPending } = authClient.useSession();
   const [reminders, setReminders] = useState<ReminderWithContact[] | null>(null);
+  const [doneReminders, setDoneReminders] = useState<ReminderWithContact[] | null>(null);
   const [importantDates, setImportantDates] = useState<ImportantDateWithContact[] | null>(null);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [tab, setTab] = useState<ReminderTab>("all");
   const [error, setError] = useState<string | null>(null);
-  const [tickingId, setTickingId] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   useEffect(() => {
     if (session === null) {
@@ -120,26 +138,25 @@ export function RemindersPage() {
 
     let active = true;
 
-    void Promise.all([listOpenReminders(), listImportantDates()]).then(
-      ([reminderResult, dateResult]) => {
+    void Promise.all([listOpenReminders(), listImportantDates(), listContacts()]).then(
+      ([reminderResult, dateResult, contactResult]) => {
         if (!active) {
           return;
         }
 
-        if (!reminderResult.ok) {
-          setError(reminderResult.message);
+        const failure = [reminderResult, dateResult, contactResult].find((result) => !result.ok);
+
+        if (failure !== undefined && !failure.ok) {
+          setError(failure.message);
 
           return;
         }
 
-        if (!dateResult.ok) {
-          setError(dateResult.message);
-
-          return;
+        if (reminderResult.ok && dateResult.ok && contactResult.ok) {
+          setReminders(reminderResult.value);
+          setImportantDates(dateResult.value);
+          setContacts(contactResult.value);
         }
-
-        setReminders(reminderResult.value);
-        setImportantDates(dateResult.value);
       },
     );
 
@@ -148,10 +165,28 @@ export function RemindersPage() {
     };
   }, [session]);
 
+  const loadDone = useCallback(async () => {
+    const result = await listDoneReminders();
+
+    if (!result.ok) {
+      setError(result.message);
+
+      return;
+    }
+
+    setDoneReminders(result.value);
+  }, []);
+
+  useEffect(() => {
+    if (session !== null && tab === "completed") {
+      void loadDone();
+    }
+  }, [session, tab, loadDone]);
+
   async function handleTick(reminder: ReminderWithContact) {
-    setTickingId(reminder.id);
+    setBusyId(reminder.id);
     const result = await tickReminder(reminder.contactId, reminder.id);
-    setTickingId(null);
+    setBusyId(null);
 
     if (!result.ok) {
       setError(result.message);
@@ -161,9 +196,51 @@ export function RemindersPage() {
 
     setError(null);
     setReminders((current) => current?.filter((item) => item.id !== reminder.id) ?? current);
+    setDoneReminders(null);
   }
 
-  const now = new Date();
+  async function handleReschedule(reminder: ReminderWithContact, dueOn: string): Promise<boolean> {
+    setBusyId(reminder.id);
+    const result = await rescheduleReminder(reminder.contactId, reminder.id, dueOn);
+    setBusyId(null);
+
+    if (!result.ok) {
+      setError(result.message);
+
+      return false;
+    }
+
+    setError(null);
+    setReminders(
+      (current) =>
+        current
+          ?.map((item) => (item.id === reminder.id ? { ...item, ...result.value } : item))
+          .sort((left, right) => left.dueOn.localeCompare(right.dueOn)) ?? current,
+    );
+
+    return true;
+  }
+
+  async function handleAdd(contactId: string, input: ReminderInput): Promise<string | null> {
+    const result = await createReminder(contactId, input);
+
+    if (!result.ok) {
+      return result.message;
+    }
+
+    const contact = contacts.find((candidate) => candidate.id === contactId);
+    const added = { ...result.value, contactName: contact?.name ?? "" };
+
+    setError(null);
+    setReminders((current) =>
+      [...(current ?? []), added].sort((left, right) => left.dueOn.localeCompare(right.dueOn)),
+    );
+
+    return null;
+  }
+
+  const now = todayForDayCounts();
+  const today = todayIsoDay();
 
   if (isPending) {
     return <PageLoading label="Fetching what's waiting" />;
@@ -181,7 +258,7 @@ export function RemindersPage() {
     return (
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-4xl flex-col items-start gap-4 px-6 py-12">
           <BackToParent label="Back to Dashboard" to="/app" />
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         </main>
@@ -189,103 +266,130 @@ export function RemindersPage() {
     );
   }
 
-  const overdue = reminders.filter((reminder) => reminder.status === "overdue");
-  const due = reminders.filter((reminder) => reminder.status === "due");
-  const birthdays = importantDates.filter(
-    (importantDate) =>
-      importantDate.source === "birthday" &&
-      occursWithinDays(importantDate.fallsOn, now, BIRTHDAY_WINDOW_DAYS),
-  );
-  const shownAsBirthday = new Set(birthdays.map((importantDate) => importantDate.id));
-  const upcoming: UpcomingItem[] = [
-    ...reminders
-      .filter((reminder) => reminder.status === "pending")
+  const inTab = (tab: ReminderTab) =>
+    reminders.filter((reminder) => reminderInTab(reminder, tab)).length +
+    (importantDatesInTab(tab) ? importantDates.length : 0);
+  const needAction = inTab("due");
+  const counts: Record<ReminderTab, number | null> = {
+    all: inTab("all"),
+    due: needAction,
+    upcoming: inTab("upcoming"),
+    completed: doneReminders?.length ?? null,
+  };
+
+  const items: Item[] = [
+    ...(tab === "completed" ? (doneReminders ?? []) : reminders)
+      .filter((reminder) => reminderInTab(reminder, tab))
       .map((reminder) => ({ key: reminder.id, when: reminder.dueOn, reminder })),
-    ...importantDates
-      .filter((importantDate) => !shownAsBirthday.has(importantDate.id))
-      .map((importantDate) => ({
-        key: importantDate.id,
-        when: nextOccurrence(importantDate.fallsOn, now),
-        importantDate,
-      })),
+    ...(importantDatesInTab(tab) ? importantDates : []).map((importantDate) => ({
+      key: importantDate.id,
+      when: nextOccurrence(importantDate.fallsOn, now),
+      importantDate,
+    })),
   ].sort((left, right) => left.when.localeCompare(right.when));
 
-  const waiting = overdue.length + due.length + birthdays.length + upcoming.length;
+  const grouped = new Map<ReminderSection, Item[]>();
+
+  for (const item of items) {
+    const section =
+      "reminder" in item
+        ? reminderSection(item.reminder, today)
+        : importantDateSection(item.importantDate.fallsOn, today);
+
+    grouped.set(section, [...(grouped.get(section) ?? []), item]);
+  }
+
+  const loadingDone = tab === "completed" && doneReminders === null;
 
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-6 py-12">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <BackToParent label="Back to Dashboard" to="/app" />
-          <h1 className="font-display text-display-md text-ink">What's waiting</h1>
+      <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-12">
+        <BackToParent label="Back to Dashboard" to="/app" />
+
+        <div className="flex flex-col justify-between gap-3 border-b border-hairline pb-6 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-1">
+            <h1 className="font-display text-display-md text-ink">Reminders &amp; Important Dates</h1>
+            <p className="text-body-md text-ink-mute">
+              Stay in touch with intentional care. Amber marks what needs your attention.
+            </p>
+          </div>
+          <p className="flex w-fit items-center gap-2 rounded-full border border-hairline bg-canvas-soft px-3 py-1 text-caption text-ink-secondary">
+            <span aria-hidden className="h-2 w-2 rounded-full bg-amber-fill" />
+            <span className="tabular-nums">
+              {needAction} {needAction === 1 ? "item needs" : "items need"} action
+            </span>
+          </p>
         </div>
+
+        <div
+          aria-label="Filter reminders"
+          className="flex w-fit flex-wrap items-center gap-1 rounded-xl border border-hairline bg-canvas-soft p-1"
+          role="tablist"
+        >
+          {reminderTabs.map((candidate) => (
+            <button
+              aria-selected={tab === candidate}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-button-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                tab === candidate
+                  ? "bg-canvas text-primary-container shadow-sm"
+                  : "text-ink-mute hover:text-ink",
+              )}
+              key={candidate}
+              onClick={() => setTab(candidate)}
+              role="tab"
+              type="button"
+            >
+              {tabLabels[candidate]}
+              {counts[candidate] !== null && (
+                <span className="ml-1 tabular-nums">({counts[candidate]})</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        <ReminderQuickAdd contacts={contacts} onAdd={handleAdd} today={today} />
 
         {error !== null && (
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         )}
 
-        {waiting === 0 ? (
+        {loadingDone ? (
+          <p className="text-body-md text-ink-secondary">Fetching what you've finished.</p>
+        ) : items.length === 0 ? (
           <p className="text-body-md text-ink-secondary">
-            Nothing is waiting. Add a reminder or an important date to a contact, and it will show
-            up here.
+            {tab === "completed"
+              ? "Nothing is done yet. Tick off a reminder and it will show up here."
+              : "Nothing is waiting. Add a reminder or an important date to a contact, and it will show up here."}
           </p>
         ) : (
-          <>
-            {overdue.length > 0 && (
-              <Section title="Overdue">
-                {overdue.map((reminder) => (
-                  <ReminderRow
-                    key={reminder.id}
-                    now={now}
-                    onTick={() => void handleTick(reminder)}
-                    reminder={reminder}
-                    ticking={tickingId === reminder.id}
-                  />
-                ))}
-              </Section>
-            )}
+          sectionOrder.map((section) => {
+            const sectionItems = grouped.get(section);
 
-            {due.length > 0 && (
-              <Section title="Due">
-                {due.map((reminder) => (
-                  <ReminderRow
-                    key={reminder.id}
-                    now={now}
-                    onTick={() => void handleTick(reminder)}
-                    reminder={reminder}
-                    ticking={tickingId === reminder.id}
-                  />
-                ))}
-              </Section>
-            )}
+            if (sectionItems === undefined) {
+              return null;
+            }
 
-            {upcoming.length > 0 && (
-              <Section title="Upcoming">
-                {upcoming.map((item) =>
+            return (
+              <Section count={sectionItems.length} key={section} section={section}>
+                {sectionItems.map((item) =>
                   "reminder" in item ? (
                     <ReminderRow
+                      busy={busyId === item.reminder.id}
                       key={item.key}
                       now={now}
+                      onReschedule={(dueOn) => handleReschedule(item.reminder, dueOn)}
                       onTick={() => void handleTick(item.reminder)}
                       reminder={item.reminder}
-                      ticking={tickingId === item.reminder.id}
                     />
                   ) : (
                     <ImportantDateRow importantDate={item.importantDate} key={item.key} now={now} />
                   ),
                 )}
               </Section>
-            )}
-
-            {birthdays.length > 0 && (
-              <Section title="Birthdays this week">
-                {birthdays.map((importantDate) => (
-                  <ImportantDateRow importantDate={importantDate} key={importantDate.id} now={now} />
-                ))}
-              </Section>
-            )}
-          </>
+            );
+          })
         )}
       </main>
     </div>

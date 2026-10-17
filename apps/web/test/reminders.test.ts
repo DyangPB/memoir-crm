@@ -204,6 +204,80 @@ describe("reminders", () => {
   });
 });
 
+describe("rescheduling a reminder", () => {
+  it("moves the due date and leaves the due and overdue transitions to the engine", async () => {
+    const email = "reminders-reschedule@example.com";
+    const cookie = await signInAs(email);
+    const contact = await createContact(cookie, "Bob Nguyen");
+    const reminder = await createReminder(cookie, contact.id, "Call Bob", dayOffset(-3));
+    const path = `/api/contacts/${contact.id}/reminders/${reminder.id}`;
+    const engine = await reminderEngine(email);
+
+    const later = await api("PATCH", path, { dueOn: dayOffset(10) }, cookie);
+    expect(later.status).toBe(200);
+    const moved = (await later.json()) as { reminder: Reminder };
+    expect(moved.reminder).toMatchObject({ id: reminder.id, dueOn: dayOffset(10), status: "pending" });
+
+    await api("PATCH", path, { dueOn: dayOffset(0) }, cookie);
+    await runDurableObjectAlarm(engine);
+    expect((await listContactReminders(cookie, contact.id))[0]).toMatchObject({
+      dueOn: dayOffset(0),
+      status: "due",
+    });
+
+    await api("PATCH", path, { dueOn: dayOffset(-2) }, cookie);
+    await runDurableObjectAlarm(engine);
+    expect((await listContactReminders(cookie, contact.id))[0]).toMatchObject({
+      dueOn: dayOffset(-2),
+      status: "overdue",
+    });
+  });
+
+  it("re-aims the reminder engine's alarm at the new day", async () => {
+    const email = "reminders-reschedule-alarm@example.com";
+    const cookie = await signInAs(email);
+    const contact = await createContact(cookie, "Lena Fischer");
+    const reminder = await createReminder(cookie, contact.id, "Call Lena", dayOffset(1));
+
+    await api(
+      "PATCH",
+      `/api/contacts/${contact.id}/reminders/${reminder.id}`,
+      { dueOn: dayOffset(5) },
+      cookie,
+    );
+
+    const engine = await reminderEngine(email);
+    const armed = await runInDurableObject(engine, (_instance, state) => state.storage.getAlarm());
+    expect(armed).toBe(Date.parse(`${dayOffset(5)}T00:00:00.000Z`));
+  });
+
+  it("rejects a missing or impossible date, and a reminder that is already done", async () => {
+    const cookie = await signInAs("reminders-reschedule-invalid@example.com");
+    const contact = await createContact(cookie, "Marco Silva");
+    const reminder = await createReminder(cookie, contact.id, "Call Marco", dayOffset(2));
+    const path = `/api/contacts/${contact.id}/reminders/${reminder.id}`;
+
+    expect((await api("PATCH", path, {}, cookie)).status).toBe(400);
+    expect((await api("PATCH", path, { dueOn: "2026-02-31" }, cookie)).status).toBe(400);
+
+    await api("POST", `${path}/tick`, undefined, cookie);
+    expect((await api("PATCH", path, { dueOn: dayOffset(4) }, cookie)).status).toBe(409);
+  });
+
+  it("hides another user's reminder from rescheduling", async () => {
+    const owner = await signInAs("reminders-reschedule-owner@example.com");
+    const stranger = await signInAs("reminders-reschedule-stranger@example.com");
+    const contact = await createContact(owner, "Dana Reyes");
+    const reminder = await createReminder(owner, contact.id, "Call Dana", dayOffset(2));
+    const path = `/api/contacts/${contact.id}/reminders/${reminder.id}`;
+
+    expect((await api("PATCH", path, { dueOn: dayOffset(9) }, stranger)).status).toBe(404);
+
+    const listed = await listContactReminders(owner, contact.id);
+    expect(listed[0]?.dueOn).toBe(dayOffset(2));
+  });
+});
+
 describe("reminder engine", () => {
   it("marks a reminder due when its day arrives, and overdue the day after", async () => {
     const email = "reminder-engine-days@example.com";
@@ -311,6 +385,40 @@ describe("home reminders", () => {
 
     const response = await api("GET", "/api/reminders", undefined, stranger);
     expect(response.status).toBe(200);
+    const body = (await response.json()) as { reminders: ReminderWithContact[] };
+    expect(body.reminders).toEqual([]);
+  });
+});
+
+describe("completed reminders", () => {
+  it("lists done reminders across contacts, most recently ticked first, with their contact", async () => {
+    const cookie = await signInAs("reminders-completed@example.com");
+    const bob = await createContact(cookie, "Bob Nguyen");
+    const ada = await createContact(cookie, "Ada Lovelace");
+    const first = await createReminder(cookie, bob.id, "Call Bob", dayOffset(-5));
+    const second = await createReminder(cookie, ada.id, "Send a card", dayOffset(3));
+    await createReminder(cookie, ada.id, "Still open", dayOffset(8));
+
+    await api("POST", `/api/contacts/${bob.id}/reminders/${first.id}/tick`, undefined, cookie);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    await api("POST", `/api/contacts/${ada.id}/reminders/${second.id}/tick`, undefined, cookie);
+
+    const response = await api("GET", "/api/reminders?status=done", undefined, cookie);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { reminders: ReminderWithContact[] };
+
+    expect(body.reminders.map((reminder) => reminder.body)).toEqual(["Send a card", "Call Bob"]);
+    expect(body.reminders[0]).toMatchObject({ contactName: "Ada Lovelace", status: "done" });
+  });
+
+  it("keeps one user's completed reminders out of another's list", async () => {
+    const owner = await signInAs("reminders-completed-owner@example.com");
+    const stranger = await signInAs("reminders-completed-stranger@example.com");
+    const contact = await createContact(owner, "Zebra Keeper");
+    const reminder = await createReminder(owner, contact.id, "Call Zebra", dayOffset(-1));
+    await api("POST", `/api/contacts/${contact.id}/reminders/${reminder.id}/tick`, undefined, owner);
+
+    const response = await api("GET", "/api/reminders?status=done", undefined, stranger);
     const body = (await response.json()) as { reminders: ReminderWithContact[] };
     expect(body.reminders).toEqual([]);
   });

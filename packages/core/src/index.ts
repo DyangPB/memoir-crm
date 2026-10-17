@@ -77,13 +77,25 @@ export { pickOnThisDay, type OnThisDay } from "./on-this-day";
 export {
   nextReminderEvent,
   parseReminderInput,
+  parseRescheduleInput,
   reminderStatusAt,
   type Reminder,
   type ReminderInput,
   type ReminderParseResult,
   type ReminderStatus,
   type ReminderWithContact,
+  type RescheduleParseResult,
 } from "./reminder";
+export { parseQuickDate, type QuickDateResult } from "./quick-date";
+export {
+  importantDateSection,
+  importantDatesInTab,
+  reminderInTab,
+  reminderSection,
+  reminderTabs,
+  type ReminderSection,
+  type ReminderTab,
+} from "./reminder-view";
 export {
   parseLabelInput,
   type Label,

@@ -1,6 +1,6 @@
 import type { Reminder, ReminderWithContact } from "@memoir/core";
 import { contacts, reminders } from "@memoir/db";
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, desc, eq, ne } from "drizzle-orm";
 
 import { createDb } from "./db";
 
@@ -45,6 +45,17 @@ export async function openReminders(env: Env, userId: string): Promise<ReminderW
     .innerJoin(contacts, eq(contacts.id, reminders.contactId))
     .where(and(eq(reminders.userId, userId), ne(reminders.status, "done")))
     .orderBy(asc(reminders.dueOn), asc(reminders.createdAt));
+
+  return rows.map((row) => ({ ...toReminder(row.reminder), contactName: row.contactName }));
+}
+
+export async function doneReminders(env: Env, userId: string): Promise<ReminderWithContact[]> {
+  const rows = await createDb(env)
+    .select({ reminder: reminders, contactName: contacts.name })
+    .from(reminders)
+    .innerJoin(contacts, eq(contacts.id, reminders.contactId))
+    .where(and(eq(reminders.userId, userId), eq(reminders.status, "done")))
+    .orderBy(desc(reminders.updatedAt), desc(reminders.dueOn));
 
   return rows.map((row) => ({ ...toReminder(row.reminder), contactName: row.contactName }));
 }

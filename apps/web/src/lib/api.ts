@@ -295,6 +295,25 @@ export async function listOpenReminders(): Promise<ApiResult<ReminderWithContact
   return result.ok ? { ok: true, value: result.value.reminders } : result;
 }
 
+export async function listDoneReminders(): Promise<ApiResult<ReminderWithContact[]>> {
+  const result = await request<{ reminders: ReminderWithContact[] }>("/api/reminders?status=done");
+
+  return result.ok ? { ok: true, value: result.value.reminders } : result;
+}
+
+export async function rescheduleReminder(
+  contactId: string,
+  reminderId: string,
+  dueOn: string,
+): Promise<ApiResult<Reminder>> {
+  const result = await request<{ reminder: Reminder }>(
+    `/api/contacts/${contactId}/reminders/${reminderId}`,
+    { method: "PATCH", body: JSON.stringify({ dueOn }) },
+  );
+
+  return result.ok ? { ok: true, value: result.value.reminder } : result;
+}
+
 export async function listContactReminders(contactId: string): Promise<ApiResult<Reminder[]>> {
   const result = await request<{ reminders: Reminder[] }>(`/api/contacts/${contactId}/reminders`);
 
