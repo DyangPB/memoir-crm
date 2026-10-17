@@ -15,9 +15,8 @@ import {
   type ReminderInput,
 } from "@memoir/core";
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Link, useLocation, useNavigate, useOutletContext, useParams } from "react-router";
 
-import { AppHeader } from "../components/app-header";
 import { BackToParent } from "../components/back-to-parent";
 import { DaysSince } from "../components/days-since";
 import { Icon } from "../components/icon";
@@ -26,7 +25,6 @@ import { ImportantDateMarker } from "../components/important-date-marker";
 import { InteractionForm } from "../components/interaction-form";
 import { LetterAvatar } from "../components/letter-avatar";
 import { NoteForm } from "../components/note-form";
-import { PageLoading } from "../components/page-loading";
 import { ReminderForm } from "../components/reminder-form";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -52,10 +50,10 @@ import {
   updateInteraction,
   updateNote,
 } from "../lib/api";
-import { authClient } from "../lib/auth-client";
 import { formatDay, todayForDayCounts, todayIsoDay } from "../lib/format";
 import { reminderChipClass, reminderTiming } from "../lib/reminders";
 import { cn } from "../lib/utils";
+import type { ContactsOutletContext } from "./contacts";
 
 const typeGlyphs = {
   call: "call",
@@ -99,9 +97,11 @@ function CustomFieldValue({
   return <p className="whitespace-pre-wrap text-body-md text-ink-secondary">{text}</p>;
 }
 
-export function ContactDetailPage() {
+/** The right-hand pane of the Contacts split view: one Contact's profile, Timeline and Notes. */
+export function ContactDetailPane() {
   const { id } = useParams();
-  const { data: session, isPending } = authClient.useSession();
+  const location = useLocation();
+  const { refreshList } = useOutletContext<ContactsOutletContext>();
   const navigate = useNavigate();
   const [contact, setContact] = useState<Contact | null>(null);
   const [interactions, setInteractions] = useState<Interaction[] | null>(null);
@@ -132,7 +132,7 @@ export function ContactDetailPage() {
   const [togglingLabel, setTogglingLabel] = useState(false);
 
   useEffect(() => {
-    if (session === null || id === undefined) {
+    if (id === undefined) {
       return;
     }
 
@@ -167,7 +167,7 @@ export function ContactDetailPage() {
           }
 
           if (contactResult.status === 404) {
-            void navigate("/app");
+            void navigate("/app/contacts");
             return;
           }
 
@@ -200,8 +200,9 @@ export function ContactDetailPage() {
     return () => {
       active = false;
     };
-  }, [session, id, navigate]);
+  }, [id, navigate]);
 
+  // The list rail shows days-since, which an Interaction change moves.
   async function refreshInteractions() {
     if (id === undefined) {
       return;
@@ -211,6 +212,7 @@ export function ContactDetailPage() {
 
     if (result.ok) {
       setInteractions(result.value);
+      refreshList();
     }
   }
 
@@ -502,6 +504,7 @@ export function ContactDetailPage() {
 
     setLabelError(null);
     setContact(result.value);
+    refreshList();
   }
 
   async function handleToggleLabel(labelId: string) {
@@ -553,21 +556,17 @@ export function ContactDetailPage() {
     setAddingLabel(false);
   }
 
-  if (isPending) {
-    return <PageLoading />;
-  }
-
-  if (session === null) {
-    return <Navigate replace to="/login" />;
-  }
+  const backToList = (
+    <div className="md:hidden">
+      <BackToParent label="Back to Contacts" to={`/app/contacts${location.search}`} />
+    </div>
+  );
 
   if (loadError !== null) {
     return (
-      <div className="min-h-screen bg-canvas">
-        <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-6 py-12">
-          <p className="text-body-md text-ink-secondary">{loadError}</p>
-        </main>
+      <div className="flex flex-col gap-3">
+        {backToList}
+        <p className="text-body-md text-ink-secondary">{loadError}</p>
       </div>
     );
   }
@@ -580,7 +579,12 @@ export function ContactDetailPage() {
     importantDates === null ||
     fieldDefinitions === null
   ) {
-    return <PageLoading label="Fetching this contact" />;
+    return (
+      <div className="flex flex-col gap-3">
+        {backToList}
+        <p className="text-caption text-ink-mute">Fetching this contact</p>
+      </div>
+    );
   }
 
   const lastOn = lastInteractionDate(interactions);
@@ -593,509 +597,506 @@ export function ContactDetailPage() {
   const doneReminders = reminders.filter((reminder) => reminder.status === "done");
 
   return (
-    <div className="min-h-screen bg-canvas">
-      <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-4xl flex-col gap-10 px-6 py-12">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-6">
-          <BackToParent label="Back to Contacts" to="/app/contacts" />
-          <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-6">
-            <div className="flex items-center gap-4">
-              <LetterAvatar name={contact.name} />
-              <div className="flex flex-col gap-0.5">
-                <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
-                <h1 className="font-display text-display-lg text-ink">{contact.name}</h1>
-              </div>
-            </div>
-            <div className="flex items-center gap-5">
-              {days !== null && (
-                <DaysSince
-                  className="flex-col items-end gap-0"
-                  days={days}
-                  numeralClassName="text-numeral"
-                  targetDays={contact.effectiveCadenceDays}
-                />
-              )}
-              <Button asChild variant="secondary">
-                <Link to={`/app/contacts/${contact.id}/edit`}>Edit</Link>
-              </Button>
+    <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-3">
+        {backToList}
+        <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <LetterAvatar name={contact.name} />
+            <div className="flex flex-col gap-0.5">
+              <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
+              <h1 className="font-display text-display-lg text-ink">{contact.name}</h1>
             </div>
           </div>
-        </div>
-
-        <div className="grid gap-10 md:grid-cols-[1fr_260px]">
-          <section className="flex flex-col gap-5">
-            <h2 className="text-heading-lg text-ink">Timeline</h2>
-
-            <div className="rounded-lg border border-hairline bg-canvas-soft/50 p-4">
-              <InteractionForm
-                error={null}
-                initialValues={{ type: "call", occurredOn: todayIsoDay(), note: null }}
-                onSubmit={handleAddInteraction}
-                pendingLabel="Logging the interaction"
-                submitLabel="Log interaction"
+          <div className="flex items-center gap-5">
+            {days !== null && (
+              <DaysSince
+                className="flex-col items-end gap-0"
+                days={days}
+                numeralClassName="text-numeral"
+                targetDays={contact.effectiveCadenceDays}
               />
-            </div>
-
-            {interactionError !== null && (
-              <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
-                {interactionError}
-              </p>
             )}
+            <Button asChild variant="secondary">
+              <Link to={`/app/contacts/${contact.id}/edit`}>Edit</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
 
-            {interactions.length === 0 ? (
-              <p className="text-body-md text-ink-mute">
-                Nothing logged yet. Add a call, a coffee, a message: anything that keeps the thread
-                alive.
-              </p>
-            ) : (
-              <ol className="relative flex flex-col gap-6">
-                <span aria-hidden className="absolute bottom-3 left-[13px] top-3 w-0.5 bg-hairline" />
-                {interactions.map((interaction) => {
-                  const glyph = typeGlyphs[interaction.type];
+      <div className="grid gap-10 xl:grid-cols-[1fr_260px]">
+        <section className="flex flex-col gap-5">
+          <h2 className="text-heading-lg text-ink">Timeline</h2>
 
-                  return (
-                    <li className="relative pl-10" key={interaction.id}>
-                      <span className="absolute left-0 top-0 flex size-7 items-center justify-center rounded-full bg-primary-bg-subdued text-primary">
-                        <Icon className="text-sm" name={glyph} />
-                      </span>
-                      {editingInteractionId === interaction.id ? (
-                        <div className="rounded-lg border border-hairline p-4">
-                          <InteractionForm
-                            error={interactionError}
-                            initialValues={{
-                              type: interaction.type,
-                              occurredOn: interaction.occurredOn,
-                              note: interaction.note,
-                            }}
-                            onCancel={() => {
-                              setEditingInteractionId(null);
-                              setInteractionError(null);
-                            }}
-                            onSubmit={(values) => handleUpdateInteraction(interaction.id, values)}
-                            pendingLabel="Saving changes"
-                            submitLabel="Save changes"
-                          />
-                        </div>
-                      ) : (
-                        <div className="flex flex-col gap-1.5">
-                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                            <span className="text-heading-sm text-ink">
-                              {interactionTypeLabel(interaction.type)}
-                            </span>
-                            <span className="text-body-tabular tabular-nums text-ink-mute">
-                              {formatDay(interaction.occurredOn)}
-                            </span>
-                          </div>
-                          {interaction.note !== null && (
-                            <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
-                              {interaction.note}
-                            </p>
-                          )}
-                          {confirmingInteractionId === interaction.id ? (
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span className="text-caption text-ink-mute">
-                                Delete this interaction?
-                              </span>
-                              <Button
-                                onClick={() => handleDeleteInteraction(interaction.id)}
-                                variant="danger"
-                              >
-                                Delete interaction
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setConfirmingInteractionId(null);
-                                }}
-                                variant="ghost"
-                              >
-                                Keep it
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => {
-                                  setEditingInteractionId(interaction.id);
-                                  setInteractionError(null);
-                                }}
-                                variant="ghost"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setConfirmingInteractionId(interaction.id);
-                                }}
-                                variant="ghost"
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ol>
-            )}
-          </section>
+          <div className="rounded-lg border border-hairline bg-canvas-soft/50 p-4">
+            <InteractionForm
+              error={null}
+              initialValues={{ type: "call", occurredOn: todayIsoDay(), note: null }}
+              onSubmit={handleAddInteraction}
+              pendingLabel="Logging the interaction"
+              submitLabel="Log interaction"
+            />
+          </div>
 
-          <aside className="flex flex-col gap-8">
-            <section className="flex flex-col gap-3">
-              <h2 className="text-heading-lg text-ink">Details</h2>
-              {contact.emails.length > 0 && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-micro-cap uppercase text-ink-mute">Emails</p>
-                  {contact.emails.map((email) => (
-                    <p className="text-body-md text-ink-secondary" key={email}>
-                      {email}
-                    </p>
-                  ))}
-                </div>
-              )}
-              {contact.phones.length > 0 && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-micro-cap uppercase text-ink-mute">Phones</p>
-                  {contact.phones.map((phone) => (
-                    <p className="text-body-md text-ink-secondary" key={phone}>
-                      {phone}
-                    </p>
-                  ))}
-                </div>
-              )}
-              {contact.socialLinks.length > 0 && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-micro-cap uppercase text-ink-mute">Links</p>
-                  {contact.socialLinks.map((link) => (
-                    <a
-                      className="text-body-md text-primary hover:underline"
-                      href={link.url}
-                      key={link.url}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      {link.label}
-                    </a>
-                  ))}
-                </div>
-              )}
-              {contact.birthday !== null && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-micro-cap uppercase text-ink-mute">Birthday</p>
-                  <p className="text-body-md text-ink-secondary">{formatDay(contact.birthday)}</p>
-                </div>
-              )}
-              {contact.howWeMet !== null && (
-                <div className="flex flex-col gap-0.5">
-                  <p className="text-micro-cap uppercase text-ink-mute">How we met</p>
-                  <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
-                    {contact.howWeMet}
-                  </p>
-                </div>
-              )}
-              {fieldDefinitions.map((definition) => {
-                const value = contact.customFields[definition.id];
+          {interactionError !== null && (
+            <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
+              {interactionError}
+            </p>
+          )}
 
-                if (
-                  value === undefined ||
-                  value === null ||
-                  value === "" ||
-                  (Array.isArray(value) && value.length === 0)
-                ) {
-                  return null;
-                }
+          {interactions.length === 0 ? (
+            <p className="text-body-md text-ink-mute">
+              Nothing logged yet. Add a call, a coffee, a message: anything that keeps the thread
+              alive.
+            </p>
+          ) : (
+            <ol className="relative flex flex-col gap-6">
+              <span aria-hidden className="absolute bottom-3 left-[13px] top-3 w-0.5 bg-hairline" />
+              {interactions.map((interaction) => {
+                const glyph = typeGlyphs[interaction.type];
 
                 return (
-                  <div className="flex flex-col gap-0.5" key={definition.id}>
-                    <p className="text-micro-cap uppercase text-ink-mute">{definition.name}</p>
-                    <CustomFieldValue definition={definition} value={value} />
-                  </div>
-                );
-              })}
-            </section>
-
-            <section className="flex flex-col gap-3">
-              <h2 className="text-heading-lg text-ink">Labels</h2>
-
-              {contact.labels.length === 0 ? (
-                <p className="text-caption text-ink-mute">No labels yet.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {contact.labels.map((label) => (
-                    <span
-                      className="rounded-full bg-primary-bg-subdued px-2 py-1 text-micro-cap uppercase text-primary"
-                      key={label.id}
-                    >
-                      {label.name}
+                  <li className="relative pl-10" key={interaction.id}>
+                    <span className="absolute left-0 top-0 flex size-7 items-center justify-center rounded-full bg-primary-bg-subdued text-primary">
+                      <Icon className="text-sm" name={glyph} />
                     </span>
-                  ))}
-                </div>
-              )}
-
-              {allLabels !== null && allLabels.length > 0 && (
-                <div className="flex flex-col gap-1.5">
-                  {allLabels.map((label) => (
-                    <label
-                      className="flex items-center gap-2 text-body-md text-ink-secondary"
-                      key={label.id}
-                    >
-                      <input
-                        checked={contact.labels.some((item) => item.id === label.id)}
-                        className="accent-primary"
-                        disabled={togglingLabel}
-                        onChange={() => void handleToggleLabel(label.id)}
-                        type="checkbox"
-                      />
-                      {label.name}
-                    </label>
-                  ))}
-                </div>
-              )}
-
-              <form className="flex gap-2" onSubmit={handleAddLabel}>
-                <Input
-                  aria-label="New label"
-                  onChange={(event) => setNewLabelName(event.target.value)}
-                  placeholder="New label"
-                  value={newLabelName}
-                />
-                <Button disabled={addingLabel} type="submit" variant="secondary">
-                  {addingLabel ? "Adding" : "Add"}
-                </Button>
-              </form>
-
-              {labelError !== null && (
-                <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
-                  {labelError}
-                </p>
-              )}
-            </section>
-
-            <section className="flex flex-col gap-4">
-              <h2 className="text-heading-lg text-ink">Reminders</h2>
-
-              <ReminderForm error={reminderError} onSubmit={handleAddReminder} />
-
-              {reminders.length === 0 ? (
-                <p className="text-body-md text-ink-mute">
-                  No reminders yet. Add one, and it will be waiting on your home screen when the
-                  day comes.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-4">
-                  {[...openReminders, ...doneReminders].map((reminder) => (
-                    <li className="flex flex-col gap-1.5" key={reminder.id}>
-                      <p
-                        className={cn(
-                          "text-body-md",
-                          reminder.status === "done"
-                            ? "text-ink-mute line-through"
-                            : "text-ink-secondary",
-                        )}
-                      >
-                        {reminder.body}
-                      </p>
-                      {reminder.status === "due" || reminder.status === "overdue" ? (
-                        <span
-                          className={cn(
-                            "self-start rounded-full px-2 py-1 text-micro-cap uppercase tabular-nums",
-                            reminderChipClass(reminder.status),
-                          )}
-                        >
-                          {reminderTiming(reminder, now)}
-                        </span>
-                      ) : (
-                        <span className="text-caption tabular-nums text-ink-mute">
-                          {reminderTiming(reminder, now)}
-                        </span>
-                      )}
-                      {confirmingReminderId === reminder.id ? (
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="text-caption text-ink-mute">Delete this reminder?</span>
-                          <Button
-                            onClick={() => handleDeleteReminder(reminder.id)}
-                            variant="danger"
-                          >
-                            Delete reminder
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setConfirmingReminderId(null);
-                            }}
-                            variant="ghost"
-                          >
-                            Keep it
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          {reminder.status !== "done" && (
-                            <Button onClick={() => handleTickReminder(reminder.id)} variant="ghost">
-                              Mark done
-                            </Button>
-                          )}
-                          <Button
-                            onClick={() => {
-                              setConfirmingReminderId(reminder.id);
-                            }}
-                            variant="ghost"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="flex flex-col gap-4">
-              <h2 className="text-heading-lg text-ink">Important dates</h2>
-
-              <ImportantDateForm
-                error={importantDateError}
-                onSubmit={handleAddImportantDate}
-              />
-
-              {importantDates.length === 0 ? (
-                <p className="text-body-md text-ink-mute">
-                  No important dates yet. Add one here, and it comes around every year.
-                </p>
-              ) : (
-                <ul className="flex flex-col gap-4">
-                  {importantDates.map((importantDate) => (
-                    <li className="flex flex-col gap-1.5" key={importantDate.id}>
-                      <p className="text-body-md text-ink-secondary">{importantDate.name}</p>
-                      <span className="flex flex-wrap items-center gap-2">
-                        <ImportantDateMarker fallsOn={importantDate.fallsOn} now={now} />
-                        <span className="text-caption tabular-nums text-ink-mute">
-                          {importantDateYears(importantDate.fallsOn, now)}{" "}
-                          {importantDate.source === "birthday" ? "turning" : "years"}
-                        </span>
-                      </span>
-                      {importantDate.source === "birthday" ? (
-                        <p className="text-caption text-ink-mute">
-                          Comes from this contact's birthday.
-                        </p>
-                      ) : confirmingImportantDateId === importantDate.id ? (
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="text-caption text-ink-mute">
-                            Delete "{importantDate.name}" from this contact? Other contacts keep
-                            theirs.
-                          </span>
-                          <Button
-                            onClick={() => handleDeleteImportantDate(importantDate.id)}
-                            variant="danger"
-                          >
-                            Delete date
-                          </Button>
-                          <Button
-                            onClick={() => {
-                              setConfirmingImportantDateId(null);
-                            }}
-                            variant="ghost"
-                          >
-                            Keep it
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => {
-                              setConfirmingImportantDateId(importantDate.id);
-                            }}
-                            variant="ghost"
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="flex flex-col gap-4">
-              <h2 className="text-heading-lg text-ink">Notes</h2>
-              <NoteForm
-                error={noteError}
-                initialBody=""
-                onSubmit={handleAddNote}
-                pendingLabel="Saving your note"
-                submitLabel="Add note"
-              />
-              {notes.length === 0 ? (
-                <p className="text-body-md text-ink-mute">No notes yet.</p>
-              ) : (
-                <ul className="flex flex-col gap-4">
-                  {notes.map((note) => (
-                    <li className="flex flex-col gap-1.5" key={note.id}>
-                      {editingNoteId === note.id ? (
-                        <NoteForm
-                          error={noteError}
-                          initialBody={note.body}
-                          onCancel={() => {
-                            setEditingNoteId(null);
-                            setNoteError(null);
+                    {editingInteractionId === interaction.id ? (
+                      <div className="rounded-lg border border-hairline p-4">
+                        <InteractionForm
+                          error={interactionError}
+                          initialValues={{
+                            type: interaction.type,
+                            occurredOn: interaction.occurredOn,
+                            note: interaction.note,
                           }}
-                          onSubmit={(body) => handleUpdateNote(note.id, body)}
+                          onCancel={() => {
+                            setEditingInteractionId(null);
+                            setInteractionError(null);
+                          }}
+                          onSubmit={(values) => handleUpdateInteraction(interaction.id, values)}
                           pendingLabel="Saving changes"
                           submitLabel="Save changes"
                         />
-                      ) : (
-                        <>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          <span className="text-heading-sm text-ink">
+                            {interactionTypeLabel(interaction.type)}
+                          </span>
+                          <span className="text-body-tabular tabular-nums text-ink-mute">
+                            {formatDay(interaction.occurredOn)}
+                          </span>
+                        </div>
+                        {interaction.note !== null && (
                           <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
-                            {note.body}
+                            {interaction.note}
                           </p>
-                          {confirmingNoteId === note.id ? (
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span className="text-caption text-ink-mute">Delete this note?</span>
-                              <Button onClick={() => handleDeleteNote(note.id)} variant="danger">
-                                Delete note
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setConfirmingNoteId(null);
-                                }}
-                                variant="ghost"
-                              >
-                                Keep it
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex gap-2">
-                              <Button
-                                onClick={() => {
-                                  setEditingNoteId(note.id);
-                                  setNoteError(null);
-                                }}
-                                variant="ghost"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                onClick={() => {
-                                  setConfirmingNoteId(note.id);
-                                }}
-                                variant="ghost"
-                              >
-                                Delete
-                              </Button>
-                            </div>
-                          )}
-                        </>
+                        )}
+                        {confirmingInteractionId === interaction.id ? (
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="text-caption text-ink-mute">
+                              Delete this interaction?
+                            </span>
+                            <Button
+                              onClick={() => handleDeleteInteraction(interaction.id)}
+                              variant="danger"
+                            >
+                              Delete interaction
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setConfirmingInteractionId(null);
+                              }}
+                              variant="ghost"
+                            >
+                              Keep it
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => {
+                                setEditingInteractionId(interaction.id);
+                                setInteractionError(null);
+                              }}
+                              variant="ghost"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setConfirmingInteractionId(interaction.id);
+                              }}
+                              variant="ghost"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+
+        <aside className="flex flex-col gap-8">
+          <section className="flex flex-col gap-3">
+            <h2 className="text-heading-lg text-ink">Details</h2>
+            {contact.emails.length > 0 && (
+              <div className="flex flex-col gap-0.5">
+                <p className="text-micro-cap uppercase text-ink-mute">Emails</p>
+                {contact.emails.map((email) => (
+                  <p className="text-body-md text-ink-secondary" key={email}>
+                    {email}
+                  </p>
+                ))}
+              </div>
+            )}
+            {contact.phones.length > 0 && (
+              <div className="flex flex-col gap-0.5">
+                <p className="text-micro-cap uppercase text-ink-mute">Phones</p>
+                {contact.phones.map((phone) => (
+                  <p className="text-body-md text-ink-secondary" key={phone}>
+                    {phone}
+                  </p>
+                ))}
+              </div>
+            )}
+            {contact.socialLinks.length > 0 && (
+              <div className="flex flex-col gap-0.5">
+                <p className="text-micro-cap uppercase text-ink-mute">Links</p>
+                {contact.socialLinks.map((link) => (
+                  <a
+                    className="text-body-md text-primary hover:underline"
+                    href={link.url}
+                    key={link.url}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+            )}
+            {contact.birthday !== null && (
+              <div className="flex flex-col gap-0.5">
+                <p className="text-micro-cap uppercase text-ink-mute">Birthday</p>
+                <p className="text-body-md text-ink-secondary">{formatDay(contact.birthday)}</p>
+              </div>
+            )}
+            {contact.howWeMet !== null && (
+              <div className="flex flex-col gap-0.5">
+                <p className="text-micro-cap uppercase text-ink-mute">How we met</p>
+                <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
+                  {contact.howWeMet}
+                </p>
+              </div>
+            )}
+            {fieldDefinitions.map((definition) => {
+              const value = contact.customFields[definition.id];
+
+              if (
+                value === undefined ||
+                value === null ||
+                value === "" ||
+                (Array.isArray(value) && value.length === 0)
+              ) {
+                return null;
+              }
+
+              return (
+                <div className="flex flex-col gap-0.5" key={definition.id}>
+                  <p className="text-micro-cap uppercase text-ink-mute">{definition.name}</p>
+                  <CustomFieldValue definition={definition} value={value} />
+                </div>
+              );
+            })}
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-heading-lg text-ink">Labels</h2>
+
+            {contact.labels.length === 0 ? (
+              <p className="text-caption text-ink-mute">No labels yet.</p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {contact.labels.map((label) => (
+                  <span
+                    className="rounded-full bg-primary-bg-subdued px-2 py-1 text-micro-cap uppercase text-primary"
+                    key={label.id}
+                  >
+                    {label.name}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {allLabels !== null && allLabels.length > 0 && (
+              <div className="flex flex-col gap-1.5">
+                {allLabels.map((label) => (
+                  <label
+                    className="flex items-center gap-2 text-body-md text-ink-secondary"
+                    key={label.id}
+                  >
+                    <input
+                      checked={contact.labels.some((item) => item.id === label.id)}
+                      className="accent-primary"
+                      disabled={togglingLabel}
+                      onChange={() => void handleToggleLabel(label.id)}
+                      type="checkbox"
+                    />
+                    {label.name}
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <form className="flex gap-2" onSubmit={handleAddLabel}>
+              <Input
+                aria-label="New label"
+                onChange={(event) => setNewLabelName(event.target.value)}
+                placeholder="New label"
+                value={newLabelName}
+              />
+              <Button disabled={addingLabel} type="submit" variant="secondary">
+                {addingLabel ? "Adding" : "Add"}
+              </Button>
+            </form>
+
+            {labelError !== null && (
+              <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
+                {labelError}
+              </p>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4">
+            <h2 className="text-heading-lg text-ink">Reminders</h2>
+
+            <ReminderForm error={reminderError} onSubmit={handleAddReminder} />
+
+            {reminders.length === 0 ? (
+              <p className="text-body-md text-ink-mute">
+                No reminders yet. Add one, and it will be waiting on your home screen when the
+                day comes.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {[...openReminders, ...doneReminders].map((reminder) => (
+                  <li className="flex flex-col gap-1.5" key={reminder.id}>
+                    <p
+                      className={cn(
+                        "text-body-md",
+                        reminder.status === "done"
+                          ? "text-ink-mute line-through"
+                          : "text-ink-secondary",
                       )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </aside>
-        </div>
-      </main>
+                    >
+                      {reminder.body}
+                    </p>
+                    {reminder.status === "due" || reminder.status === "overdue" ? (
+                      <span
+                        className={cn(
+                          "self-start rounded-full px-2 py-1 text-micro-cap uppercase tabular-nums",
+                          reminderChipClass(reminder.status),
+                        )}
+                      >
+                        {reminderTiming(reminder, now)}
+                      </span>
+                    ) : (
+                      <span className="text-caption tabular-nums text-ink-mute">
+                        {reminderTiming(reminder, now)}
+                      </span>
+                    )}
+                    {confirmingReminderId === reminder.id ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-caption text-ink-mute">Delete this reminder?</span>
+                        <Button
+                          onClick={() => handleDeleteReminder(reminder.id)}
+                          variant="danger"
+                        >
+                          Delete reminder
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setConfirmingReminderId(null);
+                          }}
+                          variant="ghost"
+                        >
+                          Keep it
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        {reminder.status !== "done" && (
+                          <Button onClick={() => handleTickReminder(reminder.id)} variant="ghost">
+                            Mark done
+                          </Button>
+                        )}
+                        <Button
+                          onClick={() => {
+                            setConfirmingReminderId(reminder.id);
+                          }}
+                          variant="ghost"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4">
+            <h2 className="text-heading-lg text-ink">Important dates</h2>
+
+            <ImportantDateForm
+              error={importantDateError}
+              onSubmit={handleAddImportantDate}
+            />
+
+            {importantDates.length === 0 ? (
+              <p className="text-body-md text-ink-mute">
+                No important dates yet. Add one here, and it comes around every year.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {importantDates.map((importantDate) => (
+                  <li className="flex flex-col gap-1.5" key={importantDate.id}>
+                    <p className="text-body-md text-ink-secondary">{importantDate.name}</p>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <ImportantDateMarker fallsOn={importantDate.fallsOn} now={now} />
+                      <span className="text-caption tabular-nums text-ink-mute">
+                        {importantDateYears(importantDate.fallsOn, now)}{" "}
+                        {importantDate.source === "birthday" ? "turning" : "years"}
+                      </span>
+                    </span>
+                    {importantDate.source === "birthday" ? (
+                      <p className="text-caption text-ink-mute">
+                        Comes from this contact's birthday.
+                      </p>
+                    ) : confirmingImportantDateId === importantDate.id ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-caption text-ink-mute">
+                          Delete "{importantDate.name}" from this contact? Other contacts keep
+                          theirs.
+                        </span>
+                        <Button
+                          onClick={() => handleDeleteImportantDate(importantDate.id)}
+                          variant="danger"
+                        >
+                          Delete date
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setConfirmingImportantDateId(null);
+                          }}
+                          variant="ghost"
+                        >
+                          Keep it
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => {
+                            setConfirmingImportantDateId(importantDate.id);
+                          }}
+                          variant="ghost"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4">
+            <h2 className="text-heading-lg text-ink">Notes</h2>
+            <NoteForm
+              error={noteError}
+              initialBody=""
+              onSubmit={handleAddNote}
+              pendingLabel="Saving your note"
+              submitLabel="Add note"
+            />
+            {notes.length === 0 ? (
+              <p className="text-body-md text-ink-mute">No notes yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {notes.map((note) => (
+                  <li className="flex flex-col gap-1.5" key={note.id}>
+                    {editingNoteId === note.id ? (
+                      <NoteForm
+                        error={noteError}
+                        initialBody={note.body}
+                        onCancel={() => {
+                          setEditingNoteId(null);
+                          setNoteError(null);
+                        }}
+                        onSubmit={(body) => handleUpdateNote(note.id, body)}
+                        pendingLabel="Saving changes"
+                        submitLabel="Save changes"
+                      />
+                    ) : (
+                      <>
+                        <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
+                          {note.body}
+                        </p>
+                        {confirmingNoteId === note.id ? (
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="text-caption text-ink-mute">Delete this note?</span>
+                            <Button onClick={() => handleDeleteNote(note.id)} variant="danger">
+                              Delete note
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setConfirmingNoteId(null);
+                              }}
+                              variant="ghost"
+                            >
+                              Keep it
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={() => {
+                                setEditingNoteId(note.id);
+                                setNoteError(null);
+                              }}
+                              variant="ghost"
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              onClick={() => {
+                                setConfirmingNoteId(note.id);
+                              }}
+                              variant="ghost"
+                            >
+                              Delete
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -20,13 +20,13 @@ A personal CRM: private per-user accounts, warm-paper identity, all-in on Cloudf
 | `/` | Landing: product-first hero ("A memoir of everyone you know."), contact-sheet composite, "Try the demo" |
 | `/login` · `/signup` | Auth (plus Better Auth's `/api/auth/*`) |
 | `/app` | Dashboard: Reminders due and overdue, Important Dates coming up, Contacts slipping |
-| `/app/contacts` | Contact list: search + label filters (moved off `/app`, see ADR-0004) |
-| `/app/contacts/:id` | Contact detail: timeline thread and Notes in the main column, reference sidebar (facts, custom fields, labels, Important Dates) |
+| `/app/contacts` | Contacts split view: list rail (search + label filters, days-since) beside a detail pane; on mobile the list fills the screen (moved off `/app`, see ADR-0004) |
+| `/app/contacts/:id` | Same split view with that Contact selected, rendered as a child route of `/app/contacts`: timeline thread and Notes in the main column, reference sidebar (facts, custom fields, labels, Important Dates); on mobile the detail replaces the list, with a Back link |
 | `/app/reminders` | Reminder monitor: due, overdue, upcoming, birthdays this week |
 | `/app/settings` | Profile, MCP API keys, custom fields, labels, danger zone |
 | `/mcp` | MCP streamable-HTTP endpoint (same Worker) |
 
-Label filtering is a `?label=` query parameter on `/app/contacts`; labels have no dedicated pages.
+Label filtering is a `?label=` query parameter on `/app/contacts`, carried onto `/app/contacts/:id` and the mobile Back link so the filter survives selection; labels have no dedicated pages.
 
 ## Data model (D1)
 
