@@ -69,7 +69,7 @@ One Durable Object per user holds the due-event schedule. Its single alarm point
 | 18 | Access | Open signup + one-click demo with seed data |
 | 19 | Name | Memoir (MemoIR CRM exists in a different niche) |
 | 20 | Docs | README + ADRs + architecture doc |
-| 21 | Visual identity | Warm paper + ocean blue; Fraunces + Inter; airmail edge |
+| 21 | Visual identity | Warm paper + ocean blue; Newsreader + Inter; airmail edge |
 | 22 | App home | List-first with reminders strip (superseded by 27) |
 | 23 | Landing | Product-first hero |
 | 24 | Voice | Warm letter |

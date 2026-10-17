@@ -56,7 +56,11 @@ const sectionTitles: Record<ReminderSection, string> = {
 const sectionOrder: ReminderSection[] = ["overdue", "this-week", "upcoming", "completed"];
 
 function sectionChipClass(section: ReminderSection): string {
-  return section === "overdue" ? "bg-danger-bg text-danger" : "bg-amber-soft text-amber";
+  if (section === "overdue") {
+    return "bg-danger-bg text-danger";
+  }
+
+  return section === "completed" ? "bg-canvas-soft text-ink-mute" : "bg-amber-soft text-amber";
 }
 
 function Section({

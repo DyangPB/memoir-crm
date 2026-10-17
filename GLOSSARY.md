@@ -69,7 +69,7 @@ A file added to an Interaction: images show inline in the Timeline, anything els
 _Avoid_: Upload, document, media (use Attachment for the file, Photo for a Contact's picture)
 
 **Memoir calendar**:
-The secondary Google calendar named "Memoir" that Memoir creates in a connected Google account. Every dated Reminder and Important Date is mirrored there, in both directions, so they show on the user's phone. Disconnecting stops the syncing and leaves the calendar in Google.
+The secondary Google calendar named "Memoir" that Memoir creates in a connected Google account. Every dated Reminder and Important Date is mirrored there, in both directions, so they show on the user's phone. A birthday goes one way only (Memoir's version wins), and a done Reminder has no event. Disconnecting stops the syncing and leaves the calendar in Google.
 _Avoid_: Sync calendar, Memoir feed
 
 **Google layer**:
