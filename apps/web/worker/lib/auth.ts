@@ -30,6 +30,9 @@ export function createAuth(env: Env, requestUrl: string) {
             google: {
               clientId: env.GOOGLE_CLIENT_ID,
               clientSecret: env.GOOGLE_CLIENT_SECRET,
+              // Calendar sync needs a refresh token, which Google only gives on consent.
+              accessType: "offline",
+              prompt: "consent",
             },
           }
         : undefined,

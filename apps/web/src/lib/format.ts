@@ -44,3 +44,26 @@ export function formatBytes(bytes: number): string {
 
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
+
+/** How long ago a moment was, in the words the sync status uses: "just now", "4 min ago". */
+export function formatAgo(iso: string, now: Date): string {
+  const minutes = Math.floor((now.getTime() - Date.parse(iso)) / 60_000);
+
+  if (minutes < 1) {
+    return "just now";
+  }
+
+  if (minutes < 60) {
+    return `${minutes} min ago`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+
+  if (hours < 24) {
+    return hours === 1 ? "1 hour ago" : `${hours} hours ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+
+  return days === 1 ? "1 day ago" : `${days} days ago`;
+}

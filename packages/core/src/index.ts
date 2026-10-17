@@ -3,6 +3,7 @@ export {
   calendarRange,
   calendarViews,
   expandImportantDates,
+  googleEventDays,
   groupItemsByDay,
   monthGrid,
   parseCalendarRange,
@@ -51,6 +52,21 @@ export {
   type FieldType,
 } from "./custom-field";
 export { daysSince } from "./days-since";
+export {
+  fromGoogleEvent,
+  GOOGLE_CALENDAR_SCOPE,
+  planSync,
+  toGoogleEvent,
+  type GoogleEventDraft,
+  type GoogleStatus,
+  type MirrorItem,
+  type MirrorKind,
+  type MirrorMode,
+  type RemoteEvent,
+  type SyncAction,
+  type SyncLink,
+  type SyncPlanInput,
+} from "./google-sync";
 export { addDays, weekdayOf } from "./iso-day";
 export { localTime } from "./local-time";
 export {

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  calendarItemTitle,
   calendarRange,
   expandImportantDates,
+  googleEventDays,
   groupItemsByDay,
   monthGrid,
   stepAnchor,
@@ -190,7 +192,73 @@ describe("groupItemsByDay", () => {
     ]);
 
     expect(
-      grouped.get("2026-10-17")?.map((item) => (item.kind === "reminder" ? item.title : item.label)),
+      grouped.get("2026-10-17")?.map(calendarItemTitle),
     ).toEqual(["Birthday", "Apple", "Zebra", "Done thing"]);
+  });
+});
+
+describe("groupItemsByDay with Google events", () => {
+  it("lists Google events after open Reminders and before done ones", () => {
+    const grouped = groupItemsByDay([
+      reminder("r1", "Done thing", "2026-10-17", true),
+      {
+        kind: "google",
+        id: "g1",
+        title: "Dinner",
+        date: "2026-10-17",
+        start: "2026-10-17",
+        end: "2026-10-18",
+        calendarId: "primary",
+        meetUrl: null,
+      },
+      reminder("r2", "Call Bob", "2026-10-17"),
+    ]);
+
+    expect(grouped.get("2026-10-17")?.map(calendarItemTitle)).toEqual(["Call Bob", "Dinner", "Done thing"]);
+  });
+});
+
+describe("googleEventDays", () => {
+  it("is just the one day for a single-day all-day event", () => {
+    expect(googleEventDays("2026-10-20", "2026-10-21", "2026-10-01", "2026-10-31")).toEqual(["2026-10-20"]);
+  });
+
+  it("covers every day of a multi-day all-day event, the end day being exclusive", () => {
+    expect(googleEventDays("2026-10-20", "2026-10-23", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-20",
+      "2026-10-21",
+      "2026-10-22",
+    ]);
+  });
+
+  it("keeps only the days inside the range, including an event that began before it", () => {
+    expect(googleEventDays("2026-09-29", "2026-10-03", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-01",
+      "2026-10-02",
+    ]);
+    expect(googleEventDays("2026-10-30", "2026-11-03", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-30",
+      "2026-10-31",
+    ]);
+  });
+
+  it("puts a timed event on the day it starts, and on the day it ends if that is later", () => {
+    expect(googleEventDays("2026-10-20T10:00:00+01:00", "2026-10-20T11:00:00+01:00", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-20",
+    ]);
+    expect(googleEventDays("2026-10-20T22:00:00+01:00", "2026-10-21T02:00:00+01:00", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-20",
+      "2026-10-21",
+    ]);
+  });
+
+  it("doesn't spill a timed event ending exactly at midnight onto the next day", () => {
+    expect(googleEventDays("2026-10-20T20:00:00+01:00", "2026-10-21T00:00:00+01:00", "2026-10-01", "2026-10-31")).toEqual([
+      "2026-10-20",
+    ]);
+  });
+
+  it("is empty when the event is outside the range", () => {
+    expect(googleEventDays("2026-11-05", "2026-11-06", "2026-10-01", "2026-10-31")).toEqual([]);
   });
 });

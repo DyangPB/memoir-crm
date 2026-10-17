@@ -71,6 +71,13 @@
       "when": 1792258308375,
       "tag": "0009_military_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1792261592833,
+      "tag": "0010_odd_gideon",
+      "breakpoints": true
     }
   ]
 }

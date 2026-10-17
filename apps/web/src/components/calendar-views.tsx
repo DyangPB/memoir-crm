@@ -9,7 +9,7 @@ import {
 } from "@memoir/core";
 import { Link } from "react-router";
 
-import { dayLabel, dayNumber, itemChipClass, weekdayHeadings } from "../lib/calendar";
+import { dayLabel, dayNumber, itemChipClass, itemIcon, itemKindLabel, weekdayHeadings } from "../lib/calendar";
 import { cn } from "../lib/utils";
 import { Icon } from "./icon";
 
@@ -35,7 +35,7 @@ function DayChips({ items, today, limit = CHIPS_PER_CELL }: DayChipsProps) {
           )}
           key={`${item.kind}-${item.id}-${item.date}`}
         >
-          <Icon className="text-base" name={item.kind === "reminder" ? "schedule" : "cake"} />
+          <Icon className="text-base" name={itemIcon(item)} />
           <span className="truncate">{calendarItemTitle(item)}</span>
         </li>
       ))}
@@ -167,13 +167,39 @@ export function WeekView({ anchor, items, today, selected, onSelect }: Selectabl
   );
 }
 
+const rowClass =
+  "flex items-center justify-between gap-3 rounded-lg border border-hairline bg-canvas p-3";
+
 function ItemRow({ item, today }: { item: CalendarItem; today: string }) {
   const years = item.kind === "important-date" ? item.yearsOld : null;
+
+  if (item.kind === "google") {
+    return (
+      <li className={rowClass}>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="truncate text-body-md text-ink">{item.title}</span>
+          <span className="rounded-full bg-canvas-soft px-2 py-0.5 text-micro-cap uppercase text-ink-secondary w-fit">
+            {itemKindLabel(item)}
+          </span>
+        </span>
+        {item.meetUrl !== null && (
+          <a
+            className="shrink-0 text-caption text-primary underline-offset-2 hover:underline"
+            href={item.meetUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            Join meeting
+          </a>
+        )}
+      </li>
+    );
+  }
 
   return (
     <li>
       <Link
-        className="flex items-center justify-between gap-3 rounded-lg border border-hairline bg-canvas p-3 transition-colors hover:border-hairline-input"
+        className={cn(rowClass, "transition-colors hover:border-hairline-input")}
         to={`/app/contacts/${item.contactId}`}
       >
         <span className="flex min-w-0 flex-col gap-1">
@@ -192,7 +218,7 @@ function ItemRow({ item, today }: { item: CalendarItem; today: string }) {
                 itemChipClass(item, today),
               )}
             >
-              {item.kind === "reminder" ? (item.done ? "Done" : "Reminder") : "Important Date"}
+              {itemKindLabel(item)}
             </span>
             <span className="text-caption text-ink-mute">{item.contactName}</span>
           </span>

@@ -2,6 +2,7 @@ import type {
   CadenceHealth,
   CalendarItem,
   Contact,
+  GoogleStatus,
   ContactWriteInput,
   FieldDefinitionInput,
   FieldDefinitionSummary,
@@ -456,4 +457,27 @@ export async function listCalendar(from: string, to: string): Promise<ApiResult<
   const result = await request<{ items: CalendarItem[] }>(`/api/calendar?from=${from}&to=${to}`);
 
   return result.ok ? { ok: true, value: result.value.items } : result;
+}
+
+export async function getGoogleStatus(): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/status");
+}
+
+export async function connectGoogle(): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/connection", { method: "POST" });
+}
+
+export async function disconnectGoogle(): Promise<ApiResult<null>> {
+  return request<null>("/api/google/connection", { method: "DELETE" });
+}
+
+export async function setGoogleCalendars(calendarIds: string[]): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/calendars", {
+    method: "PUT",
+    body: JSON.stringify({ calendarIds }),
+  });
+}
+
+export async function syncGoogleNow(): Promise<ApiResult<GoogleStatus>> {
+  return request<GoogleStatus>("/api/google/sync", { method: "POST" });
 }

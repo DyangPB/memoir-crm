@@ -13,6 +13,7 @@ import {
   toReminder,
   type ReminderRow,
 } from "../lib/reminders";
+import { syncSoon } from "../lib/google/queue";
 import { getSessionUser } from "../lib/session";
 
 export const remindersRoutes = new Hono<{ Bindings: Env }>();
@@ -86,6 +87,7 @@ remindersRoutes.post("/contacts/:contactId/reminders", async (c) => {
 
   await createDb(c.env).insert(reminders).values(row);
   await reminderEngine(c.env, user.id).reschedule();
+  syncSoon(c, user.id);
 
   return c.json({ reminder: toReminder(row) }, 201);
 });
@@ -129,6 +131,7 @@ remindersRoutes.patch("/contacts/:contactId/reminders/:reminderId", async (c) =>
       ),
     );
   await reminderEngine(c.env, user.id).reschedule();
+  syncSoon(c, user.id);
 
   return c.json({ reminder: toReminder({ ...existing, dueOn: parsed.dueOn, status: "pending", updatedAt }) });
 });
@@ -161,6 +164,7 @@ remindersRoutes.post("/contacts/:contactId/reminders/:reminderId/tick", async (c
       ),
     );
   await reminderEngine(c.env, user.id).reschedule();
+  syncSoon(c, user.id);
 
   return c.json({ reminder: toReminder({ ...existing, status: "done", updatedAt }) });
 });
@@ -190,6 +194,7 @@ remindersRoutes.delete("/contacts/:contactId/reminders/:reminderId", async (c) =
       ),
     );
   await reminderEngine(c.env, user.id).reschedule();
+  syncSoon(c, user.id);
 
   return c.body(null, 204);
 });

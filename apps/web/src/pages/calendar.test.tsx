@@ -1,4 +1,4 @@
-import type { CalendarItem, Contact } from "@memoir/core";
+import type { CalendarItem, Contact, GoogleStatus } from "@memoir/core";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
@@ -18,6 +18,8 @@ vi.mock("../lib/api", () => ({
   listCalendar: vi.fn(),
   listContacts: vi.fn(),
   createReminder: vi.fn(),
+  getGoogleStatus: vi.fn(),
+  syncGoogleNow: vi.fn(),
 }));
 
 function contact(id: string, name: string): Contact {
@@ -73,6 +75,15 @@ const ITEMS: CalendarItem[] = [
   },
 ];
 
+const NOT_CONNECTED: GoogleStatus = {
+  configured: true,
+  linked: false,
+  connected: false,
+  calendars: [],
+  lastSyncedAt: null,
+  lastError: null,
+};
+
 function renderCalendar(search = "?date=2026-10-20") {
   return render(
     <MemoryRouter initialEntries={[`/app/calendar${search}`]}>
@@ -100,6 +111,8 @@ beforeEach(() => {
     .mockReset()
     .mockResolvedValue({ ok: true, value: [contact("bob", "Bob Nguyen"), contact("ada", "Ada Lovelace")] });
   vi.mocked(api.createReminder).mockReset();
+  vi.mocked(api.getGoogleStatus).mockReset().mockResolvedValue({ ok: true, value: NOT_CONNECTED });
+  vi.mocked(api.syncGoogleNow).mockReset();
 });
 
 describe("Calendar month view", () => {

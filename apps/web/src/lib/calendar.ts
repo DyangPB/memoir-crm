@@ -65,10 +65,36 @@ export const viewLabels: Record<CalendarView, string> = {
   agenda: "Agenda",
 };
 
+export function itemIcon(item: CalendarItem): string {
+  switch (item.kind) {
+    case "reminder":
+      return "schedule";
+    case "important-date":
+      return "cake";
+    case "google":
+      return "event";
+  }
+}
+
+export function itemKindLabel(item: CalendarItem): string {
+  switch (item.kind) {
+    case "reminder":
+      return item.done ? "Done" : "Reminder";
+    case "important-date":
+      return "Important Date";
+    case "google":
+      return "Google Calendar";
+  }
+}
+
 /** How an item's chip looks: Important Dates amber, Reminders ocean, overdue ones red, done ones faded. */
 export function itemChipClass(item: CalendarItem, today: string): string {
   if (item.kind === "important-date") {
     return "bg-amber-bg text-amber";
+  }
+
+  if (item.kind === "google") {
+    return "border border-hairline bg-canvas-soft text-ink-secondary";
   }
 
   if (item.done) {

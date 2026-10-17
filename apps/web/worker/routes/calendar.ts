@@ -1,5 +1,6 @@
 import {
   expandImportantDates,
+  googleEventDays,
   parseCalendarRange,
   type CalendarItem,
 } from "@memoir/core";
@@ -8,10 +9,54 @@ import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { Hono } from "hono";
 
 import { createDb } from "../lib/db";
+import { getGoogleClient } from "../lib/google";
+import { getConnection } from "../lib/google/sync";
 import { allImportantDates } from "../lib/important-dates";
 import { getSessionUser } from "../lib/session";
 
 export const calendarRoutes = new Hono<{ Bindings: Env }>();
+
+/** Events from the Google calendars the user chose. A Google outage leaves the layer empty, not the page. */
+async function googleLayer(
+  env: Env,
+  userId: string,
+  from: string,
+  to: string,
+): Promise<CalendarItem[]> {
+  const connection = await getConnection(env, userId);
+
+  if (connection === null || connection.selectedCalendarIds.length === 0) {
+    return [];
+  }
+
+  const client = await getGoogleClient(env, userId).catch(() => null);
+
+  if (client === null) {
+    return [];
+  }
+
+  const calendarIds = connection.selectedCalendarIds.filter((id) => id !== connection.memoirCalendarId);
+  const results = await Promise.allSettled(
+    calendarIds.map(async (calendarId) =>
+      (await client.listEvents(calendarId, from, to)).flatMap((event) =>
+        googleEventDays(event.start, event.end, from, to).map(
+          (date): CalendarItem => ({
+            kind: "google",
+            id: event.id,
+            title: event.title,
+            date,
+            start: event.start,
+            end: event.end,
+            calendarId,
+            meetUrl: event.meetUrl,
+          }),
+        ),
+      ),
+    ),
+  );
+
+  return results.flatMap((result) => (result.status === "fulfilled" ? result.value : []));
+}
 
 calendarRoutes.get("/calendar", async (c) => {
   const user = await getSessionUser(c.env, c.req.raw);
@@ -44,7 +89,8 @@ calendarRoutes.get("/calendar", async (c) => {
     done: row.reminder.status === "done",
   }));
   const dateItems = expandImportantDates(await allImportantDates(c.env, user.id), from, to);
-  const items = [...dateItems, ...reminderItems].sort((left, right) =>
+  const googleItems = await googleLayer(c.env, user.id, from, to);
+  const items = [...dateItems, ...reminderItems, ...googleItems].sort((left, right) =>
     left.date.localeCompare(right.date),
   );
 

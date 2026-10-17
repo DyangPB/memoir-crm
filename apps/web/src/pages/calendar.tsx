@@ -7,6 +7,7 @@ import {
   type CalendarRange,
   type CalendarView,
   type Contact,
+  type GoogleStatus,
   type ReminderInput,
 } from "@memoir/core";
 import { useEffect, useState } from "react";
@@ -22,10 +23,17 @@ import {
   MonthGridView,
   WeekView,
 } from "../components/calendar-views";
+import { GoogleSyncPill } from "../components/google-sync-pill";
 import { Icon } from "../components/icon";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
-import { createReminder, listCalendar, listContacts } from "../lib/api";
+import {
+  createReminder,
+  getGoogleStatus,
+  listCalendar,
+  listContacts,
+  syncGoogleNow,
+} from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { dayLabel, rangeTitle, viewLabels } from "../lib/calendar";
 import { isoDayOrNull, todayIsoDay } from "../lib/format";
@@ -36,9 +44,11 @@ type Layer = CalendarItem["kind"];
 const layerLabels: Record<Layer, string> = {
   reminder: "Reminders",
   "important-date": "Important Dates",
+  google: "Google Calendar",
 };
 
-const layers: Layer[] = ["reminder", "important-date"];
+/** A Google sync older than this is refreshed when the Calendar opens. */
+const STALE_SYNC_MS = 2 * 60_000;
 
 function viewFrom(value: string | null): CalendarView {
   return calendarViews.find((view) => view === value) ?? "month";
@@ -59,6 +69,8 @@ export function CalendarPage() {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloads, setReloads] = useState(0);
+  const [google, setGoogle] = useState<GoogleStatus | null>(null);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!signedIn) {
@@ -91,6 +103,34 @@ export function CalendarPage() {
 
     let active = true;
 
+    void getGoogleStatus().then(async (result) => {
+      if (!active || !result.ok) {
+        return;
+      }
+
+      setGoogle(result.value);
+
+      const last = result.value.lastSyncedAt;
+
+      if (result.value.connected && (last === null || Date.now() - Date.parse(last) > STALE_SYNC_MS)) {
+        await refreshGoogle(() => active);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+    // Runs once per visit: the status then drives the sync, not the other way round.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signedIn]);
+
+  useEffect(() => {
+    if (!signedIn) {
+      return;
+    }
+
+    let active = true;
+
     void listCalendar(range.from, range.to).then((result) => {
       if (!active) {
         return;
@@ -110,6 +150,25 @@ export function CalendarPage() {
       active = false;
     };
   }, [signedIn, range.from, range.to, reloads]);
+
+  async function refreshGoogle(stillWanted: () => boolean = () => true) {
+    setSyncing(true);
+
+    const result = await syncGoogleNow();
+
+    if (!stillWanted()) {
+      return;
+    }
+
+    setSyncing(false);
+
+    if (result.ok) {
+      setGoogle(result.value);
+      setReloads((count) => count + 1);
+    } else {
+      setGoogle((current) => (current === null ? current : { ...current, lastError: result.message }));
+    }
+  }
 
   /** The URL's date is the selected day, so a view switch, back button or link keeps it. */
   function go(next: { view?: CalendarView; date?: string }, replace = false) {
@@ -171,6 +230,8 @@ export function CalendarPage() {
     );
   }
 
+  const layers: Layer[] =
+    google?.connected === true ? ["reminder", "important-date", "google"] : ["reminder", "important-date"];
   const shown = feed.items.filter((item) => !hidden.has(item.kind));
   const selectedItems = groupItemsByDay(shown).get(anchor) ?? [];
   // The previous range's items stay up, dimmed, until the new range arrives.
@@ -189,10 +250,19 @@ export function CalendarPage() {
               Your Reminders and Important Dates in time. Amber marks a date to remember.
             </p>
           </div>
-          <Button onClick={() => setAdding(true)}>
-            <Icon className="text-body-md" name="add" />
-            Add reminder
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            {google?.connected === true && (
+              <GoogleSyncPill
+                onRefresh={() => void refreshGoogle()}
+                status={google}
+                syncing={syncing}
+              />
+            )}
+            <Button onClick={() => setAdding(true)}>
+              <Icon className="text-body-md" name="add" />
+              Add reminder
+            </Button>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -246,6 +316,7 @@ export function CalendarPage() {
         <fieldset className="flex flex-wrap items-center gap-4">
           <legend className="sr-only">Show on the calendar</legend>
           {layers.map((layer) => (
+
             <label className="flex items-center gap-2 text-body-md text-ink-secondary" key={layer}>
               <input
                 checked={!hidden.has(layer)}

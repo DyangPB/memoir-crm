@@ -18,6 +18,7 @@ import { createDb } from "../lib/db";
 import { listFieldDefinitions } from "../lib/fields";
 import { syncBirthdayImportantDate } from "../lib/important-dates";
 import { findOwnedLabel } from "../lib/labels";
+import { syncSoon } from "../lib/google/queue";
 import { attachmentKeysForContact, deleteObjects } from "../lib/media";
 import { defaultCadenceDays } from "../lib/settings";
 import { getSessionUser } from "../lib/session";
@@ -130,6 +131,7 @@ contactsRoutes.post("/contacts", async (c) => {
 
   await createDb(c.env).insert(contacts).values(row);
   await syncBirthdayImportantDate(c.env, user.id, row.id, row.birthday);
+  syncSoon(c, user.id);
 
   return c.json(
     { contact: toContact(row, null, [], await defaultCadenceDays(c.env, user.id)) },
@@ -190,6 +192,7 @@ contactsRoutes.put("/contacts/:id", async (c) => {
     .set({ ...parsed.contact, customFields: parsed.customFields, updatedAt })
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
   await syncBirthdayImportantDate(c.env, user.id, id, parsed.contact.birthday);
+  syncSoon(c, user.id);
 
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, id);
   const contactLabelsList = await labelsForContact(c.env, user.id, id);
@@ -280,6 +283,7 @@ contactsRoutes.delete("/contacts/:id", async (c) => {
     .delete(contacts)
     .where(and(eq(contacts.id, id), eq(contacts.userId, user.id)));
   await deleteObjects(c.env, existing.photoKey === null ? fileKeys : [existing.photoKey, ...fileKeys]);
+  syncSoon(c, user.id);
 
   return c.body(null, 204);
 });

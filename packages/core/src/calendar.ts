@@ -25,6 +25,19 @@ export type CalendarItem =
       contactName: string;
       /** The years since the date's own year (a birthday's age); null in that year or before it. */
       yearsOld: number | null;
+    }
+  | {
+      /** An event from one of the user's Google calendars: shown, never edited. */
+      kind: "google";
+      id: string;
+      title: string;
+      /** One of the days the event covers; a multi-day event appears once per day. */
+      date: string;
+      /** The event's own start and end, as Google gave them. */
+      start: string;
+      end: string;
+      calendarId: string;
+      meetUrl: string | null;
     };
 
 export type CalendarRange = { from: string; to: string };
@@ -142,15 +155,18 @@ export function expandImportantDates(
 }
 
 export function calendarItemTitle(item: CalendarItem): string {
-  return item.kind === "reminder" ? item.title : item.label;
+  return item.kind === "important-date" ? item.label : item.title;
 }
 
 function dayOrder(item: CalendarItem): number {
-  if (item.kind === "important-date") {
-    return 0;
+  switch (item.kind) {
+    case "important-date":
+      return 0;
+    case "reminder":
+      return item.done ? 3 : 1;
+    case "google":
+      return 2;
   }
-
-  return item.done ? 2 : 1;
 }
 
 /** Items under the day they fall on: Important Dates, then open Reminders, then done ones. */
@@ -189,4 +205,21 @@ export function parseCalendarRange(from: unknown, to: unknown): CalendarRangePar
   }
 
   return { ok: true, range: { from, to } };
+}
+
+/**
+ * The days of a range that a Google event covers. An all-day event's end is the day
+ * after its last day; a timed event covers the day it starts, and the day it ends
+ * when that is later (unless it ends exactly at midnight).
+ */
+export function googleEventDays(start: string, end: string, from: string, to: string): string[] {
+  const first = start.slice(0, 10);
+  const allDay = start.length === 10;
+  const endDay = end.slice(0, 10);
+  const endsAtMidnight = !allDay && end.slice(11, 16) === "00:00" && endDay > first;
+  const last = allDay || endsAtMidnight ? addDays(endDay, -1) : endDay;
+
+  const lastDay = last < first ? first : last;
+
+  return eachDay(first > from ? first : from, lastDay < to ? lastDay : to);
 }
