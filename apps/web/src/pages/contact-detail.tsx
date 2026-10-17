@@ -19,6 +19,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { BackToParent } from "../components/back-to-parent";
+import { DaysSince } from "../components/days-since";
 import { Icon } from "../components/icon";
 import { ImportantDateForm } from "../components/important-date-form";
 import { ImportantDateMarker } from "../components/important-date-marker";
@@ -52,7 +53,7 @@ import {
   updateNote,
 } from "../lib/api";
 import { authClient } from "../lib/auth-client";
-import { formatDay, todayIsoDay } from "../lib/format";
+import { formatDay, todayForDayCounts, todayIsoDay } from "../lib/format";
 import { reminderChipClass, reminderTiming } from "../lib/reminders";
 import { cn } from "../lib/utils";
 
@@ -583,7 +584,10 @@ export function ContactDetailPage() {
   }
 
   const lastOn = lastInteractionDate(interactions);
-  const days = lastOn === null ? null : daysSince(new Date(`${lastOn}T00:00:00.000Z`), new Date());
+  const days =
+    lastOn === null
+      ? null
+      : daysSince(new Date(`${lastOn}T00:00:00.000Z`), todayForDayCounts());
   const now = new Date();
   const openReminders = reminders.filter((reminder) => reminder.status !== "done");
   const doneReminders = reminders.filter((reminder) => reminder.status === "done");
@@ -604,10 +608,12 @@ export function ContactDetailPage() {
             </div>
             <div className="flex items-center gap-5">
               {days !== null && (
-                <span className="flex flex-col items-end">
-                  <span className="font-display text-numeral tabular-nums text-ink">{days}</span>
-                  <span className="text-caption text-ink-mute">days since you talked</span>
-                </span>
+                <DaysSince
+                  className="flex-col items-end gap-0"
+                  days={days}
+                  numeralClassName="text-numeral"
+                  targetDays={contact.effectiveCadenceDays}
+                />
               )}
               <Button asChild variant="secondary">
                 <Link to={`/app/contacts/${contact.id}/edit`}>Edit</Link>

@@ -1,6 +1,4 @@
 import {
-  CATCH_UP_AFTER_DAYS,
-  contactsToCatchUp,
   importantDateYears,
   interactionTypeLabel,
   nextOccurrence,
@@ -15,12 +13,20 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { DaysSince } from "../components/days-since";
 import { Icon } from "../components/icon";
 import { LetterAvatar } from "../components/letter-avatar";
 import { LogInteractionDialog } from "../components/log-interaction-dialog";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
-import { getOnThisDay, listContacts, listImportantDates, listOpenReminders } from "../lib/api";
+import {
+  getCadence,
+  getOnThisDay,
+  listContacts,
+  listImportantDates,
+  listOpenReminders,
+  type CadenceReport,
+} from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { formatDay, todayIsoDay } from "../lib/format";
 import { importantDateTiming } from "../lib/important-dates";
@@ -138,12 +144,11 @@ function CatchUpCard({ contact }: { contact: Contact & { daysSince: number } }) 
         <LetterAvatar name={contact.name} />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate font-display text-contact-name text-ink">{contact.name}</span>
-          <span className="flex items-baseline gap-1.5 text-caption text-ink-mute">
-            <span className="font-display text-numeral tabular-nums text-ink">
-              {contact.daysSince}
-            </span>
-            days since you talked
-          </span>
+          <DaysSince
+            days={contact.daysSince}
+            numeralClassName="text-numeral"
+            targetDays={contact.effectiveCadenceDays}
+          />
         </span>
       </Link>
     </li>
@@ -192,18 +197,21 @@ export function AppPage() {
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const [reminders, setReminders] = useState<ReminderWithContact[] | null>(null);
   const [importantDates, setImportantDates] = useState<ImportantDateWithContact[] | null>(null);
+  const [cadence, setCadence] = useState<CadenceReport | null>(null);
   const [onThisDay, setOnThisDay] = useState<OnThisDay | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [logging, setLogging] = useState(false);
   const signedIn = session !== null && session !== undefined;
 
   const load = useCallback(async () => {
-    const [contactResult, reminderResult, dateResult, memoryResult] = await Promise.all([
-      listContacts(),
-      listOpenReminders(),
-      listImportantDates(),
-      getOnThisDay(todayIsoDay()),
-    ]);
+    const [contactResult, reminderResult, dateResult, cadenceResult, memoryResult] =
+      await Promise.all([
+        listContacts(),
+        listOpenReminders(),
+        listImportantDates(),
+        getCadence(todayIsoDay()),
+        getOnThisDay(todayIsoDay()),
+      ]);
 
     if (!contactResult.ok) {
       setError(contactResult.message);
@@ -223,7 +231,14 @@ export function AppPage() {
       return;
     }
 
+    if (!cadenceResult.ok) {
+      setError(cadenceResult.message);
+
+      return;
+    }
+
     setContacts(contactResult.value);
+    setCadence(cadenceResult.value);
     setReminders(reminderResult.value);
     setImportantDates(dateResult.value);
     // A memory is a nicety: if it can't load, the strip stays hidden.
@@ -248,7 +263,7 @@ export function AppPage() {
     return <Navigate replace to="/login" />;
   }
 
-  if (contacts === null || reminders === null || importantDates === null) {
+  if (contacts === null || reminders === null || importantDates === null || cadence === null) {
     if (error === null) {
       return <PageLoading label="Fetching your dashboard" />;
     }
@@ -283,7 +298,7 @@ export function AppPage() {
     .sort((left, right) =>
       nextOccurrence(left.fallsOn, now).localeCompare(nextOccurrence(right.fallsOn, now)),
     );
-  const catchUp = contactsToCatchUp(contacts, now);
+  const catchUp = cadence.catchUp;
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -370,7 +385,7 @@ export function AppPage() {
               ) : (
                 <>
                   <p className="text-body-tabular tabular-nums text-ink-mute">
-                    Contacts quiet for more than {CATCH_UP_AFTER_DAYS} days
+                    Contacts past their Cadence
                   </p>
                   <ul className="grid gap-3 sm:grid-cols-2">
                     {catchUp.map((contact) => (

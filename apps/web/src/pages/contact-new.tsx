@@ -1,4 +1,4 @@
-import type { ContactWriteInput, FieldDefinition } from "@memoir/core";
+import { DEFAULT_CADENCE_DAYS, type ContactWriteInput, type FieldDefinition } from "@memoir/core";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router";
 
@@ -6,13 +6,14 @@ import { AppHeader } from "../components/app-header";
 import { BackToParent } from "../components/back-to-parent";
 import { ContactForm, emptyContactInput } from "../components/contact-form";
 import { PageLoading } from "../components/page-loading";
-import { createContact, listFieldDefinitions } from "../lib/api";
+import { createContact, getDefaultCadenceDays, listFieldDefinitions } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 
 export function ContactNewPage() {
   const { data: session, isPending } = authClient.useSession();
   const navigate = useNavigate();
   const [definitions, setDefinitions] = useState<FieldDefinition[] | null>(null);
+  const [defaultCadenceDays, setDefaultCadenceDays] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,23 +24,27 @@ export function ContactNewPage() {
 
     let active = true;
 
-    void listFieldDefinitions().then((result) => {
-      if (!active) {
-        return;
-      }
+    void Promise.all([listFieldDefinitions(), getDefaultCadenceDays()]).then(
+      ([result, cadenceResult]) => {
+        if (!active) {
+          return;
+        }
 
-      if (result.ok) {
-        setDefinitions(result.value);
-        return;
-      }
+        if (result.ok) {
+          setDefinitions(result.value);
+          // The default is only a hint on the form; if it can't load, show the app default.
+          setDefaultCadenceDays(cadenceResult.ok ? cadenceResult.value : DEFAULT_CADENCE_DAYS);
+          return;
+        }
 
-      if (result.status === 401) {
-        void navigate("/login");
-        return;
-      }
+        if (result.status === 401) {
+          void navigate("/login");
+          return;
+        }
 
-      setLoadError(result.message);
-    });
+        setLoadError(result.message);
+      },
+    );
 
     return () => {
       active = false;
@@ -81,7 +86,7 @@ export function ContactNewPage() {
     );
   }
 
-  if (definitions === null) {
+  if (definitions === null || defaultCadenceDays === null) {
     return <PageLoading label="Fetching your fields" />;
   }
 
@@ -98,6 +103,7 @@ export function ContactNewPage() {
         </div>
         <ContactForm
           cancelHref="/app/contacts"
+          defaultCadenceDays={defaultCadenceDays}
           definitions={definitions}
           error={error}
           initialValues={emptyContactInput}

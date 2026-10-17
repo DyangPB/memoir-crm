@@ -1,4 +1,5 @@
 import type {
+  CadenceHealth,
   Contact,
   ContactWriteInput,
   FieldDefinitionInput,
@@ -126,6 +127,31 @@ export async function createInteraction(
   );
 
   return result.ok ? { ok: true, value: result.value.interaction } : result;
+}
+
+export type CadenceReport = {
+  defaultCadenceDays: number;
+  health: CadenceHealth | null;
+  catchUp: (Contact & { daysSince: number })[];
+};
+
+export async function getCadence(today: string): Promise<ApiResult<CadenceReport>> {
+  return request<CadenceReport>(`/api/cadence?date=${today}`);
+}
+
+export async function getDefaultCadenceDays(): Promise<ApiResult<number>> {
+  const result = await request<{ settings: { defaultCadenceDays: number } }>("/api/settings");
+
+  return result.ok ? { ok: true, value: result.value.settings.defaultCadenceDays } : result;
+}
+
+export async function saveDefaultCadenceDays(days: number): Promise<ApiResult<number>> {
+  const result = await request<{ settings: { defaultCadenceDays: number } }>("/api/settings", {
+    method: "PUT",
+    body: JSON.stringify({ defaultCadenceDays: days }),
+  });
+
+  return result.ok ? { ok: true, value: result.value.settings.defaultCadenceDays } : result;
 }
 
 export async function getOnThisDay(today: string): Promise<ApiResult<OnThisDay | null>> {

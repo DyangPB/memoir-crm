@@ -94,6 +94,17 @@ export const verifications = sqliteTable(
   (table) => [index("verifications_identifier_idx").on(table.identifier)],
 );
 
+export const userSettings = sqliteTable("user_settings", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  defaultCadenceDays: integer("default_cadence_days").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 export const contacts = sqliteTable(
   "contacts",
   {
@@ -114,6 +125,8 @@ export const contacts = sqliteTable(
       .$type<Record<string, unknown>>()
       .notNull()
       .default({}),
+    cadenceDays: integer("cadence_days"),
+    cadenceTracked: integer("cadence_tracked", { mode: "boolean" }).default(true).notNull(),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),

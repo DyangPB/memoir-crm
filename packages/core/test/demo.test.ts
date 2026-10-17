@@ -54,6 +54,8 @@ describe("demo seed validity", () => {
           socialLinks: contact.socialLinks,
           birthday: contact.birthday,
           howWeMet: contact.howWeMet,
+          cadenceDays: null,
+          cadenceTracked: true,
         },
       });
     }

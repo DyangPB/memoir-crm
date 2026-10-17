@@ -1,4 +1,4 @@
-import type { Contact, Label } from "@memoir/core";
+import { effectiveCadenceDays, type Contact, type Label } from "@memoir/core";
 import { contactLabels, contacts, interactions, labels } from "@memoir/db";
 import { and, eq, sql } from "drizzle-orm";
 
@@ -10,6 +10,7 @@ export function toContact(
   row: ContactRow,
   lastInteractionAt: string | null,
   contactLabelsList: Label[],
+  defaultCadenceDays: number,
 ): Contact {
   return {
     id: row.id,
@@ -20,6 +21,9 @@ export function toContact(
     birthday: row.birthday,
     howWeMet: row.howWeMet,
     customFields: row.customFields,
+    cadenceDays: row.cadenceDays,
+    cadenceTracked: row.cadenceTracked,
+    effectiveCadenceDays: effectiveCadenceDays(row, defaultCadenceDays),
     labels: contactLabelsList,
     lastInteractionAt,
     createdAt: row.createdAt.toISOString(),

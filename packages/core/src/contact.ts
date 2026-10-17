@@ -1,3 +1,5 @@
+import type { CadenceSettings } from "./cadence";
+import { parseCadenceInput } from "./cadence";
 import type { CustomFieldValues } from "./custom-field";
 import type { Label } from "./label";
 
@@ -6,7 +8,7 @@ export type SocialLink = {
   url: string;
 };
 
-export type ContactInput = {
+export type ContactInput = CadenceSettings & {
   name: string;
   emails: string[];
   phones: string[];
@@ -24,6 +26,8 @@ export type Contact = ContactInput & {
   id: string;
   labels: Label[];
   lastInteractionAt: string | null;
+  /** Target interval in days after the override and global default; null when opted out. */
+  effectiveCadenceDays: number | null;
   createdAt: string;
 };
 
@@ -159,9 +163,23 @@ export function parseContactInput(input: unknown): ContactParseResult {
 
   const howWeMet = typeof howWeMetRaw === "string" && howWeMetRaw.trim() !== "" ? howWeMetRaw.trim() : null;
 
+  const cadence = parseCadenceInput(record);
+
+  if (!cadence.ok) {
+    return { ok: false, message: cadence.message };
+  }
+
   return {
     ok: true,
-    contact: { name, emails, phones, socialLinks: socialLinks.links, birthday, howWeMet },
+    contact: {
+      name,
+      emails,
+      phones,
+      socialLinks: socialLinks.links,
+      birthday,
+      howWeMet,
+      ...cadence.cadence,
+    },
   };
 }
 

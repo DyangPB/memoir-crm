@@ -24,6 +24,8 @@ describe("parseContactInput", () => {
         socialLinks: [{ label: "Instagram", url: "https://instagram.com/bob" }],
         birthday: "1990-05-14",
         howWeMet: "Neighbours in Lisbon",
+        cadenceDays: null,
+        cadenceTracked: true,
       },
     });
   });
@@ -40,6 +42,8 @@ describe("parseContactInput", () => {
         socialLinks: [],
         birthday: null,
         howWeMet: null,
+        cadenceDays: null,
+        cadenceTracked: true,
       },
     });
   });
@@ -84,8 +88,27 @@ describe("parseContactInput", () => {
         socialLinks: [],
         birthday: null,
         howWeMet: null,
+        cadenceDays: null,
+        cadenceTracked: true,
       },
     });
+  });
+});
+
+describe("parseContactInput Cadence", () => {
+  it("carries a Cadence override and opt-out through", () => {
+    const result = parseContactInput({ name: "Ada", cadenceDays: 14, cadenceTracked: false });
+
+    expect(result).toMatchObject({
+      ok: true,
+      contact: { name: "Ada", cadenceDays: 14, cadenceTracked: false },
+    });
+  });
+
+  it("rejects an invalid Cadence", () => {
+    const result = parseContactInput({ name: "Ada", cadenceDays: 0 });
+
+    expect(result.ok).toBe(false);
   });
 });
 

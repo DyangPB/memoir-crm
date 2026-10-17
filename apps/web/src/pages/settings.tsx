@@ -9,6 +9,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Navigate, useNavigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { DefaultCadenceForm } from "../components/default-cadence-form";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
@@ -17,8 +18,10 @@ import {
   createLabel,
   deleteFieldDefinition,
   deleteLabel,
+  getDefaultCadenceDays,
   listFieldDefinitions,
   listLabels,
+  saveDefaultCadenceDays,
   updateFieldDefinition,
   updateLabel,
 } from "../lib/api";
@@ -56,6 +59,7 @@ export function SettingsPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [defaultCadenceDays, setDefaultCadenceDays] = useState<number | null>(null);
   const [labels, setLabels] = useState<LabelSummary[] | null>(null);
   const [labelError, setLabelError] = useState<string | null>(null);
   const [newLabelName, setNewLabelName] = useState("");
@@ -80,23 +84,29 @@ export function SettingsPage() {
 
     let active = true;
 
-    void Promise.all([listLabels(), listFieldDefinitions()]).then(([labelsResult, fieldsResult]) => {
-      if (!active) {
-        return;
-      }
+    void Promise.all([listLabels(), listFieldDefinitions(), getDefaultCadenceDays()]).then(
+      ([labelsResult, fieldsResult, cadenceResult]) => {
+        if (!active) {
+          return;
+        }
 
-      if (labelsResult.ok) {
-        setLabels(labelsResult.value);
-      } else {
-        setLabelError(labelsResult.message);
-      }
+        if (cadenceResult.ok) {
+          setDefaultCadenceDays(cadenceResult.value);
+        }
 
-      if (fieldsResult.ok) {
-        setFields(fieldsResult.value);
-      } else {
-        setFieldError(fieldsResult.message);
-      }
-    });
+        if (labelsResult.ok) {
+          setLabels(labelsResult.value);
+        } else {
+          setLabelError(labelsResult.message);
+        }
+
+        if (fieldsResult.ok) {
+          setFields(fieldsResult.value);
+        } else {
+          setFieldError(fieldsResult.message);
+        }
+      },
+    );
 
     return () => {
       active = false;
@@ -283,6 +293,22 @@ export function SettingsPage() {
     setFields((fields ?? []).filter((field) => field.id !== fieldId));
   }
 
+  async function handleSaveCadence(days: number): Promise<string | null> {
+    const result = await saveDefaultCadenceDays(days);
+
+    if (!result.ok) {
+      if (result.status === 401) {
+        void navigate("/login");
+      }
+
+      return result.message;
+    }
+
+    setDefaultCadenceDays(result.value);
+
+    return null;
+  }
+
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
@@ -298,6 +324,19 @@ export function SettingsPage() {
             {session.user.name} · {session.user.email}
           </p>
         </section>
+
+        {defaultCadenceDays !== null && (
+          <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-display text-headline-sm text-ink">Cadence</h2>
+              <p className="text-caption text-ink-mute">
+                How often you'd like to be in touch with each contact. A contact past their Cadence
+                is due for a catch-up. Each contact can set their own, or opt out.
+              </p>
+            </div>
+            <DefaultCadenceForm days={defaultCadenceDays} onSave={handleSaveCadence} />
+          </section>
+        )}
 
         <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
           <div className="flex flex-col gap-1">
