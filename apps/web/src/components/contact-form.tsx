@@ -1,4 +1,5 @@
 import type {
+  CadenceSettings,
   ContactWriteInput,
   CustomFieldValues,
   FieldDefinition,
@@ -7,6 +8,7 @@ import type {
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
 
+import { CadenceField } from "./cadence-field";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select } from "./ui/select";
@@ -19,12 +21,16 @@ export const emptyContactInput: ContactWriteInput = {
   socialLinks: [],
   birthday: null,
   howWeMet: null,
+  cadenceDays: null,
+  cadenceTracked: true,
   customFields: {},
 };
 
 type ContactFormProps = {
   initialValues: ContactWriteInput;
   definitions: FieldDefinition[];
+  /** The user's global Cadence, shown as what a Contact follows by default. */
+  defaultCadenceDays: number;
   submitLabel: string;
   pendingLabel: string;
   cancelHref: string;
@@ -247,6 +253,7 @@ function StringListField({ legend, addLabel, type, values, onChange }: StringLis
 export function ContactForm({
   initialValues,
   definitions,
+  defaultCadenceDays,
   submitLabel,
   pendingLabel,
   cancelHref,
@@ -259,6 +266,10 @@ export function ContactForm({
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>(initialValues.socialLinks);
   const [birthday, setBirthday] = useState(initialValues.birthday ?? "");
   const [howWeMet, setHowWeMet] = useState(initialValues.howWeMet ?? "");
+  const [cadence, setCadence] = useState<CadenceSettings>({
+    cadenceDays: initialValues.cadenceDays,
+    cadenceTracked: initialValues.cadenceTracked,
+  });
   const [customFields, setCustomFields] = useState<CustomFieldValues>(initialValues.customFields);
   const [submitting, setSubmitting] = useState(false);
 
@@ -284,6 +295,7 @@ export function ContactForm({
         ),
         birthday: birthday === "" ? null : birthday,
         howWeMet: howWeMet.trim() === "" ? null : howWeMet,
+        ...cadence,
         customFields: valuesForSubmit(definitions, customFields),
       });
     } finally {
@@ -387,6 +399,8 @@ export function ContactForm({
           value={howWeMet}
         />
       </div>
+
+      <CadenceField defaultDays={defaultCadenceDays} onChange={setCadence} value={cadence} />
 
       {definitions.length > 0 && (
         <div className="flex flex-col gap-4">

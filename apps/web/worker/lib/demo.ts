@@ -8,6 +8,7 @@ import {
   labels,
   notes,
   reminders,
+  userSettings,
   users,
 } from "@memoir/db";
 import { eq } from "drizzle-orm";
@@ -50,6 +51,7 @@ async function reseedDemoAccount(env: Env, userId: string, now: Date): Promise<n
     db.delete(contacts).where(eq(contacts.userId, userId)),
     db.delete(labels).where(eq(labels.userId, userId)),
     db.delete(fieldDefinitions).where(eq(fieldDefinitions.userId, userId)),
+    db.delete(userSettings).where(eq(userSettings.userId, userId)),
     db
       .insert(fieldDefinitions)
       .values(seed.fieldDefinitions.map((field) => ({ ...field, userId }))),

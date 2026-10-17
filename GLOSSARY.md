@@ -44,6 +44,14 @@ _Avoid_: Task, follow-up (use Reminder)
 A date that recurs yearly for a contact — birthday, anniversary. Drives the recurring reminders feed. A contact's birthday is one of these.
 _Avoid_: Recurring event, anniversary (use Important Date for the general concept)
 
+**Cadence**:
+How often the user intends to be in touch with a Contact, expressed as a target interval ("every 30 days"). A global default applies unless the Contact overrides it or opts out; a Contact past their Cadence is due for outreach. A Contact with no Interactions yet has no "days since", so it is not measured against its Cadence.
+_Avoid_: Frequency, rhythm, schedule
+
+**Cadence Health**:
+The share of cadence-tracked Contacts currently within their target interval, shown as a percentage ("84% in touch"). Contacts that opted out, or have no Interactions yet, are left out.
+_Avoid_: Score, rating
+
 **Label**:
 A user-defined tag applied to Contacts for organization ("college friends", "work"). Flat: a Contact has many Labels, one level deep, no hierarchy.
 _Avoid_: Tag, group, category (use Label)

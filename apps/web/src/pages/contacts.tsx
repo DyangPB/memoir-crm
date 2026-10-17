@@ -1,21 +1,24 @@
-import { daysSince, type Contact, type LabelSummary } from "@memoir/core";
+import { daysSince, type CadenceHealth, type Contact, type LabelSummary } from "@memoir/core";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useSearchParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { CadenceHealthPill } from "../components/cadence-health-pill";
+import { DaysSince } from "../components/days-since";
 import { LetterAvatar } from "../components/letter-avatar";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { listContacts, listLabels } from "../lib/api";
+import { getCadence, listContacts, listLabels } from "../lib/api";
 import { authClient } from "../lib/auth-client";
+import { todayForDayCounts, todayIsoDay } from "../lib/format";
 import { cn } from "../lib/utils";
 
 function ContactRow({ contact }: { contact: Contact }) {
   const caption = contact.emails[0] ?? contact.howWeMet ?? null;
   const days =
     contact.lastInteractionAt !== null
-      ? daysSince(new Date(contact.lastInteractionAt), new Date())
+      ? daysSince(new Date(contact.lastInteractionAt), todayForDayCounts())
       : null;
 
   return (
@@ -32,10 +35,12 @@ function ContactRow({ contact }: { contact: Contact }) {
           )}
         </span>
         {days !== null && (
-          <span className="flex flex-col items-end">
-            <span className="font-display text-display-md tabular-nums text-ink">{days}</span>
-            <span className="text-caption text-ink-mute">days since you talked</span>
-          </span>
+          <DaysSince
+            className="flex-col items-end gap-0"
+            days={days}
+            numeralClassName="text-display-md"
+            targetDays={contact.effectiveCadenceDays}
+          />
         )}
       </Link>
     </li>
@@ -58,6 +63,7 @@ export function ContactsPage() {
   const activeLabelId = searchParams.get("label");
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const [labels, setLabels] = useState<LabelSummary[]>([]);
+  const [health, setHealth] = useState<CadenceHealth | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(query);
 
@@ -98,6 +104,25 @@ export function ContactsPage() {
     void listLabels().then((result) => {
       if (active && result.ok) {
         setLabels(result.value);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  useEffect(() => {
+    if (session === null) {
+      return;
+    }
+
+    let active = true;
+
+    // Cadence Health is a nicety: if it can't load, the pill stays hidden.
+    void getCadence(todayIsoDay()).then((result) => {
+      if (active && result.ok) {
+        setHealth(result.value.health);
       }
     });
 
@@ -201,6 +226,8 @@ export function ContactsPage() {
                   <Link to="/app/contacts/new">Add contact</Link>
                 </Button>
               </div>
+
+              <CadenceHealthPill health={health} />
 
               <Input
                 aria-label="Search your people"

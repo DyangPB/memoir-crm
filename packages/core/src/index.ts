@@ -1,4 +1,16 @@
-export { CATCH_UP_AFTER_DAYS, contactsToCatchUp } from "./catch-up";
+export {
+  cadenceHealth,
+  contactsToCatchUp,
+  DEFAULT_CADENCE_DAYS,
+  effectiveCadenceDays,
+  MAX_CADENCE_DAYS,
+  parseCadenceDays,
+  parseCadenceInput,
+  type CadenceDaysParseResult,
+  type CadenceHealth,
+  type CadenceParseResult,
+  type CadenceSettings,
+} from "./cadence";
 export {
   isIsoDay,
   letterFor,

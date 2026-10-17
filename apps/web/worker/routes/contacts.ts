@@ -18,6 +18,7 @@ import { createDb } from "../lib/db";
 import { listFieldDefinitions } from "../lib/fields";
 import { syncBirthdayImportantDate } from "../lib/important-dates";
 import { findOwnedLabel } from "../lib/labels";
+import { defaultCadenceDays } from "../lib/settings";
 import { getSessionUser } from "../lib/session";
 
 export const contactsRoutes = new Hono<{ Bindings: Env }>();
@@ -83,10 +84,11 @@ contactsRoutes.get("/contacts", async (c) => {
 
   const lastByContact = await lastInteractionDates(c.env, user.id);
   const labelsMap = await labelsByContact(c.env, user.id);
+  const cadenceDays = await defaultCadenceDays(c.env, user.id);
 
   return c.json({
     contacts: rows.map((row) =>
-      toContact(row, lastByContact.get(row.id) ?? null, labelsMap.get(row.id) ?? []),
+      toContact(row, lastByContact.get(row.id) ?? null, labelsMap.get(row.id) ?? [], cadenceDays),
     ),
   });
 });
@@ -115,6 +117,8 @@ contactsRoutes.post("/contacts", async (c) => {
     birthday: parsed.contact.birthday,
     howWeMet: parsed.contact.howWeMet,
     customFields: parsed.customFields,
+    cadenceDays: parsed.contact.cadenceDays,
+    cadenceTracked: parsed.contact.cadenceTracked,
     createdAt: now,
     updatedAt: now,
   };
@@ -122,7 +126,10 @@ contactsRoutes.post("/contacts", async (c) => {
   await createDb(c.env).insert(contacts).values(row);
   await syncBirthdayImportantDate(c.env, user.id, row.id, row.birthday);
 
-  return c.json({ contact: toContact(row, null, []) }, 201);
+  return c.json(
+    { contact: toContact(row, null, [], await defaultCadenceDays(c.env, user.id)) },
+    201,
+  );
 });
 
 contactsRoutes.get("/contacts/:id", async (c) => {
@@ -141,7 +148,14 @@ contactsRoutes.get("/contacts/:id", async (c) => {
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, row.id);
   const contactLabelsList = await labelsForContact(c.env, user.id, row.id);
 
-  return c.json({ contact: toContact(row, lastInteractionAt, contactLabelsList) });
+  return c.json({
+    contact: toContact(
+      row,
+      lastInteractionAt,
+      contactLabelsList,
+      await defaultCadenceDays(c.env, user.id),
+    ),
+  });
 });
 
 contactsRoutes.put("/contacts/:id", async (c) => {
@@ -180,6 +194,7 @@ contactsRoutes.put("/contacts/:id", async (c) => {
       { ...existing, ...parsed.contact, customFields: parsed.customFields, updatedAt },
       lastInteractionAt,
       contactLabelsList,
+      await defaultCadenceDays(c.env, user.id),
     ),
   });
 });
@@ -230,7 +245,14 @@ contactsRoutes.put("/contacts/:id/labels", async (c) => {
   const contactLabelsList = await labelsForContact(c.env, user.id, contact.id);
   const lastInteractionAt = await latestInteractionOn(c.env, user.id, contact.id);
 
-  return c.json({ contact: toContact(contact, lastInteractionAt, contactLabelsList) });
+  return c.json({
+    contact: toContact(
+      contact,
+      lastInteractionAt,
+      contactLabelsList,
+      await defaultCadenceDays(c.env, user.id),
+    ),
+  });
 });
 
 contactsRoutes.delete("/contacts/:id", async (c) => {

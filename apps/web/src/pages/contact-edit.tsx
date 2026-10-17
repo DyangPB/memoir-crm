@@ -1,4 +1,9 @@
-import type { Contact, ContactWriteInput, FieldDefinition } from "@memoir/core";
+import {
+  DEFAULT_CADENCE_DAYS,
+  type Contact,
+  type ContactWriteInput,
+  type FieldDefinition,
+} from "@memoir/core";
 import { useEffect, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 
@@ -7,7 +12,13 @@ import { BackToParent } from "../components/back-to-parent";
 import { ContactForm } from "../components/contact-form";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
-import { deleteContact, getContact, listFieldDefinitions, updateContact } from "../lib/api";
+import {
+  deleteContact,
+  getContact,
+  getDefaultCadenceDays,
+  listFieldDefinitions,
+  updateContact,
+} from "../lib/api";
 import { authClient } from "../lib/auth-client";
 
 export function ContactEditPage() {
@@ -16,6 +27,7 @@ export function ContactEditPage() {
   const navigate = useNavigate();
   const [contact, setContact] = useState<Contact | null>(null);
   const [definitions, setDefinitions] = useState<FieldDefinition[] | null>(null);
+  const [defaultCadenceDays, setDefaultCadenceDays] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [confirmingRemoval, setConfirmingRemoval] = useState(false);
@@ -28,34 +40,38 @@ export function ContactEditPage() {
 
     let active = true;
 
-    void Promise.all([getContact(id), listFieldDefinitions()]).then(([contactResult, fieldsResult]) => {
-      if (!active) {
-        return;
-      }
-
-      if (!contactResult.ok) {
-        if (contactResult.status === 401) {
-          void navigate("/login");
+    void Promise.all([getContact(id), listFieldDefinitions(), getDefaultCadenceDays()]).then(
+      ([contactResult, fieldsResult, cadenceResult]) => {
+        if (!active) {
           return;
         }
 
-        if (contactResult.status === 404) {
-          void navigate("/app");
+        if (!contactResult.ok) {
+          if (contactResult.status === 401) {
+            void navigate("/login");
+            return;
+          }
+
+          if (contactResult.status === 404) {
+            void navigate("/app");
+            return;
+          }
+
+          setLoadError(contactResult.message);
           return;
         }
 
-        setLoadError(contactResult.message);
-        return;
-      }
+        if (!fieldsResult.ok) {
+          setLoadError("That didn't load. Refresh and try again.");
+          return;
+        }
 
-      if (!fieldsResult.ok) {
-        setLoadError("That didn't load. Refresh and try again.");
-        return;
-      }
-
-      setContact(contactResult.value);
-      setDefinitions(fieldsResult.value);
-    });
+        setContact(contactResult.value);
+        setDefinitions(fieldsResult.value);
+        // The default is only a hint on the form; if it can't load, show the app default.
+        setDefaultCadenceDays(cadenceResult.ok ? cadenceResult.value : DEFAULT_CADENCE_DAYS);
+      },
+    );
 
     return () => {
       active = false;
@@ -81,7 +97,7 @@ export function ContactEditPage() {
     );
   }
 
-  if (contact === null || definitions === null) {
+  if (contact === null || definitions === null || defaultCadenceDays === null) {
     return <PageLoading label="Fetching this contact" />;
   }
 
@@ -138,6 +154,7 @@ export function ContactEditPage() {
 
         <ContactForm
           cancelHref={`/app/contacts/${contact.id}`}
+          defaultCadenceDays={defaultCadenceDays}
           definitions={definitions}
           error={formError}
           initialValues={{
@@ -147,6 +164,8 @@ export function ContactEditPage() {
             socialLinks: contact.socialLinks,
             birthday: contact.birthday,
             howWeMet: contact.howWeMet,
+            cadenceDays: contact.cadenceDays,
+            cadenceTracked: contact.cadenceTracked,
             customFields: contact.customFields,
           }}
           onSubmit={handleSubmit}

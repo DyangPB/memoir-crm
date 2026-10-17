@@ -57,6 +57,13 @@
       "when": 1791792180690,
       "tag": "0007_spotty_baron_strucker",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1792240769761,
+      "tag": "0008_smooth_giant_man",
+      "breakpoints": true
     }
   ]
 }

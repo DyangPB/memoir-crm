@@ -229,6 +229,19 @@ describe("demo account", () => {
     );
   });
 
+  it("resets the default Cadence a visitor changed", async () => {
+    const cookie = await startDemo();
+
+    expect((await api("PUT", "/api/settings", { defaultCadenceDays: 1 }, cookie)).status).toBe(200);
+
+    const second = await startDemo();
+    const settings = (await (await api("GET", "/api/settings", undefined, second)).json()) as {
+      settings: { defaultCadenceDays: number };
+    };
+
+    expect(settings.settings.defaultCadenceDays).toBe(30);
+  });
+
   it("keeps the demo address book away from every other account", async () => {
     await startDemo();
 
