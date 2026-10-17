@@ -1,6 +1,6 @@
 import { daysSince, type CadenceHealth, type Contact, type LabelSummary } from "@memoir/core";
 import { useEffect, useState } from "react";
-import { Link, Navigate, useSearchParams } from "react-router";
+import { Link, NavLink, Navigate, Outlet, useLocation, useParams, useSearchParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { CadenceHealthPill } from "../components/cadence-health-pill";
@@ -14,7 +14,12 @@ import { authClient } from "../lib/auth-client";
 import { todayForDayCounts, todayIsoDay } from "../lib/format";
 import { cn } from "../lib/utils";
 
-function ContactRow({ contact }: { contact: Contact }) {
+/** What the detail pane can ask of the list rail beside it. */
+export type ContactsOutletContext = {
+  refreshList: () => void;
+};
+
+function ContactRow({ contact, search }: { contact: Contact; search: string }) {
   const caption = contact.emails[0] ?? contact.howWeMet ?? null;
   const days =
     contact.lastInteractionAt !== null
@@ -23,9 +28,14 @@ function ContactRow({ contact }: { contact: Contact }) {
 
   return (
     <li>
-      <Link
-        className="flex items-center gap-3 rounded-sm px-2 py-3 transition-colors hover:bg-primary-bg-subdued"
-        to={`/app/contacts/${contact.id}`}
+      <NavLink
+        className={({ isActive }) =>
+          cn(
+            "flex items-center gap-3 rounded-sm px-2 py-3 transition-colors hover:bg-primary-bg-subdued",
+            isActive && "bg-primary-bg-subdued",
+          )
+        }
+        to={{ pathname: `/app/contacts/${contact.id}`, search }}
       >
         <LetterAvatar name={contact.name} />
         <span className="flex min-w-0 flex-1 flex-col">
@@ -42,7 +52,7 @@ function ContactRow({ contact }: { contact: Contact }) {
             targetDays={contact.effectiveCadenceDays}
           />
         )}
-      </Link>
+      </NavLink>
     </li>
   );
 }
@@ -59,6 +69,8 @@ function chipClass(active: boolean): string {
 export function ContactsPage() {
   const { data: session, isPending } = authClient.useSession();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { id: selectedId } = useParams();
+  const { search } = useLocation();
   const query = searchParams.get("q") ?? "";
   const activeLabelId = searchParams.get("label");
   const [contacts, setContacts] = useState<Contact[] | null>(null);
@@ -66,6 +78,7 @@ export function ContactsPage() {
   const [health, setHealth] = useState<CadenceHealth | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchInput, setSearchInput] = useState(query);
+  const [listVersion, setListVersion] = useState(0);
 
   useEffect(() => {
     setSearchInput(query);
@@ -110,7 +123,7 @@ export function ContactsPage() {
     return () => {
       active = false;
     };
-  }, [session]);
+  }, [session, listVersion]);
 
   useEffect(() => {
     if (session === null) {
@@ -154,7 +167,7 @@ export function ContactsPage() {
     return () => {
       active = false;
     };
-  }, [session, query, activeLabelId]);
+  }, [session, query, activeLabelId, listVersion]);
 
   function selectLabel(labelId: string | null) {
     setSearchParams(
@@ -197,18 +210,23 @@ export function ContactsPage() {
   const isFiltering = query.trim() !== "" || activeLabelId !== null;
   const showEmptyState = contacts !== null && contacts.length === 0 && !isFiltering;
 
+  const hasSelection = selectedId !== undefined;
+  const outletContext: ContactsOutletContext = {
+    refreshList: () => setListVersion((version) => version + 1),
+  };
+
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-6 px-6 py-12">
+      <main className="mx-auto w-full max-w-6xl px-6 py-8">
         {error !== null && (
-          <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
+          <p className="mb-4 rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
+            {error}
+          </p>
         )}
 
-        {contacts === null ? (
-          <p className="text-caption text-ink-mute">Fetching your people</p>
-        ) : showEmptyState ? (
-          <div className="flex flex-col gap-3">
+        {showEmptyState ? (
+          <div className="flex max-w-xl flex-col gap-3">
             <h1 className="font-display text-display-md text-ink">Your people, all in one place.</h1>
             <p className="text-body-md text-ink-secondary">
               Add your first contact, and Memoir will help you stay in touch.
@@ -218,83 +236,106 @@ export function ContactsPage() {
             </Button>
           </div>
         ) : (
-          <>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <h1 className="font-display text-display-md text-ink">Your people</h1>
-                <Button asChild>
-                  <Link to="/app/contacts/new">Add contact</Link>
-                </Button>
-              </div>
+          <div className="grid gap-8 md:grid-cols-[22rem_1fr]">
+            <section
+              aria-label="Your people"
+              className={cn(
+                "min-w-0 flex-col gap-6 md:max-h-[80vh] md:overflow-y-auto md:pr-2",
+                hasSelection ? "hidden md:flex" : "flex",
+              )}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <h1 className="font-display text-display-md text-ink">Your people</h1>
+                  <Button asChild>
+                    <Link to="/app/contacts/new">Add contact</Link>
+                  </Button>
+                </div>
 
-              <CadenceHealthPill health={health} />
+                <CadenceHealthPill health={health} />
 
-              <Input
-                aria-label="Search your people"
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search your people"
-                type="search"
-                value={searchInput}
-              />
+                <Input
+                  aria-label="Search your people"
+                  onChange={(event) => setSearchInput(event.target.value)}
+                  placeholder="Search your people"
+                  type="search"
+                  value={searchInput}
+                />
 
-              {labels.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    className={chipClass(activeLabelId === null)}
-                    onClick={() => selectLabel(null)}
-                    type="button"
-                  >
-                    All
-                  </button>
-                  {labels.map((label) => (
+                {labels.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
                     <button
-                      className={chipClass(activeLabelId === label.id)}
-                      key={label.id}
-                      onClick={() => selectLabel(label.id)}
+                      className={chipClass(activeLabelId === null)}
+                      onClick={() => selectLabel(null)}
                       type="button"
                     >
-                      {label.name}
+                      All
                     </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {contacts.length === 0 ? (
-              <div className="flex flex-col gap-2">
-                {query.trim() !== "" ? (
-                  <>
-                    <p className="text-body-md text-ink-secondary">
-                      Nothing matched "{query.trim()}". Try a name, a place, or something you talked
-                      about.
-                    </p>
-                    <Button className="self-start" onClick={clearSearch} variant="ghost">
-                      Clear search
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-body-md text-ink-secondary">
-                      No one carries this label yet.
-                    </p>
-                    <Button
-                      className="self-start"
-                      onClick={() => selectLabel(null)}
-                      variant="ghost"
-                    >
-                      Show everyone
-                    </Button>
-                  </>
+                    {labels.map((label) => (
+                      <button
+                        className={chipClass(activeLabelId === label.id)}
+                        key={label.id}
+                        onClick={() => selectLabel(label.id)}
+                        type="button"
+                      >
+                        {label.name}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-            ) : (
-              <ul className="flex flex-col divide-y divide-hairline">
-                {contacts.map((contact) => (
-                  <ContactRow contact={contact} key={contact.id} />
-                ))}
-              </ul>
-            )}
-          </>
+
+              {contacts === null ? (
+                <p className="text-caption text-ink-mute">Fetching your people</p>
+              ) : contacts.length === 0 ? (
+                <div className="flex flex-col gap-2">
+                  {query.trim() !== "" ? (
+                    <>
+                      <p className="text-body-md text-ink-secondary">
+                        Nothing matched "{query.trim()}". Try a name, a place, or something you
+                        talked about.
+                      </p>
+                      <Button className="self-start" onClick={clearSearch} variant="ghost">
+                        Clear search
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-body-md text-ink-secondary">
+                        No one carries this label yet.
+                      </p>
+                      <Button
+                        className="self-start"
+                        onClick={() => selectLabel(null)}
+                        variant="ghost"
+                      >
+                        Show everyone
+                      </Button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <ul className="flex flex-col divide-y divide-hairline">
+                  {contacts.map((contact) => (
+                    <ContactRow contact={contact} key={contact.id} search={search} />
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            <section
+              aria-label="Contact detail"
+              className={cn("min-w-0", hasSelection ? "block" : "hidden md:block")}
+            >
+              {hasSelection ? (
+                <Outlet context={outletContext} key={selectedId} />
+              ) : (
+                <p className="text-body-md text-ink-mute">
+                  Pick someone from the list to see your history together.
+                </p>
+              )}
+            </section>
+          </div>
         )}
       </main>
     </div>

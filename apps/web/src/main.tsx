@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import { AppPage } from "./pages/app";
-import { ContactDetailPage } from "./pages/contact-detail";
+import { ContactDetailPane } from "./pages/contact-detail";
 import { ContactEditPage } from "./pages/contact-edit";
 import { ContactNewPage } from "./pages/contact-new";
 import { ContactsPage } from "./pages/contacts";
@@ -29,9 +29,10 @@ createRoot(root).render(
         <Route element={<SignupPage />} path="/signup" />
         <Route element={<AppPage />} path="/app" />
         <Route element={<RemindersPage />} path="/app/reminders" />
-        <Route element={<ContactsPage />} path="/app/contacts" />
+        <Route element={<ContactsPage />} path="/app/contacts">
+          <Route element={<ContactDetailPane />} path=":id" />
+        </Route>
         <Route element={<ContactNewPage />} path="/app/contacts/new" />
-        <Route element={<ContactDetailPage />} path="/app/contacts/:id" />
         <Route element={<ContactEditPage />} path="/app/contacts/:id/edit" />
         <Route element={<SettingsPage />} path="/app/settings" />
       </Routes>
