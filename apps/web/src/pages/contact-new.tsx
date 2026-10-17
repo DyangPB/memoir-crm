@@ -92,8 +92,8 @@ export function ContactNewPage() {
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <BackToParent label="Back to Contacts" to="/app/contacts" />
           <div className="flex flex-col gap-1">
-            <p className="text-micro-cap uppercase text-ink-mute">New contact</p>
-            <h1 className="font-display text-display-md text-ink">Add a contact</h1>
+            <p className="text-label-md uppercase tracking-wider text-ink-mute">New contact</p>
+            <h1 className="font-display text-display-lg text-ink">Add a contact</h1>
           </div>
         </div>
         <ContactForm
