@@ -1,7 +1,7 @@
 /**
  * The brand's airmail edge: a 6px band of diagonal stripes, ocean with one amber
  * stripe every fifth, drawn as an inline SVG pattern. It sits across the top of
- * every brand hero and nowhere else.
+ * every brand hero. In-app cards use the `airmail-edge` utility in index.css.
  */
 export function AirmailEdge() {
   return (
