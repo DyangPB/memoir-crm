@@ -32,7 +32,15 @@ CI on every push to `main` (needs a `CLOUDFLARE_API_TOKEN` repository secret wit
 and D1 edit permissions).
 
 The `memoir` D1 database is already provisioned and bound in `apps/web/wrangler.jsonc`.
-Apply schema changes with `wrangler d1 migrations apply memoir --remote` from `apps/web`.
+CI applies pending migrations before every deploy, after printing a D1 Time Travel
+bookmark in the log to restore from. Keep migrations additive (add columns and tables;
+drop or rename only in a later release) so the code still live keeps working while they
+apply. Locally, apply them with `wrangler d1 migrations apply DB --local` from `apps/web`.
+
+Contact photos and Interaction attachments live in an R2 bucket, `memoir-media`, bound as
+`MEDIA`. Create it once with `wrangler r2 bucket create memoir-media` before the first
+deploy that includes it; CI does not create it. Google Calendar sync is optional and needs
+the `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` secrets (`wrangler secret put`).
 
 ## Regenerating types
 
