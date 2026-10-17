@@ -1,3 +1,4 @@
+export { CATCH_UP_AFTER_DAYS, contactsToCatchUp } from "./catch-up";
 export {
   isIsoDay,
   letterFor,
@@ -60,6 +61,7 @@ export {
   type InteractionType,
 } from "./interaction";
 export { parseNoteInput, type Note, type NoteInput, type NoteParseResult } from "./note";
+export { pickOnThisDay, type OnThisDay } from "./on-this-day";
 export {
   nextReminderEvent,
   parseReminderInput,

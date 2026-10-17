@@ -1,20 +1,27 @@
 import {
+  contactsToCatchUp,
   importantDateYears,
+  interactionTypeLabel,
   nextOccurrence,
   occursWithinDays,
   UPCOMING_WINDOW_DAYS,
   type Contact,
   type ImportantDateWithContact,
+  type OnThisDay,
   type ReminderWithContact,
 } from "@memoir/core";
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link, Navigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
+import { Icon } from "../components/icon";
+import { LetterAvatar } from "../components/letter-avatar";
+import { LogInteractionDialog } from "../components/log-interaction-dialog";
 import { PageLoading } from "../components/page-loading";
 import { Button } from "../components/ui/button";
-import { listContacts, listImportantDates, listOpenReminders } from "../lib/api";
+import { getOnThisDay, listContacts, listImportantDates, listOpenReminders } from "../lib/api";
 import { authClient } from "../lib/auth-client";
+import { formatDay, todayIsoDay } from "../lib/format";
 import { importantDateTiming } from "../lib/important-dates";
 import { reminderChipClass, reminderTiming } from "../lib/reminders";
 import { cn } from "../lib/utils";
@@ -23,16 +30,22 @@ type DashboardCardProps = {
   title: string;
   linkLabel: string;
   linkTo: string;
+  edge?: boolean;
   children: ReactNode;
 };
 
-function DashboardCard({ title, linkLabel, linkTo, children }: DashboardCardProps) {
+function DashboardCard({ title, linkLabel, linkTo, edge = false, children }: DashboardCardProps) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-hairline p-6">
+    <section className="relative flex flex-col gap-3 overflow-hidden rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+      {edge && <div aria-hidden className="airmail-edge absolute inset-x-0 top-0 h-1.5" />}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <h2 className="text-heading-lg text-ink">{title}</h2>
-        <Link className="text-caption text-ink-mute hover:text-ink" to={linkTo}>
+        <h2 className="font-display text-headline-sm text-ink">{title}</h2>
+        <Link
+          className="inline-flex items-center gap-1 text-label-lg text-primary hover:text-primary-press"
+          to={linkTo}
+        >
           {linkLabel}
+          <Icon className="text-base" name="arrow_forward" />
         </Link>
       </div>
       {children}
@@ -40,19 +53,41 @@ function DashboardCard({ title, linkLabel, linkTo, children }: DashboardCardProp
   );
 }
 
-function ReminderChip({ reminder, now }: { reminder: ReminderWithContact; now: Date }) {
+function greeting(now: Date, name: string): string {
+  const hour = now.getHours();
+  const part = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+  const first = name.includes("@") ? "" : (name.trim().split(/\s+/)[0] ?? "");
+
+  return first === "" ? `Good ${part}` : `Good ${part}, ${first}`;
+}
+
+function ReminderRow({ reminder, now }: { reminder: ReminderWithContact; now: Date }) {
   return (
     <li>
       <Link
-        className={cn(
-          "flex flex-col gap-0.5 rounded-full px-3 py-1.5 transition-opacity hover:opacity-80",
-          reminderChipClass(reminder.status),
-        )}
+        className="-mx-2 flex items-center justify-between gap-3 rounded-sm px-2 py-2.5 transition-colors hover:bg-canvas-soft"
         to={`/app/contacts/${reminder.contactId}`}
       >
-        <span className="text-body-md font-medium">{reminder.body}</span>
-        <span className="text-caption tabular-nums opacity-80">
-          {reminder.contactName} · {reminderTiming(reminder, now)}
+        <span className="flex min-w-0 items-center gap-3">
+          <Icon
+            className={cn(
+              "text-xl",
+              reminder.status === "overdue" ? "text-danger" : "text-tertiary",
+            )}
+            name={reminder.status === "overdue" ? "priority_high" : "schedule"}
+          />
+          <span className="flex min-w-0 flex-col">
+            <span className="truncate text-body-md font-medium text-ink">{reminder.body}</span>
+            <span className="truncate text-caption text-ink-mute">{reminder.contactName}</span>
+          </span>
+        </span>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-3 py-1 text-caption tabular-nums",
+            reminderChipClass(reminder.status),
+          )}
+        >
+          {reminderTiming(reminder, now)}
         </span>
       </Link>
     </li>
@@ -92,6 +127,28 @@ function ComingUpRow({
   );
 }
 
+function CatchUpCard({ contact }: { contact: Contact & { daysSince: number } }) {
+  return (
+    <li>
+      <Link
+        className="flex h-full items-center gap-4 rounded-lg border border-hairline p-4 transition-colors hover:bg-canvas-soft"
+        to={`/app/contacts/${contact.id}`}
+      >
+        <LetterAvatar name={contact.name} />
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate font-display text-contact-name text-ink">{contact.name}</span>
+          <span className="flex items-baseline gap-1.5 text-caption text-ink-mute">
+            <span className="font-display text-numeral tabular-nums text-ink">
+              {contact.daysSince}
+            </span>
+            days since you talked
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
 function comingUpCountLine(importantDates: ImportantDateWithContact[], now: Date): string {
   const count =
     importantDates.length === 1
@@ -102,54 +159,82 @@ function comingUpCountLine(importantDates: ImportantDateWithContact[], now: Date
   return next === undefined ? count : `${count} · next: ${importantDateTiming(next.fallsOn, now)}`;
 }
 
+function OnThisDayStrip({ memory }: { memory: OnThisDay }) {
+  return (
+    <aside className="flex items-start gap-4 rounded-lg bg-vellum p-6">
+      <Icon className="mt-0.5 text-2xl text-primary-container" name="auto_stories" />
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <p className="text-label-md uppercase tracking-wider text-ink-mute">
+          On this day · {memory.yearsAgo === 1 ? "1 year ago" : `${memory.yearsAgo} years ago`}
+        </p>
+        <p className="font-display text-headline-sm text-ink">
+          {memory.note ?? `${interactionTypeLabel(memory.type)} with ${memory.contactName}`}
+        </p>
+        <p className="text-caption text-ink-mute">
+          {memory.contactName} · {formatDay(memory.occurredOn)}
+        </p>
+        <Link
+          className="inline-flex w-fit items-center gap-1 text-label-lg text-primary hover:text-primary-press"
+          to={`/app/contacts/${memory.contactId}`}
+        >
+          Open {memory.contactName}
+          <Icon className="text-base" name="arrow_forward" />
+        </Link>
+      </div>
+    </aside>
+  );
+}
+
 export function AppPage() {
   const { data: session, isPending } = authClient.useSession();
   const [contacts, setContacts] = useState<Contact[] | null>(null);
   const [reminders, setReminders] = useState<ReminderWithContact[] | null>(null);
   const [importantDates, setImportantDates] = useState<ImportantDateWithContact[] | null>(null);
+  const [onThisDay, setOnThisDay] = useState<OnThisDay | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [logging, setLogging] = useState(false);
+  const signedIn = session !== null && session !== undefined;
 
-  useEffect(() => {
-    if (session === null) {
+  const load = useCallback(async () => {
+    const [contactResult, reminderResult, dateResult, memoryResult] = await Promise.all([
+      listContacts(),
+      listOpenReminders(),
+      listImportantDates(),
+      getOnThisDay(todayIsoDay()),
+    ]);
+
+    if (!contactResult.ok) {
+      setError(contactResult.message);
+
       return;
     }
 
-    let active = true;
+    if (!reminderResult.ok) {
+      setError(reminderResult.message);
 
-    void Promise.all([listContacts(), listOpenReminders(), listImportantDates()]).then(
-      ([contactResult, reminderResult, dateResult]) => {
-        if (!active) {
-          return;
-        }
+      return;
+    }
 
-        if (!contactResult.ok) {
-          setError(contactResult.message);
+    if (!dateResult.ok) {
+      setError(dateResult.message);
 
-          return;
-        }
+      return;
+    }
 
-        if (!reminderResult.ok) {
-          setError(reminderResult.message);
+    setContacts(contactResult.value);
+    setReminders(reminderResult.value);
+    setImportantDates(dateResult.value);
+    // A memory is a nicety: if it can't load, the strip stays hidden.
+    setOnThisDay(memoryResult.ok ? memoryResult.value : null);
+  }, []);
 
-          return;
-        }
+  useEffect(() => {
+    if (!signedIn) {
+      return;
+    }
 
-        if (!dateResult.ok) {
-          setError(dateResult.message);
-
-          return;
-        }
-
-        setContacts(contactResult.value);
-        setReminders(reminderResult.value);
-        setImportantDates(dateResult.value);
-      },
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [session]);
+    void load();
+  }, [signedIn, load]);
 
   const now = new Date();
 
@@ -196,6 +281,7 @@ export function AppPage() {
     .sort((left, right) =>
       nextOccurrence(left.fallsOn, now).localeCompare(nextOccurrence(right.fallsOn, now)),
     );
+  const catchUp = contactsToCatchUp(contacts, now);
 
   return (
     <div className="min-h-screen bg-canvas">
@@ -217,7 +303,18 @@ export function AppPage() {
           </div>
         ) : (
           <>
+            <header className="flex flex-wrap items-center justify-between gap-4">
+              <h1 className="font-display text-display-lg text-ink">
+                {greeting(now, session.user.name)}
+              </h1>
+              <Button onClick={() => setLogging(true)} type="button">
+                <Icon className="text-lg" name="history_edu" />
+                Log interaction
+              </Button>
+            </header>
+
             <DashboardCard
+              edge
               linkLabel="See everything"
               linkTo="/app/reminders"
               title="Waiting on you"
@@ -229,9 +326,9 @@ export function AppPage() {
                   <p className="text-body-tabular tabular-nums text-ink-mute">
                     {waitingCountLine}
                   </p>
-                  <ul className="flex flex-wrap gap-2">
+                  <ul className="flex flex-col divide-y divide-hairline">
                     {waiting.map((reminder) => (
-                      <ReminderChip key={reminder.id} now={now} reminder={reminder} />
+                      <ReminderRow key={reminder.id} now={now} reminder={reminder} />
                     ))}
                   </ul>
                 </>
@@ -258,6 +355,38 @@ export function AppPage() {
                 </>
               )}
             </DashboardCard>
+
+            <DashboardCard
+              linkLabel="All contacts"
+              linkTo="/app/contacts"
+              title="People to catch up with"
+            >
+              {catchUp.length === 0 ? (
+                <p className="text-body-md text-ink-secondary">
+                  You're in touch with everyone lately.
+                </p>
+              ) : (
+                <>
+                  <p className="text-body-tabular tabular-nums text-ink-mute">
+                    Contacts quiet for more than 30 days
+                  </p>
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {catchUp.map((contact) => (
+                      <CatchUpCard contact={contact} key={contact.id} />
+                    ))}
+                  </ul>
+                </>
+              )}
+            </DashboardCard>
+
+            {onThisDay !== null && <OnThisDayStrip memory={onThisDay} />}
+
+            <LogInteractionDialog
+              contacts={contacts}
+              onClose={() => setLogging(false)}
+              onLogged={() => void load()}
+              open={logging}
+            />
           </>
         )}
       </main>
