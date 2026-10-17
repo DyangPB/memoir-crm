@@ -90,7 +90,7 @@ export function ContactEditPage() {
     return (
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-xl flex-col gap-3 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-xl flex-col gap-3 px-4 py-6 sm:px-6 sm:py-12">
           <p className="text-body-md text-ink-secondary">{loadError}</p>
         </main>
       </div>
@@ -143,7 +143,7 @@ export function ContactEditPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-12">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <BackToParent label="Back to Contacts" to="/app/contacts" />
           <div className="flex flex-col gap-1">
@@ -176,7 +176,7 @@ export function ContactEditPage() {
           submitLabel="Save changes"
         />
 
-        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-6 shadow-card">
+        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-4 shadow-card sm:p-6">
           {!confirmingRemoval ? (
             <>
               <h2 className="font-display text-headline-sm text-ink">Remove {firstName}</h2>

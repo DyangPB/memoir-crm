@@ -220,7 +220,7 @@ export function CalendarPage() {
     return (
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-6xl flex-col items-start gap-4 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-6xl flex-col items-start gap-4 px-4 py-6 sm:px-6 sm:py-12">
           <BackToParent label="Back to Dashboard" to="/app" />
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger" role="alert">
             {error}
@@ -240,7 +240,7 @@ export function CalendarPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-12">
         <BackToParent label="Back to Dashboard" to="/app" />
 
         <div className="flex flex-col justify-between gap-4 border-b border-hairline pb-6 lg:flex-row lg:items-end">
@@ -266,7 +266,7 @@ export function CalendarPage() {
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <Button
               aria-label="Previous"
               onClick={() => go({ date: stepAnchor(view, anchor, -1) })}
@@ -274,7 +274,7 @@ export function CalendarPage() {
             >
               <Icon className="text-body-md" name="chevron_left" />
             </Button>
-            <h2 className="min-w-44 text-center font-display text-display-md text-ink">
+            <h2 className="min-w-0 flex-1 text-balance text-center font-display text-title-md leading-tight text-ink sm:min-w-44 sm:flex-none sm:text-display-md">
               {rangeTitle(view, anchor, range)}
             </h2>
             <Button
@@ -291,14 +291,14 @@ export function CalendarPage() {
 
           <div
             aria-label="Calendar view"
-            className="flex items-center gap-1 rounded-xl border border-hairline bg-canvas-soft p-1"
+            className="flex w-full items-center gap-1 rounded-xl border border-hairline bg-canvas-soft p-1 sm:w-auto"
             role="group"
           >
             {calendarViews.map((candidate) => (
               <button
                 aria-pressed={view === candidate}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-button-md transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  "flex-1 rounded-lg px-2 py-1.5 text-button-md sm:px-3 transition-all sm:flex-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   view === candidate
                     ? "bg-canvas text-primary-container shadow-sm"
                     : "text-ink-mute hover:text-ink",
@@ -346,7 +346,7 @@ export function CalendarPage() {
 
         <div aria-busy={loading} className={cn("flex flex-col gap-6", loading && "opacity-60")}>
         {view === "month" && (
-          <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_320px]">
             <MonthGridView
               items={shown}
               month={anchor.slice(0, 7)}

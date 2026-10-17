@@ -313,13 +313,13 @@ export function SettingsPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex max-w-xl flex-col gap-8 px-6 py-16">
+      <main className="mx-auto flex max-w-xl flex-col gap-8 px-4 py-8 sm:px-6 sm:py-16">
         <div className="flex flex-col gap-2">
           <p className="text-label-md uppercase tracking-wider text-ink-mute">Settings</p>
           <h1 className="font-display text-display-lg text-ink">Your account</h1>
         </div>
 
-        <section className="flex flex-col gap-1 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+        <section className="flex flex-col gap-1 rounded-lg border border-hairline bg-canvas p-4 shadow-card sm:p-6">
           <h2 className="font-display text-headline-sm text-ink">Profile</h2>
           <p className="text-body-md text-ink-secondary">
             {session.user.name} · {session.user.email}
@@ -327,7 +327,7 @@ export function SettingsPage() {
         </section>
 
         {defaultCadenceDays !== null && (
-          <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+          <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-4 shadow-card sm:p-6">
             <div className="flex flex-col gap-1">
               <h2 className="font-display text-headline-sm text-ink">Cadence</h2>
               <p className="text-caption text-ink-mute">
@@ -341,7 +341,7 @@ export function SettingsPage() {
 
         <GoogleCalendarSection />
 
-        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-4 shadow-card sm:p-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-headline-sm text-ink">Custom fields</h2>
             <p className="text-caption text-ink-mute">
@@ -497,7 +497,7 @@ export function SettingsPage() {
           )}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+        <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-4 shadow-card sm:p-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-headline-sm text-ink">Labels</h2>
             <p className="text-caption text-ink-mute">
@@ -612,7 +612,7 @@ export function SettingsPage() {
           )}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-6 shadow-card">
+        <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-4 shadow-card sm:p-6">
           <div className="flex flex-col gap-1">
             <h2 className="font-display text-headline-sm text-danger">Delete your account</h2>
             <p className="text-body-md text-ink-secondary">

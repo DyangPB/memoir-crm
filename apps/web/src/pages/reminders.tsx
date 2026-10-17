@@ -262,7 +262,7 @@ export function RemindersPage() {
     return (
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-4xl flex-col items-start gap-4 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-4xl flex-col items-start gap-4 px-4 py-6 sm:px-6 sm:py-12">
           <BackToParent label="Back to Dashboard" to="/app" />
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         </main>
@@ -308,7 +308,7 @@ export function RemindersPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-12">
         <BackToParent label="Back to Dashboard" to="/app" />
 
         <div className="flex flex-col justify-between gap-3 border-b border-hairline pb-6 sm:flex-row sm:items-end">

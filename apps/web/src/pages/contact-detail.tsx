@@ -709,11 +709,11 @@ function ContactDetailBody() {
       <div className="flex flex-col gap-3">
         {backToList}
         <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-6">
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 max-w-full items-center gap-4">
             <ContactAvatar contact={contact} size="lg" />
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
-              <h1 className="font-display text-display-lg text-ink">{contact.name}</h1>
+              <h1 className="break-words font-display text-headline-lg text-ink sm:text-display-lg">{contact.name}</h1>
               {(contact.roleCompany !== null || contact.location !== null) && (
                 <p className="text-body-md text-ink-secondary">
                   {[contact.roleCompany, contact.location]
@@ -722,7 +722,7 @@ function ContactDetailBody() {
                 </p>
               )}
               {contact.timezone !== null && <LocalClock timezone={contact.timezone} />}
-              <div className="-ml-4 flex items-center gap-1">
+              <div className="-ml-4 flex flex-wrap items-center gap-1">
                 <AttachButton
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   busy={photoBusy}
@@ -759,7 +759,7 @@ function ContactDetailBody() {
         </div>
       </div>
 
-      <div className="grid gap-10 xl:grid-cols-[1fr_260px]">
+      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[1fr_260px]">
         <section className="flex flex-col gap-5">
           <h2 className="text-heading-lg text-ink">Timeline</h2>
 
@@ -859,7 +859,7 @@ function ContactDetailBody() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-x-2">
                             <AttachButton
                               ariaLabel={`Attach file to ${interactionTypeLabel(interaction.type)} on ${formatDay(interaction.occurredOn)}`}
                               busy={attachingId === interaction.id}
@@ -1081,7 +1081,7 @@ function ContactDetailBody() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-x-2">
                         {reminder.status !== "done" && (
                           <Button onClick={() => handleTickReminder(reminder.id)} variant="ghost">
                             Mark done
@@ -1153,7 +1153,7 @@ function ContactDetailBody() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-x-2">
                         <Button
                           onClick={() => {
                             setConfirmingImportantDateId(importantDate.id);
@@ -1218,7 +1218,7 @@ function ContactDetailBody() {
                             </Button>
                           </div>
                         ) : (
-                          <div className="flex gap-2">
+                          <div className="flex flex-wrap gap-x-2">
                             <Button
                               onClick={() => {
                                 setEditingNoteId(note.id);

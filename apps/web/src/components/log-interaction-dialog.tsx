@@ -114,7 +114,7 @@ export function LogInteractionDialog({
   return (
     <dialog
       aria-labelledby={titleId}
-      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-hairline bg-canvas p-6 shadow-panel backdrop:bg-ink/40"
+      className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-hairline bg-canvas p-4 shadow-panel sm:p-6 backdrop:bg-ink/40"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
           onClose();

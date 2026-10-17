@@ -43,7 +43,7 @@ type DashboardCardProps = {
 
 function DashboardCard({ title, linkLabel, linkTo, edge = false, children }: DashboardCardProps) {
   return (
-    <section className="relative flex flex-col gap-3 overflow-hidden rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+    <section className="relative flex flex-col gap-3 overflow-hidden rounded-lg border border-hairline bg-canvas p-4 shadow-card sm:p-6">
       {edge && <div aria-hidden className="airmail-edge absolute inset-x-0 top-0 h-1.5" />}
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
         <h2 className="font-display text-headline-sm text-ink">{title}</h2>
@@ -118,10 +118,12 @@ function ComingUpRow({
       >
         <span className="flex min-w-0 flex-1 items-center gap-2">
           <span aria-hidden className="h-2 w-2 shrink-0 rounded-full bg-amber-fill" />
-          <span className="truncate text-body-md text-ink">{importantDate.name}</span>
-          <span className="shrink-0 text-caption text-ink-mute">{importantDate.contactName}</span>
+          <span className="flex min-w-0 flex-col sm:flex-row sm:items-baseline sm:gap-2">
+            <span className="truncate text-body-md text-ink">{importantDate.name}</span>
+            <span className="truncate text-caption text-ink-mute">{importantDate.contactName}</span>
+          </span>
         </span>
-        <span className="flex shrink-0 items-baseline gap-2">
+        <span className="flex shrink-0 flex-col items-end sm:flex-row sm:items-baseline sm:gap-2">
           {importantDate.source === "birthday" && years > 0 && (
             <span className="text-caption text-ink-mute">turning {years}</span>
           )}
@@ -167,7 +169,7 @@ function comingUpCountLine(importantDates: ImportantDateWithContact[], now: Date
 
 function OnThisDayStrip({ memory }: { memory: OnThisDay }) {
   return (
-    <aside className="flex items-start gap-4 rounded-lg bg-vellum p-6">
+    <aside className="flex items-start gap-4 rounded-lg bg-vellum p-4 sm:p-6">
       <Icon className="mt-0.5 text-2xl text-primary-container" name="auto_stories" />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <p className="text-label-md uppercase tracking-wider text-ink-mute">
@@ -271,7 +273,7 @@ export function AppPage() {
     return (
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-3xl flex-col items-start gap-4 px-4 py-6 sm:px-6 sm:py-12">
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         </main>
       </div>
@@ -303,7 +305,7 @@ export function AppPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-12">
         {error !== null && (
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         )}
@@ -387,7 +389,7 @@ export function AppPage() {
                   <p className="text-body-tabular tabular-nums text-ink-mute">
                     Contacts past their Cadence
                   </p>
-                  <ul className="grid gap-3 sm:grid-cols-2">
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     {catchUp.map((contact) => (
                       <CatchUpCard contact={contact} key={contact.id} />
                     ))}
