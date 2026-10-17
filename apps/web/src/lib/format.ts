@@ -1,3 +1,5 @@
+import { isIsoDay } from "@memoir/core";
+
 const dayFormat = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "short",
@@ -7,6 +9,11 @@ const dayFormat = new Intl.DateTimeFormat("en-GB", {
 
 export function formatDay(isoDay: string): string {
   return dayFormat.format(new Date(`${isoDay}T00:00:00.000Z`));
+}
+
+/** The text when it is a real YYYY-MM-DD day, otherwise null. */
+export function isoDayOrNull(value: string | null): string | null {
+  return value !== null && isIsoDay(value) ? value : null;
 }
 
 export function todayIsoDay(): string {

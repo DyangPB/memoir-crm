@@ -1,4 +1,19 @@
 export {
+  calendarItemTitle,
+  calendarRange,
+  calendarViews,
+  expandImportantDates,
+  groupItemsByDay,
+  monthGrid,
+  parseCalendarRange,
+  stepAnchor,
+  weekOf,
+  type CalendarItem,
+  type CalendarRange,
+  type CalendarRangeParseResult,
+  type CalendarView,
+} from "./calendar";
+export {
   cadenceHealth,
   contactsToCatchUp,
   DEFAULT_CADENCE_DAYS,
@@ -36,6 +51,7 @@ export {
   type FieldType,
 } from "./custom-field";
 export { daysSince } from "./days-since";
+export { addDays, weekdayOf } from "./iso-day";
 export { localTime } from "./local-time";
 export {
   ATTACHMENT_MAX_BYTES,

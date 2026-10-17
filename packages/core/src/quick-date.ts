@@ -1,8 +1,8 @@
 import { isIsoDay } from "./contact";
+import { addDays, weekdayOf } from "./iso-day";
 
 export type QuickDateResult = { ok: true; dueOn: string } | { ok: false };
 
-const MS_PER_DAY = 86_400_000;
 const FEB_29_LOOKAHEAD_YEARS = 8;
 
 const WEEKDAYS: Record<string, number> = {
@@ -51,12 +51,6 @@ const MONTHS: Record<string, number> = {
   december: 12,
   dec: 12,
 };
-
-function addDays(isoDay: string, days: number): string {
-  return new Date(Date.parse(`${isoDay}T00:00:00.000Z`) + days * MS_PER_DAY)
-    .toISOString()
-    .slice(0, 10);
-}
 
 function isoDay(year: number, month: number, day: number): string {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -126,7 +120,7 @@ export function parseQuickDate(text: string, today: string): QuickDateResult {
   const target = weekday?.[1] === undefined ? undefined : WEEKDAYS[weekday[1]];
 
   if (target !== undefined) {
-    const todayIndex = new Date(`${today}T00:00:00.000Z`).getUTCDay();
+    const todayIndex = weekdayOf(today);
     const ahead = ((target - todayIndex + 6) % 7) + 1;
 
     return { ok: true, dueOn: addDays(today, ahead) };

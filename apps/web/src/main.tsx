@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router";
 
 import { AppPage } from "./pages/app";
+import { CalendarPage } from "./pages/calendar";
 import { ContactDetailPane } from "./pages/contact-detail";
 import { ContactEditPage } from "./pages/contact-edit";
 import { ContactNewPage } from "./pages/contact-new";
@@ -29,6 +30,7 @@ createRoot(root).render(
         <Route element={<SignupPage />} path="/signup" />
         <Route element={<AppPage />} path="/app" />
         <Route element={<RemindersPage />} path="/app/reminders" />
+        <Route element={<CalendarPage />} path="/app/calendar" />
         <Route element={<ContactsPage />} path="/app/contacts">
           <Route element={<ContactDetailPane />} path=":id" />
         </Route>

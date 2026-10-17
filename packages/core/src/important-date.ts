@@ -72,6 +72,11 @@ function isoDay(value: number): string {
   return new Date(value).toISOString().slice(0, 10);
 }
 
+/** The day an Important Date falls on in a given year, with 29 February clamped to the 28th. */
+export function occurrenceInYearOf(fallsOn: string, year: number): string {
+  return isoDay(occurrenceInYear(Number(fallsOn.slice(5, 7)), Number(fallsOn.slice(8, 10)), year));
+}
+
 /**
  * The next yearly occurrence of an Important Date, on or after `now`. The stored
  * date keeps its original year so ages stay readable; only the day and month recur.

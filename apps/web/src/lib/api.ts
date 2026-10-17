@@ -1,5 +1,6 @@
 import type {
   CadenceHealth,
+  CalendarItem,
   Contact,
   ContactWriteInput,
   FieldDefinitionInput,
@@ -449,4 +450,10 @@ export async function deleteAttachment(
   return request<null>(attachmentUrl(contactId, interactionId, attachmentId), {
     method: "DELETE",
   });
+}
+
+export async function listCalendar(from: string, to: string): Promise<ApiResult<CalendarItem[]>> {
+  const result = await request<{ items: CalendarItem[] }>(`/api/calendar?from=${from}&to=${to}`);
+
+  return result.ok ? { ok: true, value: result.value.items } : result;
 }
