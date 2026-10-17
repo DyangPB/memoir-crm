@@ -1,0 +1,463 @@
+<!-- Memoir - Calendar -->
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}.airmail-pattern{background:repeating-linear-gradient(135deg,#0e5f82 0,#0e5f82 12px,#fbf7ef 12px,#fbf7ef 16px,#ffb209 16px,#ffb209 28px,#fbf7ef 28px,#fbf7ef 32px);}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"canvas-soft":"#f4edde","on-error-container":"#93000a","on-primary-fixed":"#001e2d","success-bg":"#ddeddc","ink-mute":"#7c7158","inverse-surface":"#372f23","surface-container-highest":"#eee1ce","surface":"#fff8f3","ocean-deep":"#0c3a54","inverse-on-surface":"#fdefdc","surface-bright":"#fff8f3","surface-container-high":"#f4e6d3","primary":"#004663","on-secondary":"#ffffff","error-container":"#ffdad6","on-primary-fixed-variant":"#004c6a","outline-variant":"#c0c7ce","primary-fixed":"#c5e7ff","primary-fixed-dim":"#8ecef6","on-primary-container":"#99d7ff","hairline-input":"#cfc3a4","on-background":"#211b0f","background":"#fff8f3","danger-bg":"#f6dcd5","on-surface-variant":"#40484d","on-tertiary-fixed-variant":"#624000","ink":"#2b2418","tertiary-container":"#795000","on-secondary-fixed-variant":"#604100","secondary-fixed":"#ffdead","on-secondary-container":"#6b4800","ocean-subdued":"#d9eaf2","outline":"#70787e","ink-secondary":"#4d4432","surface-container":"#faecd9","on-tertiary-fixed":"#291800","tertiary-fixed-dim":"#f8bc60","surface-container-low":"#fff2e0","success":"#38701a","primary-container":"#0e5f82","surface-tint":"#196588","on-tertiary":"#ffffff","on-secondary-fixed":"#281900","surface-dim":"#e6d8c6","on-error":"#ffffff","canvas":"#fbf7ef","surface-variant":"#eee1ce","hairline":"#e6dcc5","secondary":"#7f5700","success-fill":"#63c132","tertiary":"#5a3b00","error":"#ba1a1a","amber-soft":"#f5e6c8","vellum":"#f1e6cf","on-tertiary-container":"#ffc56f","surface-container-lowest":"#ffffff","secondary-fixed-dim":"#ffba3d","primary-press":"#0a4a66","danger":"#b3402e","on-primary":"#fefefa","secondary-container":"#ffb209","on-surface":"#211b0f","tertiary-fixed":"#ffddb1","inverse-primary":"#8ecef6","ocean-soft":"#05b2dc"},borderRadius:{DEFAULT:"0.25rem",lg:"0.5rem",xl:"0.75rem",full:"9999px"},spacing:{"margin-sm":"1rem","gutter-sm":"1rem","space-xl":"2.5rem",margin:"2rem",gutter:"1.5rem","space-lg":"1.5rem","space-md":"1rem","space-sm":"0.5rem","space-xs":"0.375rem"},fontFamily:{"display-lg":["Newsreader"],"headline-sm":["Newsreader"],"headline-md":["Newsreader"],"body-sm":["Inter"],"body-md":["Inter"],"title-md":["Inter"],"label-sm":["Inter"],"label-lg":["Inter"],"label-md":["Inter"],"body-lg":["Inter"],"headline-lg":["Newsreader"],"display-lg-mobile":["Newsreader"]},fontSize:{"display-lg":["48px",{lineHeight:"56px",letterSpacing:"-0.02em",fontWeight:"600"}],"headline-sm":["20px",{lineHeight:"28px",fontWeight:"500"}],"headline-md":["24px",{lineHeight:"32px",fontWeight:"500"}],"body-sm":["12px",{lineHeight:"18px",fontWeight:"400"}],"body-md":["14px",{lineHeight:"22px",fontWeight:"400"}],"title-md":["18px",{lineHeight:"26px",fontWeight:"600"}],"label-sm":["11px",{lineHeight:"14px",letterSpacing:"0.04em",fontWeight:"500"}],"label-lg":["14px",{lineHeight:"20px",fontWeight:"600"}],"label-md":["12px",{lineHeight:"16px",fontWeight:"500"}],"body-lg":["16px",{lineHeight:"26px",fontWeight:"400"}],"headline-lg":["32px",{lineHeight:"40px",letterSpacing:"-0.01em",fontWeight:"500"}],"display-lg-mobile":["36px",{lineHeight:"44px",letterSpacing:"-0.01em",fontWeight:"600"}]}}}};</script></head><body class="bg-canvas font-body-md text-body-md text-on-surface antialiased min-h-screen flex flex-col"><header class="fixed top-0 left-0 right-0 z-50 bg-canvas/95 backdrop-blur-md"><div class="h-1.5 w-full airmail-pattern"></div><div class="h-16 w-full border-b border-hairline"><div class="max-w-7xl mx-auto px-margin h-full flex items-center justify-between gap-gutter"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="Memoir Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W_CNNRVB4lgM22hEh8ijXGnpKz3OCELsH-JXaekRtXVOF_6Clu5zwOD6HsppdN0_OHW6CTXdZ5G-_aZcwFWnon4oBywAl8_RhNpBtvFcIGSqd_cqoYJjeYrsJLyfQkOcZJrOmWOTjagIwXSjKgigOHD0yGsuSMSnPNwqIEba0v_-GNRAid4ZMUu0IFOn8L75wnZGCH_TwuYqMGrz5PC8GtZhDrSGn-HsVw6WCVeqFzXQ9soBMUppiBZg"/><span class="font-headline-md text-headline-md text-ink tracking-tight">Memoir</span></div><nav class="hidden md:flex items-center gap-space-xs" data-active-classes="bg-ocean-subdued text-primary-container font-label-lg text-label-lg rounded-lg"><a class="px-space-md py-space-xs font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-canvas-soft rounded-lg transition-colors" data-path="dashboard" href="#">Dashboard</a><a class="px-space-md py-space-xs font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-canvas-soft rounded-lg transition-colors" data-path="contacts" href="#">Contacts</a><a class="px-space-md py-space-xs font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-canvas-soft rounded-lg transition-colors" data-path="reminders" href="#">Reminders</a><a aria-current="page" class="px-space-md py-space-xs transition-colors bg-ocean-subdued text-primary-container font-label-lg text-label-lg rounded-lg" data-path="calendar" href="#">Calendar</a><a class="px-space-md py-space-xs font-label-lg text-label-lg text-on-surface-variant hover:text-on-surface hover:bg-canvas-soft rounded-lg transition-colors" data-path="settings" href="#">Settings</a></nav></div><div class="flex items-center gap-space-md"><button class="hidden sm:flex items-center gap-space-sm bg-canvas border border-hairline-input px-space-md py-space-xs rounded-lg text-ink-mute hover:border-outline hover:text-ink transition-colors" type="button"><span class="material-symbols-outlined text-body-lg text-ink-mute">search</span><span class="font-body-sm text-body-sm">Search journal &amp; contacts...</span><kbd class="font-label-sm text-label-sm bg-canvas-soft border border-hairline px-space-xs py-0.5 rounded text-ink-mute">⌘K</kbd></button><button class="flex items-center gap-space-xs bg-primary-container text-on-primary hover:bg-primary-press font-label-lg text-label-lg px-space-md py-space-xs rounded-lg shadow-[0_1px_3px_rgba(44,36,24,0.06)] transition-colors" type="button"><span class="material-symbols-outlined text-body-lg">add</span><span class="hidden sm:inline">Record Entry</span></button><div class="relative flex items-center gap-space-xs pl-space-xs"><button class="flex items-center gap-space-xs p-0.5 rounded-full hover:bg-canvas-soft transition-colors" type="button"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-hairline" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAusJ89r9Ta4zDel6Q7kPCI3LlA3ei5EhEtOYIusXcuf2ThXGlMQZK1n_B0Q8ODOtkwJqh6MAnOIrxHgulStqKz1k1va5wc_rrYuHW6E6q7DARzz6j1AtQJgPjv4tMX3Hxzu2oknzxEiPC1fdF6LzzXdDZpdZtoGinQ7jd5IklZGo_ogVt4RuACdSnvid82HaB7bJ8d0kdKllFhXenmtuUZBsjMtqV2GDOZbRqsfd4BShpTLhewv4wd"/><span class="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-success ring-2 ring-canvas"></span></button></div></div></div></div></header><main class="w-full flex-1 pt-16 bg-canvas"><div class="flex flex-col w-full">
+<div class="max-w-7xl mx-auto w-full px-margin py-space-lg flex flex-col gap-space-lg">
+<!-- Header / Breadcrumb / Control Area -->
+<section class="flex flex-col gap-space-md">
+<!-- Breadcrumb & Status Ribbon -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm text-ink-mute">
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm uppercase tracking-widest text-ink-secondary">
+<span>Archives</span>
+<span class="material-symbols-outlined text-[13px] text-hairline-input">chevron_right</span>
+<span>Schedules</span>
+<span class="material-symbols-outlined text-[13px] text-hairline-input">chevron_right</span>
+<span class="text-ink font-semibold">Calendar &amp; Dispatch</span>
+</div>
+<!-- Live Google Sync Indicator -->
+<div class="flex items-center gap-space-xs bg-canvas-soft px-space-md py-1 rounded-full shadow-sm">
+<span class="w-2 h-2 rounded-full bg-success"></span>
+<span class="font-label-sm text-label-sm text-ink-secondary">Google Calendar Synced · 4 min ago</span>
+<button aria-label="Refresh calendar synchronization" class="text-ink-mute hover:text-ink transition-transform duration-300 hover:rotate-180 flex items-center" id="refreshSyncBtn" type="button">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+</button>
+</div>
+</div>
+<!-- Main Title Row with View Controls and CTA -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-ink tracking-tight">Calendar &amp; Dispatch</h1>
+<p class="font-body-md text-body-md text-ink-mute mt-0.5">
+            Synced with Google Calendar (<span class="text-ink font-medium">clara.thorne@atelier.co</span>) · Cadence and commitments at a glance
+          </p>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm">
+<!-- Calendar Month Navigation -->
+<div class="flex items-center bg-canvas-soft p-1 rounded-lg shadow-sm">
+<button class="px-space-sm py-1 rounded-md text-ink-secondary hover:text-ink hover:bg-canvas transition-colors flex items-center" type="button">
+<span class="material-symbols-outlined text-body-md">chevron_left</span>
+</button>
+<span class="px-space-sm font-headline-sm text-headline-sm text-ink tabular-nums">October 2024</span>
+<button class="px-space-sm py-1 rounded-md text-ink-secondary hover:text-ink hover:bg-canvas transition-colors flex items-center" type="button">
+<span class="material-symbols-outlined text-body-md">chevron_right</span>
+</button>
+<button class="ml-1 px-space-sm py-1 font-label-md text-label-md bg-canvas rounded-md text-ink hover:text-primary-container shadow-sm transition-colors" type="button">
+              Today
+            </button>
+</div>
+<!-- View Switcher Segmented Control -->
+<div class="hidden sm:flex items-center bg-canvas-soft p-1 rounded-lg shadow-sm">
+<button class="px-space-md py-1 rounded-md font-label-md text-label-md bg-canvas text-ink shadow-sm" type="button">Month</button>
+<button class="px-space-md py-1 rounded-md font-label-md text-label-md text-ink-mute hover:text-ink transition-colors" type="button">Week</button>
+<button class="px-space-md py-1 rounded-md font-label-md text-label-md text-ink-mute hover:text-ink transition-colors" type="button">Day</button>
+<button class="px-space-md py-1 rounded-md font-label-md text-label-md text-ink-mute hover:text-ink transition-colors" type="button">Agenda</button>
+</div>
+<!-- Signature Primary Action -->
+<button class="flex items-center gap-space-xs bg-primary-container text-on-primary hover:bg-primary-press font-label-lg text-label-lg px-space-lg py-2 rounded-full shadow-md transition-colors" type="button">
+<span class="material-symbols-outlined text-body-lg">add</span>
+<span>+ Add Commitment</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Calendar & Agenda Grid Structure -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+<!-- Left 70% Column: The Epistolary Month Grid -->
+<div class="lg:col-span-8 flex flex-col bg-canvas-soft rounded-xl shadow-sm p-4 overflow-hidden">
+<!-- Day-of-week Headers -->
+<div class="grid grid-cols-7 mb-2 text-center">
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Sun</div>
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Mon</div>
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Tue</div>
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Wed</div>
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Thu</div>
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Fri</div>
+<div class="py-1 font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Sat</div>
+</div>
+<!-- 35-Cell Month Grid (October 2024 starts on Tuesday) -->
+<div class="grid grid-cols-7 gap-1.5 auto-rows-fr">
+<!-- Sep 29 (Leading Day) -->
+<div class="min-h-[108px] p-2 bg-canvas/40 rounded-lg flex flex-col justify-between opacity-40">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">29</span>
+<div></div>
+</div>
+<!-- Sep 30 (Leading Day) -->
+<div class="min-h-[108px] p-2 bg-canvas/40 rounded-lg flex flex-col justify-between opacity-40">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">30</span>
+<div></div>
+</div>
+<!-- OCT 1: TARGET SELECTED DAY -->
+<div class="min-h-[108px] p-2 bg-surface-container-low rounded-lg shadow-sm flex flex-col justify-between relative cursor-pointer transform scale-[1.01] transition-transform">
+<div class="flex items-center justify-between">
+<span class="font-headline-sm text-headline-sm text-ink font-semibold tabular-nums">1</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+</div>
+<div class="flex flex-col gap-1 mt-1">
+<!-- All-Day Amber Birthday Marker -->
+<div class="bg-amber-soft text-on-secondary-container px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm font-semibold truncate leading-none">🎂 Okti’s Birthday</span>
+</div>
+<!-- Timed Cadence Event -->
+<div class="bg-ocean-subdued text-primary-container px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="material-symbols-outlined text-[11px] shrink-0">schedule</span>
+<span class="font-label-sm text-label-sm font-semibold truncate leading-none">1:00P · Cadence Sync</span>
+</div>
+</div>
+</div>
+<!-- Oct 2 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">2</span>
+<div></div>
+</div>
+<!-- Oct 3: Coffee Commitment -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">3</span>
+<div class="bg-canvas-soft text-ink px-1.5 py-0.5 rounded-md flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px] text-ink-mute shrink-0">local_cafe</span>
+<span class="font-label-sm text-label-sm truncate">Blue Bottle (Mint)</span>
+</div>
+</div>
+<!-- Oct 4 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">4</span>
+<div></div>
+</div>
+<!-- Oct 5 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">5</span>
+<div></div>
+</div>
+<!-- Oct 6 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">6</span>
+<div></div>
+</div>
+<!-- Oct 7 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">7</span>
+<div></div>
+</div>
+<!-- Oct 8 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">8</span>
+<div></div>
+</div>
+<!-- Oct 9 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">9</span>
+<div></div>
+</div>
+<!-- Oct 10 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">10</span>
+<div></div>
+</div>
+<!-- Oct 11 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">11</span>
+<div></div>
+</div>
+<!-- Oct 12 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">12</span>
+<div></div>
+</div>
+<!-- Oct 13 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">13</span>
+<div></div>
+</div>
+<!-- Oct 14 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">14</span>
+<div></div>
+</div>
+<!-- Oct 15 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">15</span>
+<div></div>
+</div>
+<!-- Oct 16: Dispatch Note Due -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">16</span>
+<div class="bg-amber-soft text-on-secondary-container px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm truncate">Sarah Lin · Note Due</span>
+</div>
+</div>
+<!-- Oct 17 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">17</span>
+<div></div>
+</div>
+<!-- Oct 18: Julian Coffee -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">18</span>
+<div class="bg-ocean-subdued text-primary-container px-1.5 py-0.5 rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[11px] shrink-0">schedule</span>
+<span class="font-label-sm text-label-sm truncate">10:30A · Julian Vance</span>
+</div>
+</div>
+<!-- Oct 19 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">19</span>
+<div></div>
+</div>
+<!-- Oct 20 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">20</span>
+<div></div>
+</div>
+<!-- Oct 21 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">21</span>
+<div></div>
+</div>
+<!-- Oct 22 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">22</span>
+<div></div>
+</div>
+<!-- Oct 23 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">23</span>
+<div></div>
+</div>
+<!-- Oct 24: Elena Rostova Birthday -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">24</span>
+<div class="bg-amber-soft text-on-secondary-container px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm truncate">Elena's 34th Bday</span>
+</div>
+</div>
+<!-- Oct 25 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">25</span>
+<div></div>
+</div>
+<!-- Oct 26 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">26</span>
+<div></div>
+</div>
+<!-- Oct 27 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">27</span>
+<div></div>
+</div>
+<!-- Oct 28 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">28</span>
+<div></div>
+</div>
+<!-- Oct 29 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">29</span>
+<div></div>
+</div>
+<!-- Oct 30: Marcus Vance Anniversary -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">30</span>
+<div class="bg-amber-soft text-on-secondary-container px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary-container shrink-0"></span>
+<span class="font-label-sm text-label-sm truncate">Marcus Vance (5yr)</span>
+</div>
+</div>
+<!-- Oct 31 -->
+<div class="min-h-[108px] p-2 bg-canvas hover:bg-canvas/80 rounded-lg shadow-xs flex flex-col justify-between transition-colors">
+<span class="font-headline-sm text-headline-sm text-ink-secondary tabular-nums">31</span>
+<div></div>
+</div>
+<!-- Nov 1 (Trailing Day) -->
+<div class="min-h-[108px] p-2 bg-canvas/40 rounded-lg flex flex-col justify-between opacity-40">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">1</span>
+<div></div>
+</div>
+<!-- Nov 2 (Trailing Day) -->
+<div class="min-h-[108px] p-2 bg-canvas/40 rounded-lg flex flex-col justify-between opacity-40">
+<span class="font-headline-sm text-headline-sm text-ink-mute tabular-nums">2</span>
+<div></div>
+</div>
+</div>
+<!-- Monthly Cadence Footnote Summary -->
+<div class="mt-4 pt-3 flex flex-wrap items-center justify-between gap-space-sm text-ink-mute font-body-sm text-body-sm">
+<div class="flex items-center gap-space-md">
+<span class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-container"></span>
+<span>Important Dates (4)</span>
+</span>
+<span class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span>
+<span>Cadence Meetings (2)</span>
+</span>
+<span class="flex items-center gap-1.5">
+<span class="w-2.5 h-2.5 rounded-full bg-ink-secondary"></span>
+<span>Social Dispatches (1)</span>
+</span>
+</div>
+<span class="italic text-ink-secondary font-headline-sm text-[15px]">October Archive 86% in balance</span>
+</div>
+</div>
+<!-- Right 30% Column: Selected Day Detail & Sync Layer Controls -->
+<aside class="lg:col-span-4 flex flex-col gap-space-md">
+<!-- Day Focus Banner Card -->
+<div class="bg-surface-container-low rounded-xl p-space-md shadow-sm relative overflow-hidden">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-secondary font-semibold">Selected Archive Day</span>
+<h2 class="font-headline-md text-headline-md text-ink mt-0.5">Tuesday, October 1</h2>
+<p class="font-body-sm text-body-sm text-ink-mute mt-0.5">2 commitments logged · All synchronized</p>
+</div>
+<div class="w-9 h-9 rounded-full bg-amber-soft flex items-center justify-center text-secondary shadow-xs">
+<span class="material-symbols-outlined text-[20px]">event_available</span>
+</div>
+</div>
+</div>
+<!-- Card 1: Okti's Birthday (Strict Amber Theme) -->
+<div class="bg-canvas-soft rounded-xl p-space-md shadow-sm relative pl-space-md overflow-hidden flex flex-col gap-space-sm">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-secondary-container"></div>
+<div class="flex items-center justify-between">
+<span class="bg-amber-soft text-on-secondary-container font-label-sm text-label-sm px-space-sm py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">cake</span>
+<span>Milestone · Turning 29</span>
+</span>
+<span class="font-label-sm text-label-sm text-ink-mute">All Day</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-ink">Okti Ramadhan’s Birthday</h3>
+<p class="font-body-md text-body-md text-ink-secondary mt-1">
+              Important Date · Gift sent via Postal Dispatch: Letterpress bespoke notebook &amp; botanical ink set.
+            </p>
+</div>
+<!-- Dispatch Action Button -->
+<div class="pt-1 flex items-center gap-space-sm">
+<button class="bg-vellum hover:bg-surface-container-high text-ink font-label-md text-label-md px-space-md py-1.5 rounded-full shadow-xs flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-secondary">mark_email_read</span>
+<span>Send Thoughtful Note</span>
+</button>
+<button class="text-ink-mute hover:text-ink font-label-md text-label-md px-2 py-1 transition-colors" type="button">
+              View Dossier
+            </button>
+</div>
+</div>
+<!-- Card 2: 1:00 PM Timed Cadence & Google Meet Agenda -->
+<div class="bg-canvas-soft rounded-xl p-space-md shadow-sm relative pl-space-md overflow-hidden flex flex-col gap-space-sm">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary-container"></div>
+<div class="flex items-center justify-between">
+<span class="bg-ocean-subdued text-primary-container font-label-sm text-label-sm px-space-sm py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+<span>1:00 PM – 2:00 PM (EDT)</span>
+</span>
+<span class="font-label-sm text-label-sm text-primary-container font-medium">Google Sync</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-ink">Project Cadence &amp; Archive Sync</h3>
+<div class="mt-2 bg-canvas p-2.5 rounded-lg flex items-center justify-between gap-2 shadow-xs">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-[18px] text-primary">videocam</span>
+<span class="font-body-sm text-body-sm text-ink font-medium truncate">meet.google.com/mem-oir-cad</span>
+</div>
+<button class="shrink-0 font-label-sm text-label-sm text-primary-container hover:underline" type="button">
+                Copy Link
+              </button>
+</div>
+</div>
+<!-- Agenda points -->
+<div class="bg-canvas/60 p-2.5 rounded-lg">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-ink-mute block mb-1">Prepared Agenda</span>
+<ol class="font-body-sm text-body-sm text-ink-secondary space-y-1 list-decimal list-inside">
+<li>Review September interaction cadence and archive gaps.</li>
+<li>Discuss typography proofs for Elena Rostova’s letterpress book.</li>
+<li>Finalize Q4 preservation roadmap &amp; dispatch schedule.</li>
+</ol>
+</div>
+<!-- Attendees with Avatar Chips -->
+<div class="flex flex-col gap-1.5 pt-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Participants (3)</span>
+<div class="flex items-center gap-2">
+<div class="flex -space-x-2">
+<img class="w-7 h-7 rounded-full object-cover shadow-xs" data-alt="Close-up portrait of Clara Thorne in warm studio light, fine art editorial film style with soft cream and ink aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC-xkEGNCGqfyiBTOPHS7AdRlOSKO7DijoBrqi30AIcpb8rLIdZZ3GAZnIPLlmRfpfMBUFtl5angqIUsD5kKsVdE-Ly7BsSjANb8fHH_THdvg93LsPx_QFtWNilSfYsJrfW6n2fOiBQaZUoYmIMXAqN7qOI2yMx8DETJ8g6oRNd_H5kPpkPcLkXHeyM-S9Mj8ABgtC1484OgFWTiqmkzSOo3A_9cUGc29l0FhgIY4jIgmAcphyIIzHM"/>
+<img class="w-7 h-7 rounded-full object-cover shadow-xs" data-alt="Portrait of young Indonesian man with warm expression wearing linen shirt in morning window light, high quality documentary photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRLujjxjSKigUo0T951iWpMXvSJZZIN9qPa3C1DlyaJQJ5VFMBVsXa-Epby0IduqeNPvd0Ntsv97a9zVo7gMI5XznQItCXJsfTHlrIv_cIi8rfXLi5o1FoZHjsXKO3fOmudKRt0TxZ4pXg46W5iWJsx6kkprcp05HezNB4DwnHgoWZoz08DU2OKFX5UIuoCuV8OrVk5Tdz94dVrc7odTy6hMeOMEi5iYYRNYAd3DMa1072G8VwYLg_"/>
+<img class="w-7 h-7 rounded-full object-cover shadow-xs" data-alt="Portrait of an older man with glasses smiling gently in architectural studio, muted earth tones and soft focus background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXqn6KKU0Z-IKpCpldD-pK0evbp5KyLNF6Rc2euYJp-buWmlCKHF9IivzgIUQ94Fve_lmLSTT6J4NRA9M4J9Hw2PL9XSy6RLkTzjA0_1Z4dSHzwwxbwK4H6AJjlisZSJTHscVY8EKttVUkWiLu7z9GRlcB9JMtwYGOgyRlqmLEcRFU9R115xDrTR7cW7oIm3G-2hm3pYpOox5TwENmB4JQWvEaBxQwKemVqgqHymvGG2DQZNN79WJy"/>
+</div>
+<span class="font-body-sm text-body-sm text-ink-secondary">Clara (Organizer), Okti, Julian</span>
+</div>
+</div>
+</div>
+<!-- Integrated Calendar Layers Toggle Panel -->
+<div class="bg-canvas-soft rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<h3 class="font-title-md text-title-md text-ink">Integrated Calendars</h3>
+<span class="font-label-sm text-label-sm text-ink-mute">4 Layers</span>
+</div>
+<div class="flex flex-col gap-2 mt-1">
+<!-- Toggle 1 -->
+<label class="flex items-center justify-between p-2 rounded-lg hover:bg-canvas transition-colors cursor-pointer">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-full bg-primary-container"></span>
+<span class="font-body-md text-body-md text-ink">Personal Cadence (Memoir)</span>
+</div>
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-0 cursor-pointer accent-primary-container" type="checkbox"/>
+</label>
+<!-- Toggle 2 -->
+<label class="flex items-center justify-between p-2 rounded-lg hover:bg-canvas transition-colors cursor-pointer">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-full bg-ocean-soft"></span>
+<span class="font-body-md text-body-md text-ink">Google Work Calendar</span>
+</div>
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-0 cursor-pointer accent-primary-container" type="checkbox"/>
+</label>
+<!-- Toggle 3 -->
+<label class="flex items-center justify-between p-2 rounded-lg hover:bg-canvas transition-colors cursor-pointer">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<span class="font-body-md text-body-md text-ink">Important Dates &amp; Milestones</span>
+</div>
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-0 cursor-pointer accent-primary-container" type="checkbox"/>
+</label>
+<!-- Toggle 4 -->
+<label class="flex items-center justify-between p-2 rounded-lg hover:bg-canvas transition-colors cursor-pointer">
+<div class="flex items-center gap-2.5">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span class="font-body-md text-body-md text-ink">Birthdays &amp; Anniversaries</span>
+</div>
+<input checked="" class="w-4 h-4 rounded text-primary-container focus:ring-0 cursor-pointer accent-primary-container" type="checkbox"/>
+</label>
+</div>
+<div class="pt-2">
+<button class="w-full bg-canvas hover:bg-vellum text-ink-secondary hover:text-ink font-label-md text-label-md py-2 px-space-md rounded-lg shadow-xs flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Manage Calendar Integrations</span>
+</button>
+</div>
+</div>
+<!-- Epistolary Quote of the Month -->
+<div class="bg-vellum rounded-xl p-space-md shadow-xs flex flex-col gap-1">
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-ink-mute">Thought of the Month</span>
+<p class="font-headline-sm text-[16px] leading-snug italic text-ink-secondary">
+            “To send a letter is to arrive across time and distance, quietly waiting on another’s desk.”
+          </p>
+<span class="font-label-sm text-label-sm text-ink-mute text-right mt-1">— Dispatch Folio, Oct 1928</span>
+</div>
+</aside>
+</div>
+</div>
+<!-- Interactive calendar click handling & refresh animation -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const refreshBtn = document.getElementById('refreshSyncBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+          refreshBtn.classList.add('rotate-180');
+          setTimeout(() => {
+            refreshBtn.classList.remove('rotate-180');
+          }, 600);
+        });
+      }
+    });
+  </script>
+</div></main><footer class="w-full bg-canvas-soft border-t border-hairline"><div class="max-w-7xl mx-auto px-margin py-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-md text-ink-mute font-body-sm text-body-sm"><span>Memoir • An intimate archive for thoughtful relationships</span><div class="flex items-center gap-space-lg"><a class="hover:text-ink transition-colors font-body-sm text-body-sm" data-path="settings" href="#">Preferences</a><span class="text-hairline-input">•</span><span class="font-body-sm text-body-sm">Press ⌘K to open commands</span></div></div></footer></body></html>
