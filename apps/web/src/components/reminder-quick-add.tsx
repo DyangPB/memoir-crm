@@ -76,7 +76,7 @@ export function ReminderQuickAdd({ contacts, onAdd, today = todayIsoDay() }: Rem
           Add a reminder
         </p>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-          <div className="flex flex-col gap-1.5 md:col-span-5">
+          <div className="flex flex-col gap-1.5 md:col-span-4">
             <label className="text-caption text-ink-mute" htmlFor={`${id}-body`}>
               Reminder
             </label>
@@ -104,7 +104,7 @@ export function ReminderQuickAdd({ contacts, onAdd, today = todayIsoDay() }: Rem
               ))}
             </Select>
           </div>
-          <div className="flex flex-col gap-1.5 md:col-span-4">
+          <div className="flex flex-col gap-1.5 md:col-span-3">
             <label className="text-caption text-ink-mute" htmlFor={`${id}-when`}>
               When
             </label>
@@ -119,6 +119,14 @@ export function ReminderQuickAdd({ contacts, onAdd, today = todayIsoDay() }: Rem
                 Scheduled {formatDay(typed.dueOn)}
               </span>
             )}
+          </div>
+          <div className="flex flex-col gap-1.5 md:col-span-2">
+            <span aria-hidden className="hidden text-caption md:block">
+              &nbsp;
+            </span>
+            <Button className="w-full md:w-auto" disabled={submitting} type="submit">
+              {submitting ? "Saving the reminder" : "Add reminder"}
+            </Button>
           </div>
         </div>
 
@@ -141,11 +149,6 @@ export function ReminderQuickAdd({ contacts, onAdd, today = todayIsoDay() }: Rem
           <p className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">{error}</p>
         )}
 
-        <div>
-          <Button disabled={submitting} type="submit">
-            {submitting ? "Saving the reminder" : "Add reminder"}
-          </Button>
-        </div>
       </form>
     </section>
   );
