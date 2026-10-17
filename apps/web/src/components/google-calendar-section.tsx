@@ -160,7 +160,7 @@ export function GoogleCalendarSection() {
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-6 shadow-card">
+    <section className="flex flex-col gap-4 rounded-lg border border-hairline bg-canvas p-4 shadow-card sm:p-6">
       <div className="flex flex-col gap-1">
         <h2 className="font-display text-headline-sm text-ink">Google Calendar</h2>
         <p className="text-body-md text-ink-mute">

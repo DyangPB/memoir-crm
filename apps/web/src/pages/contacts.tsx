@@ -46,7 +46,7 @@ function ContactRow({ contact, search }: { contact: Contact; search: string }) {
         </span>
         {days !== null && (
           <DaysSince
-            className="flex-col items-end gap-0"
+            className="max-w-[5.5rem] shrink-0 flex-col items-end gap-0 text-right"
             days={days}
             numeralClassName="text-display-md"
             targetDays={contact.effectiveCadenceDays}
@@ -218,7 +218,7 @@ export function ContactsPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto w-full max-w-6xl px-6 py-8">
+      <main className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
         {error !== null && (
           <p className="mb-4 rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
             {error}
@@ -236,7 +236,7 @@ export function ContactsPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid gap-8 md:grid-cols-[22rem_1fr]">
+          <div className="grid grid-cols-1 gap-8 md:grid-cols-[22rem_1fr]">
             <section
               aria-label="Your people"
               className={cn(

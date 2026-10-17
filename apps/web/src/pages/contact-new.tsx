@@ -79,7 +79,7 @@ export function ContactNewPage() {
     return (
       <div className="min-h-screen bg-canvas">
         <AppHeader email={session.user.email} />
-        <main className="mx-auto flex w-full max-w-xl flex-col gap-3 px-6 py-12">
+        <main className="mx-auto flex w-full max-w-xl flex-col gap-3 px-4 py-6 sm:px-6 sm:py-12">
           <p className="text-body-md text-ink-secondary">{loadError}</p>
         </main>
       </div>
@@ -93,7 +93,7 @@ export function ContactNewPage() {
   return (
     <div className="min-h-screen bg-canvas">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-6 py-12">
+      <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-6 sm:px-6 sm:py-12">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <BackToParent label="Back to Contacts" to="/app/contacts" />
           <div className="flex flex-col gap-1">
