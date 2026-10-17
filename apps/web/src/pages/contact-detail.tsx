@@ -14,12 +14,12 @@ import {
   type Reminder,
   type ReminderInput,
 } from "@memoir/core";
-import { Circle, Coffee, MessageCircle, Phone } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { BackToParent } from "../components/back-to-parent";
+import { Icon } from "../components/icon";
 import { ImportantDateForm } from "../components/important-date-form";
 import { ImportantDateMarker } from "../components/important-date-marker";
 import { InteractionForm } from "../components/interaction-form";
@@ -57,10 +57,10 @@ import { reminderChipClass, reminderTiming } from "../lib/reminders";
 import { cn } from "../lib/utils";
 
 const typeGlyphs = {
-  call: Phone,
-  meeting: Coffee,
-  message: MessageCircle,
-  other: Circle,
+  call: "call",
+  meeting: "local_cafe",
+  message: "chat_bubble_outline",
+  other: "radio_button_unchecked",
 } as const;
 
 function CustomFieldValue({
@@ -645,12 +645,12 @@ export function ContactDetailPage() {
               <ol className="relative flex flex-col gap-6">
                 <span aria-hidden className="absolute bottom-3 left-[13px] top-3 w-0.5 bg-hairline" />
                 {interactions.map((interaction) => {
-                  const Glyph = typeGlyphs[interaction.type];
+                  const glyph = typeGlyphs[interaction.type];
 
                   return (
                     <li className="relative pl-10" key={interaction.id}>
                       <span className="absolute left-0 top-0 flex size-7 items-center justify-center rounded-full bg-primary-bg-subdued text-primary">
-                        <Glyph aria-hidden className="size-3.5" />
+                        <Icon className="text-sm" name={glyph} />
                       </span>
                       {editingInteractionId === interaction.id ? (
                         <div className="rounded-lg border border-hairline p-4">
