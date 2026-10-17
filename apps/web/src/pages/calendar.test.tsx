@@ -1,5 +1,5 @@
 import type { CalendarItem, Contact, GoogleStatus } from "@memoir/core";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -305,3 +305,124 @@ describe("Add reminder from the Calendar", () => {
     expect(await screen.findByText("Write the reminder first.")).toBeTruthy();
   });
 });
+
+describe("Calendar item details", () => {
+  function chip(day: string, name: string) {
+    return within(cell(day)).getByRole("button", { name });
+  }
+
+  it("shows what a Reminder is about while the pointer rests on it", async () => {
+    const user = userEvent.setup();
+
+    renderCalendar();
+    await loaded();
+
+    expect(screen.queryByRole("tooltip")).toBeNull();
+
+    await user.hover(chip("Tuesday 20 October 2026", "Call Bob"));
+
+    const tip = within(screen.getByRole("tooltip"));
+
+    expect(tip.getByText("Call Bob")).toBeTruthy();
+    expect(tip.getByText("Reminder")).toBeTruthy();
+    expect(tip.getByText("For Bob Nguyen")).toBeTruthy();
+    expect(tip.getByText("Tuesday 20 October 2026")).toBeTruthy();
+
+    await user.unhover(chip("Tuesday 20 October 2026", "Call Bob"));
+
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+
+  it("shows the same details to someone using the keyboard, and Escape closes them", async () => {
+    const user = userEvent.setup();
+
+    renderCalendar();
+    await loaded();
+
+    act(() => chip("Thursday 22 October 2026", "Send a card").focus());
+
+    expect(within(screen.getByRole("tooltip")).getByText("For Ada Lovelace")).toBeTruthy();
+
+    await user.keyboard("{Escape}");
+
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+
+  it("says how long an Important Date has been marked, and whose it is", async () => {
+    const user = userEvent.setup();
+
+    renderCalendar();
+    await loaded();
+    await user.hover(chip("Tuesday 20 October 2026", "Birthday"));
+
+    const tip = within(screen.getByRole("tooltip"));
+
+    expect(tip.getByText("Important Date")).toBeTruthy();
+    expect(tip.getByText("Ada Lovelace")).toBeTruthy();
+    expect(tip.getByText("Marks 34 years")).toBeTruthy();
+  });
+
+  it("says when a Reminder is done, and gives a Google event its times", async () => {
+    const user = userEvent.setup();
+
+    vi.mocked(api.listCalendar).mockResolvedValue({
+      ok: true,
+      value: [
+        {
+          kind: "reminder",
+          id: "r9",
+          title: "Return the book",
+          date: "2026-10-20",
+          contactId: "bob",
+          contactName: "Bob Nguyen",
+          done: true,
+        },
+        {
+          kind: "google",
+          id: "g1",
+          title: "Dinner",
+          date: "2026-10-20",
+          start: "2026-10-20T19:30:00+01:00",
+          end: "2026-10-20T21:00:00+01:00",
+          calendarId: "primary",
+          meetUrl: null,
+        },
+      ],
+    });
+
+    renderCalendar();
+    await loaded2();
+    await user.hover(chip("Tuesday 20 October 2026", "Return the book"));
+
+    expect(within(screen.getByRole("tooltip")).getByText("Done")).toBeTruthy();
+
+    await user.hover(chip("Tuesday 20 October 2026", "Dinner"));
+
+    const tip = within(screen.getByRole("tooltip"));
+
+    expect(tip.getByText("Google Calendar")).toBeTruthy();
+    expect(tip.getByText("19:30 to 21:00")).toBeTruthy();
+  });
+
+  it("selects the day when a chip is clicked", async () => {
+    const user = userEvent.setup();
+
+    renderCalendar();
+    await loaded();
+    await user.click(chip("Thursday 22 October 2026", "Send a card"));
+
+    const panel = within(screen.getByRole("complementary", { name: "Selected day" }));
+
+    expect(panel.getByRole("heading", { name: "Thursday 22 October 2026" })).toBeTruthy();
+  });
+});
+
+/** Waits for the grid without assuming which items the test fed it. */
+async function loaded2() {
+  await screen.findByRole("gridcell", { name: "Tuesday 20 October 2026" });
+  await waitFor(() =>
+    expect(
+      within(cell("Tuesday 20 October 2026")).queryAllByRole("button").length,
+    ).toBeGreaterThan(1),
+  );
+}

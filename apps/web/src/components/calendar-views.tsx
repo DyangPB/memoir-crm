@@ -9,35 +9,27 @@ import {
 } from "@memoir/core";
 import { Link } from "react-router";
 
-import { dayLabel, dayNumber, itemChipClass, itemIcon, itemKindLabel, weekdayHeadings } from "../lib/calendar";
+import { dayLabel, dayNumber, itemChipClass, itemKindLabel, weekdayHeadings } from "../lib/calendar";
 import { cn } from "../lib/utils";
-import { Icon } from "./icon";
+import { ItemChip } from "./calendar-item-chip";
 
 const CHIPS_PER_CELL = 3;
 
 type DayChipsProps = {
   items: CalendarItem[];
   today: string;
+  onSelect: (day: string) => void;
   limit?: number;
 };
 
-function DayChips({ items, today, limit = CHIPS_PER_CELL }: DayChipsProps) {
+function DayChips({ items, today, onSelect, limit = CHIPS_PER_CELL }: DayChipsProps) {
   const shown = items.slice(0, limit);
   const more = items.length - shown.length;
 
   return (
     <ul className="flex flex-col gap-1">
       {shown.map((item) => (
-        <li
-          className={cn(
-            "flex items-center gap-1 truncate rounded px-1.5 py-0.5 text-caption",
-            itemChipClass(item, today),
-          )}
-          key={`${item.kind}-${item.id}-${item.date}`}
-        >
-          <Icon className="text-base" name={itemIcon(item)} />
-          <span className="truncate">{calendarItemTitle(item)}</span>
-        </li>
+        <ItemChip item={item} key={`${item.kind}-${item.id}-${item.date}`} onSelect={onSelect} today={today} />
       ))}
       {more > 0 && <li className="px-1.5 text-caption text-ink-mute">+{more} more</li>}
     </ul>
@@ -131,7 +123,7 @@ export function MonthGridView({ month, items, today, selected, onSelect }: Month
                 selected={day === selected}
                 today={today}
               />
-              <DayChips items={byDay.get(day) ?? []} today={today} />
+              <DayChips items={byDay.get(day) ?? []} onSelect={onSelect} today={today} />
             </div>
           ))}
         </div>
@@ -160,7 +152,7 @@ export function WeekView({ anchor, items, today, selected, onSelect }: Selectabl
             </span>
             <DayButton day={day} onSelect={onSelect} selected={day === selected} today={today} />
           </div>
-          <DayChips items={byDay.get(day) ?? []} limit={20} today={today} />
+          <DayChips items={byDay.get(day) ?? []} limit={20} onSelect={onSelect} today={today} />
         </section>
       ))}
     </div>

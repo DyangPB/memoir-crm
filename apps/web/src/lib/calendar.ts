@@ -87,6 +87,71 @@ export function itemKindLabel(item: CalendarItem): string {
   }
 }
 
+export type ItemDetails = {
+  /** What sort of item it is, as the popup labels it. */
+  kind: string;
+  /** Whose it is, when it belongs to a Contact. */
+  who: string | null;
+  when: string;
+  /** Where a Reminder stands against today. */
+  status: string | null;
+  extra: string | null;
+};
+
+function daysFromToday(day: string, today: string): number {
+  return Math.round(
+    (Date.parse(`${day}T00:00:00.000Z`) - Date.parse(`${today}T00:00:00.000Z`)) / 86_400_000,
+  );
+}
+
+function reminderStatus(done: boolean, date: string, today: string): string {
+  if (done) {
+    return "Done";
+  }
+
+  const days = daysFromToday(date, today);
+
+  if (days < 0) {
+    return days === -1 ? "1 day overdue" : `${-days} days overdue`;
+  }
+
+  if (days === 0) {
+    return "Due today";
+  }
+
+  return days === 1 ? "Due tomorrow" : `Due in ${days} days`;
+}
+
+/** The words a popup shows about an item on the Calendar. */
+export function itemDetails(item: CalendarItem, today: string): ItemDetails {
+  switch (item.kind) {
+    case "reminder":
+      return {
+        kind: "Reminder",
+        who: `For ${item.contactName}`,
+        when: dayLabel(item.date),
+        status: reminderStatus(item.done, item.date, today),
+        extra: null,
+      };
+    case "important-date":
+      return {
+        kind: "Important Date",
+        who: item.contactName,
+        when: dayLabel(item.date),
+        status: null,
+        extra: item.yearsOld === null ? null : `Marks ${item.yearsOld} ${item.yearsOld === 1 ? "year" : "years"}`,
+      };
+    case "google":
+      return {
+        kind: "Google Calendar",
+        who: null,
+        when: dayLabel(item.date),
+        status: null,
+        extra: item.start.length > 10 ? `${item.start.slice(11, 16)} to ${item.end.slice(11, 16)}` : null,
+      };
+  }
+}
+
 /** How an item's chip looks: Important Dates amber, Reminders ocean, overdue ones red, done ones faded. */
 export function itemChipClass(item: CalendarItem, today: string): string {
   if (item.kind === "important-date") {
