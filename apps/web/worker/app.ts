@@ -12,6 +12,8 @@ import { health } from "./routes/health";
 import { importantDatesRoutes } from "./routes/important-dates";
 import { interactionsRoutes } from "./routes/interactions";
 import { labelsRoutes } from "./routes/labels";
+import { createMcpRoutes } from "./routes/mcp";
+import { mcpKeysRoutes } from "./routes/mcp-keys";
 import { mediaRoutes } from "./routes/media";
 import { notesRoutes } from "./routes/notes";
 import { remindersRoutes } from "./routes/reminders";
@@ -31,6 +33,11 @@ app.route("/api", fieldsRoutes);
 app.route("/api", googleRoutes);
 app.route("/api", interactionsRoutes);
 app.route("/api", labelsRoutes);
+app.route("/api", mcpKeysRoutes);
+app.route(
+  "/",
+  createMcpRoutes((request, env, ctx) => app.fetch(request, env, ctx)),
+);
 app.route("/api", mediaRoutes);
 app.route("/api", notesRoutes);
 app.route("/api", remindersRoutes);
