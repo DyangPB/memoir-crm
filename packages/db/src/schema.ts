@@ -389,3 +389,20 @@ export const contactLabels = sqliteTable(
     index("contact_labels_labelId_idx").on(table.labelId),
   ],
 );
+
+export const mcpKeys = sqliteTable(
+  "mcp_keys",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    prefix: text("prefix").notNull(),
+    keyHash: text("key_hash").notNull().unique(),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+  },
+  (table) => [index("mcp_keys_userId_idx").on(table.userId)],
+);

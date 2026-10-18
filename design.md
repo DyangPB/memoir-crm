@@ -293,7 +293,9 @@ Month, Week, Day, and Agenda over Memoir's own data and, when connected, the Goo
 
 ### Settings
 
-One `card-feature-light` per concern, each headed in `{typography.headline-sm}`: Profile, Cadence (the default every Contact follows), **Google Calendar**, Custom fields, Labels, and Delete your account (the danger-bordered card, last). The Google Calendar card walks through three states in place: *not set up* (a sentence saying whoever runs Memoir needs to add Google credentials), *not connected* (one primary "Connect Google Calendar"), and *connected* (when it last synced with "Sync now", a checkbox per Google calendar to show as the Google layer, and "Disconnect Google Calendar", which restates that the Memoir calendar stays in Google before it asks to be confirmed).
+One `card-feature-light` per concern, each headed in `{typography.headline-sm}`: Profile, Cadence (the default every Contact follows), **Google Calendar**, Custom fields, Labels, **Assistant access**, and Delete your account (the danger-bordered card, last). The Google Calendar card walks through three states in place: *not set up* (a sentence saying whoever runs Memoir needs to add Google credentials), *not connected* (one primary "Connect Google Calendar"), and *connected* (when it last synced with "Sync now", a checkbox per Google calendar to show as the Google layer, and "Disconnect Google Calendar", which restates that the Memoir calendar stays in Google before it asks to be confirmed).
+
+The **Assistant access** card names a new key, then shows its secret once in a `vellum` panel with "Copy" and "Done" and the line that this is the only time it is shown. Keys are listed with their prefix and creation day; "Revoke" asks first and says an assistant using the key stops working right away.
 
 ## Do's and Don'ts
 

@@ -11,6 +11,7 @@ import { Navigate, useNavigate } from "react-router";
 import { AppHeader } from "../components/app-header";
 import { DefaultCadenceForm } from "../components/default-cadence-form";
 import { GoogleCalendarSection } from "../components/google-calendar-section";
+import { McpKeysSection } from "../components/mcp-keys-section";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";
@@ -611,6 +612,8 @@ export function SettingsPage() {
             </ul>
           )}
         </section>
+
+        <McpKeysSection />
 
         <section className="flex flex-col gap-4 rounded-lg border border-danger/30 bg-canvas p-4 shadow-card sm:p-6">
           <div className="flex flex-col gap-1">

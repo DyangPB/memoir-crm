@@ -119,6 +119,7 @@ export {
   type InteractionParseResult,
   type InteractionType,
 } from "./interaction";
+export { type McpKeySummary } from "./mcp-key";
 export { parseNoteInput, type Note, type NoteInput, type NoteParseResult } from "./note";
 export { pickOnThisDay, type OnThisDay } from "./on-this-day";
 export {

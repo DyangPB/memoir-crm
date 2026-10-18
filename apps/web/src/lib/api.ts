@@ -12,6 +12,7 @@ import type {
   Interaction,
   InteractionInput,
   LabelSummary,
+  McpKeySummary,
   Note,
   NoteInput,
   OnThisDay,
@@ -480,4 +481,24 @@ export async function setGoogleCalendars(calendarIds: string[]): Promise<ApiResu
 
 export async function syncGoogleNow(): Promise<ApiResult<GoogleStatus>> {
   return request<GoogleStatus>("/api/google/sync", { method: "POST" });
+}
+
+export async function listMcpKeys(): Promise<ApiResult<McpKeySummary[]>> {
+  const result = await request<{ keys: McpKeySummary[] }>("/api/mcp-keys");
+
+  return result.ok ? { ok: true, value: result.value.keys } : result;
+}
+
+/** The secret comes back once, here, and is never shown again. */
+export async function createMcpKey(
+  name: string,
+): Promise<ApiResult<{ key: McpKeySummary; secret: string }>> {
+  return request<{ key: McpKeySummary; secret: string }>("/api/mcp-keys", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function revokeMcpKey(id: string): Promise<ApiResult<null>> {
+  return request<null>(`/api/mcp-keys/${id}`, { method: "DELETE" });
 }

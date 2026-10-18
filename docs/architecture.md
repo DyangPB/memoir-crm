@@ -38,7 +38,7 @@ Label filtering is a `?label=` query parameter on `/app/contacts`, carried onto 
 - `notes` — freeform captured info per contact
 - `reminders` — one-off dated prompts per contact; `important_dates` — yearly recurring dates (birthdays)
 - `labels` + `contact_labels` — flat, per-user organization
-- `mcp_keys` — per-user API keys for the MCP server
+- `mcp_keys` — per-user API keys for the MCP server (SHA-256 hash only, with a short display prefix; see ADR-0007)
 - FTS5 virtual table over contact names, notes, and interactions
 
 Every row except `users` is scoped by `user_id` — that column is the entire multi-tenant isolation model (ADR in reverse: no vaults, no teams, no permissions).
@@ -85,3 +85,5 @@ One Durable Object per user holds the due-event schedule. Its single alarm point
 - [0003 — DO alarm reminders](adr/0003-durable-object-alarm-reminders.md)
 - [0004 — Dashboard home](adr/0004-dashboard-home.md)
 - [0005 — Demo account](adr/0005-demo-account.md)
+- [0006 — Google Calendar full mirror](adr/0006-google-calendar-full-mirror.md)
+- [0007 — MCP keys and confirmed deletes](adr/0007-mcp-keys-and-confirmed-deletes.md)
