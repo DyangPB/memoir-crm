@@ -216,9 +216,9 @@ export function ContactsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-canvas md:flex md:h-dvh md:flex-col md:overflow-hidden">
       <AppHeader email={session.user.email} />
-      <main className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
+      <main className="mx-auto flex w-full max-w-6xl flex-col px-4 py-4 sm:px-6 sm:py-8 md:min-h-0 md:flex-1 md:pb-0">
         {error !== null && (
           <p className="mb-4 rounded-md bg-danger-bg px-3 py-2 text-caption text-danger">
             {error}
@@ -236,11 +236,11 @@ export function ContactsPage() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-[22rem_1fr]">
+          <div className="grid grid-cols-1 gap-8 md:min-h-0 md:flex-1 md:grid-cols-[22rem_1fr] md:grid-rows-[minmax(0,1fr)]">
             <section
               aria-label="Your people"
               className={cn(
-                "min-w-0 flex-col gap-6 md:max-h-[80vh] md:overflow-y-auto md:pr-2",
+                "min-w-0 flex-col gap-6 md:min-h-0 md:overflow-y-auto md:pr-2 md:pb-8",
                 hasSelection ? "hidden md:flex" : "flex",
               )}
             >
@@ -325,7 +325,7 @@ export function ContactsPage() {
 
             <section
               aria-label="Contact detail"
-              className={cn("min-w-0", hasSelection ? "block" : "hidden md:block")}
+              className={cn("min-w-0 md:min-h-0", hasSelection ? "block" : "hidden md:block")}
             >
               {hasSelection ? (
                 <Outlet context={outletContext} key={selectedId} />

@@ -70,13 +70,7 @@ const typeGlyphs = {
   other: "radio_button_unchecked",
 } as const;
 
-function CustomFieldValue({
-  definition,
-  value,
-}: {
-  definition: FieldDefinition;
-  value: unknown;
-}) {
+function CustomFieldValue({ definition, value }: { definition: FieldDefinition; value: unknown }) {
   if (definition.type === "url" && typeof value === "string") {
     return (
       <a
@@ -133,10 +127,12 @@ function ContactDetailBody() {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
 
+  const [addingNote, setAddingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [confirmingNoteId, setConfirmingNoteId] = useState<string | null>(null);
   const [noteError, setNoteError] = useState<string | null>(null);
 
+  const [addingReminder, setAddingReminder] = useState(false);
   const [confirmingReminderId, setConfirmingReminderId] = useState<string | null>(null);
   const [reminderError, setReminderError] = useState<string | null>(null);
 
@@ -418,6 +414,7 @@ function ContactDetailBody() {
     }
 
     setNoteError(null);
+    setAddingNote(false);
     await refreshNotes();
   }
 
@@ -494,6 +491,7 @@ function ContactDetailBody() {
     }
 
     setReminderError(null);
+    setAddingReminder(false);
     await refreshReminders();
   }
 
@@ -697,23 +695,23 @@ function ContactDetailBody() {
 
   const lastOn = lastInteractionDate(interactions);
   const days =
-    lastOn === null
-      ? null
-      : daysSince(new Date(`${lastOn}T00:00:00.000Z`), todayForDayCounts());
+    lastOn === null ? null : daysSince(new Date(`${lastOn}T00:00:00.000Z`), todayForDayCounts());
   const now = new Date();
   const openReminders = reminders.filter((reminder) => reminder.status !== "done");
   const doneReminders = reminders.filter((reminder) => reminder.status === "done");
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-10 md:h-full md:min-h-0 md:gap-6">
+      <div className="flex shrink-0 flex-col gap-3">
         {backToList}
         <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-6">
           <div className="flex min-w-0 max-w-full items-center gap-4">
             <ContactAvatar contact={contact} size="lg" />
             <div className="flex min-w-0 flex-col gap-1">
               <p className="text-micro-cap uppercase text-ink-mute">Contact</p>
-              <h1 className="break-words font-display text-headline-lg text-ink sm:text-display-lg">{contact.name}</h1>
+              <h1 className="break-words font-display text-headline-lg text-ink sm:text-display-lg">
+                {contact.name}
+              </h1>
               {(contact.roleCompany !== null || contact.location !== null) && (
                 <p className="text-body-md text-ink-secondary">
                   {[contact.roleCompany, contact.location]
@@ -731,7 +729,11 @@ function ContactDetailBody() {
                   pendingLabel="Uploading"
                 />
                 {contact.photoVersion !== null && (
-                  <Button disabled={photoBusy} onClick={() => void handlePhotoRemove()} variant="ghost">
+                  <Button
+                    disabled={photoBusy}
+                    onClick={() => void handlePhotoRemove()}
+                    variant="ghost"
+                  >
                     Remove photo
                   </Button>
                 )}
@@ -759,99 +761,294 @@ function ContactDetailBody() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-10 xl:grid-cols-[1fr_260px]">
-        <section className="flex flex-col gap-5">
-          <h2 className="text-heading-lg text-ink">Timeline</h2>
+      <div className="grid grid-cols-1 gap-10 md:min-h-0 md:flex-1 md:overflow-y-auto md:pb-8 xl:grid-cols-[1fr_260px] xl:grid-rows-[minmax(0,1fr)] xl:overflow-visible xl:pb-0">
+        <div className="flex min-w-0 flex-col gap-10 xl:min-h-0 xl:overflow-y-auto xl:pb-8 xl:pr-2">
+          <section className="flex flex-col gap-5">
+            <h2 className="text-heading-lg text-ink">Timeline</h2>
 
-          <div className="rounded-lg border border-hairline bg-canvas-soft/50 p-4">
-            <InteractionForm
-              error={null}
-              initialValues={{ type: "call", occurredOn: todayIsoDay(), note: null }}
-              onSubmit={handleAddInteraction}
-              pendingLabel="Logging the interaction"
-              submitLabel="Log interaction"
-            />
-          </div>
+            <div className="rounded-lg border border-hairline bg-canvas-soft/50 p-4">
+              <InteractionForm
+                error={null}
+                initialValues={{
+                  type: "call",
+                  occurredOn: todayIsoDay(),
+                  note: null,
+                }}
+                onSubmit={handleAddInteraction}
+                pendingLabel="Logging the interaction"
+                submitLabel="Log interaction"
+              />
+            </div>
 
-          {interactionError !== null && (
-            <p
-              className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger"
-              role="alert"
-            >
-              {interactionError}
-            </p>
-          )}
+            {interactionError !== null && (
+              <p
+                className="rounded-md bg-danger-bg px-3 py-2 text-caption text-danger"
+                role="alert"
+              >
+                {interactionError}
+              </p>
+            )}
 
-          {interactions.length === 0 ? (
-            <p className="text-body-md text-ink-mute">
-              Nothing logged yet. Add a call, a coffee, a message: anything that keeps the thread
-              alive.
-            </p>
-          ) : (
-            <ol className="relative flex flex-col gap-6">
-              <span aria-hidden className="absolute bottom-3 left-[13px] top-3 w-0.5 bg-hairline" />
-              {interactions.map((interaction) => {
-                const glyph = typeGlyphs[interaction.type];
+            {interactions.length === 0 ? (
+              <p className="text-body-md text-ink-mute">
+                Nothing logged yet. Add a call, a coffee, a message: anything that keeps the thread
+                alive.
+              </p>
+            ) : (
+              <ol className="relative flex flex-col gap-6">
+                <span
+                  aria-hidden
+                  className="absolute bottom-3 left-[13px] top-3 w-0.5 bg-hairline"
+                />
+                {interactions.map((interaction) => {
+                  const glyph = typeGlyphs[interaction.type];
 
-                return (
-                  <li className="relative pl-10" key={interaction.id}>
-                    <span className="absolute left-0 top-0 flex size-7 items-center justify-center rounded-full bg-primary-bg-subdued text-primary">
-                      <Icon className="text-sm" name={glyph} />
-                    </span>
-                    {editingInteractionId === interaction.id ? (
-                      <div className="rounded-lg border border-hairline p-4">
-                        <InteractionForm
-                          error={interactionError}
-                          initialValues={{
-                            type: interaction.type,
-                            occurredOn: interaction.occurredOn,
-                            note: interaction.note,
+                  return (
+                    <li className="relative pl-10" key={interaction.id}>
+                      <span className="absolute left-0 top-0 flex size-7 items-center justify-center rounded-full bg-primary-bg-subdued text-primary">
+                        <Icon className="text-sm" name={glyph} />
+                      </span>
+                      {editingInteractionId === interaction.id ? (
+                        <div className="rounded-lg border border-hairline p-4">
+                          <InteractionForm
+                            error={interactionError}
+                            initialValues={{
+                              type: interaction.type,
+                              occurredOn: interaction.occurredOn,
+                              note: interaction.note,
+                            }}
+                            onCancel={() => {
+                              setEditingInteractionId(null);
+                              setInteractionError(null);
+                            }}
+                            onSubmit={(values) => handleUpdateInteraction(interaction.id, values)}
+                            pendingLabel="Saving changes"
+                            submitLabel="Save changes"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-1.5">
+                          <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                            <span className="text-heading-sm text-ink">
+                              {interactionTypeLabel(interaction.type)}
+                            </span>
+                            <span className="text-body-tabular tabular-nums text-ink-mute">
+                              {formatDay(interaction.occurredOn)}
+                            </span>
+                          </div>
+                          {interaction.note !== null && (
+                            <p className="max-w-[80ch] whitespace-pre-wrap text-body-md text-ink-secondary">
+                              {interaction.note}
+                            </p>
+                          )}
+                          <AttachmentList
+                            attachments={interaction.attachments}
+                            contactId={contact.id}
+                            onRemove={(attachment) =>
+                              void handleRemoveAttachment(interaction, attachment.id)
+                            }
+                          />
+                          {confirmingInteractionId === interaction.id ? (
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="text-caption text-ink-mute">
+                                Delete this interaction?
+                              </span>
+                              <Button
+                                onClick={() => handleDeleteInteraction(interaction.id)}
+                                variant="danger"
+                              >
+                                Delete interaction
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  setConfirmingInteractionId(null);
+                                }}
+                                variant="ghost"
+                              >
+                                Keep it
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-x-2">
+                              <AttachButton
+                                ariaLabel={`Attach file to ${interactionTypeLabel(interaction.type)} on ${formatDay(interaction.occurredOn)}`}
+                                busy={attachingId === interaction.id}
+                                onPick={(file) => void handleAttach(interaction, file)}
+                              />
+                              <Button
+                                onClick={() => {
+                                  setEditingInteractionId(interaction.id);
+                                  setInteractionError(null);
+                                }}
+                                variant="ghost"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                onClick={() => {
+                                  setConfirmingInteractionId(interaction.id);
+                                }}
+                                variant="ghost"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ol>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-heading-lg text-ink">Reminders</h2>
+              {!addingReminder && (
+                <Button onClick={() => setAddingReminder(true)} variant="secondary">
+                  Add reminder
+                </Button>
+              )}
+            </div>
+
+            {addingReminder && (
+              <ReminderForm
+                error={reminderError}
+                onCancel={() => {
+                  setAddingReminder(false);
+                  setReminderError(null);
+                }}
+                onSubmit={handleAddReminder}
+              />
+            )}
+
+            {reminders.length === 0 ? (
+              <p className="text-body-md text-ink-mute">
+                No reminders yet. Add one, and it will be waiting on your home screen when the day
+                comes.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {[...openReminders, ...doneReminders].map((reminder) => (
+                  <li className="flex flex-col gap-1.5" key={reminder.id}>
+                    <p
+                      className={cn(
+                        "text-body-md",
+                        reminder.status === "done"
+                          ? "text-ink-mute line-through"
+                          : "text-ink-secondary",
+                      )}
+                    >
+                      {reminder.body}
+                    </p>
+                    {reminder.status === "due" || reminder.status === "overdue" ? (
+                      <span
+                        className={cn(
+                          "self-start rounded-full px-2 py-1 text-micro-cap uppercase tabular-nums",
+                          reminderChipClass(reminder.status),
+                        )}
+                      >
+                        {reminderTiming(reminder, now)}
+                      </span>
+                    ) : (
+                      <span className="text-caption tabular-nums text-ink-mute">
+                        {reminderTiming(reminder, now)}
+                      </span>
+                    )}
+                    {confirmingReminderId === reminder.id ? (
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="text-caption text-ink-mute">Delete this reminder?</span>
+                        <Button onClick={() => handleDeleteReminder(reminder.id)} variant="danger">
+                          Delete reminder
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setConfirmingReminderId(null);
                           }}
-                          onCancel={() => {
-                            setEditingInteractionId(null);
-                            setInteractionError(null);
-                          }}
-                          onSubmit={(values) => handleUpdateInteraction(interaction.id, values)}
-                          pendingLabel="Saving changes"
-                          submitLabel="Save changes"
-                        />
+                          variant="ghost"
+                        >
+                          Keep it
+                        </Button>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-1.5">
-                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                          <span className="text-heading-sm text-ink">
-                            {interactionTypeLabel(interaction.type)}
-                          </span>
-                          <span className="text-body-tabular tabular-nums text-ink-mute">
-                            {formatDay(interaction.occurredOn)}
-                          </span>
-                        </div>
-                        {interaction.note !== null && (
-                          <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
-                            {interaction.note}
-                          </p>
+                      <div className="flex flex-wrap gap-x-2">
+                        {reminder.status !== "done" && (
+                          <Button onClick={() => handleTickReminder(reminder.id)} variant="ghost">
+                            Mark done
+                          </Button>
                         )}
-                        <AttachmentList
-                          attachments={interaction.attachments}
-                          contactId={contact.id}
-                          onRemove={(attachment) =>
-                            void handleRemoveAttachment(interaction, attachment.id)
-                          }
-                        />
-                        {confirmingInteractionId === interaction.id ? (
+                        <Button
+                          onClick={() => {
+                            setConfirmingReminderId(reminder.id);
+                          }}
+                          variant="ghost"
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-heading-lg text-ink">Notes</h2>
+              {!addingNote && (
+                <Button onClick={() => setAddingNote(true)} variant="secondary">
+                  Add note
+                </Button>
+              )}
+            </div>
+            {addingNote && (
+              <NoteForm
+                error={noteError}
+                initialBody=""
+                onCancel={() => {
+                  setAddingNote(false);
+                  setNoteError(null);
+                }}
+                onSubmit={handleAddNote}
+                pendingLabel="Saving your note"
+                submitLabel="Add note"
+              />
+            )}
+            {notes.length === 0 ? (
+              <p className="text-body-md text-ink-mute">No notes yet.</p>
+            ) : (
+              <ul className="flex flex-col gap-4">
+                {notes.map((note) => (
+                  <li className="flex flex-col gap-1.5" key={note.id}>
+                    {editingNoteId === note.id ? (
+                      <NoteForm
+                        error={noteError}
+                        initialBody={note.body}
+                        onCancel={() => {
+                          setEditingNoteId(null);
+                          setNoteError(null);
+                        }}
+                        onSubmit={(body) => handleUpdateNote(note.id, body)}
+                        pendingLabel="Saving changes"
+                        submitLabel="Save changes"
+                      />
+                    ) : (
+                      <>
+                        <p className="max-w-[80ch] whitespace-pre-wrap text-body-md text-ink-secondary">
+                          {note.body}
+                        </p>
+                        {confirmingNoteId === note.id ? (
                           <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-caption text-ink-mute">
-                              Delete this interaction?
-                            </span>
-                            <Button
-                              onClick={() => handleDeleteInteraction(interaction.id)}
-                              variant="danger"
-                            >
-                              Delete interaction
+                            <span className="text-caption text-ink-mute">Delete this note?</span>
+                            <Button onClick={() => handleDeleteNote(note.id)} variant="danger">
+                              Delete note
                             </Button>
                             <Button
                               onClick={() => {
-                                setConfirmingInteractionId(null);
+                                setConfirmingNoteId(null);
                               }}
                               variant="ghost"
                             >
@@ -860,15 +1057,10 @@ function ContactDetailBody() {
                           </div>
                         ) : (
                           <div className="flex flex-wrap gap-x-2">
-                            <AttachButton
-                              ariaLabel={`Attach file to ${interactionTypeLabel(interaction.type)} on ${formatDay(interaction.occurredOn)}`}
-                              busy={attachingId === interaction.id}
-                              onPick={(file) => void handleAttach(interaction, file)}
-                            />
                             <Button
                               onClick={() => {
-                                setEditingInteractionId(interaction.id);
-                                setInteractionError(null);
+                                setEditingNoteId(note.id);
+                                setNoteError(null);
                               }}
                               variant="ghost"
                             >
@@ -876,7 +1068,7 @@ function ContactDetailBody() {
                             </Button>
                             <Button
                               onClick={() => {
-                                setConfirmingInteractionId(interaction.id);
+                                setConfirmingNoteId(note.id);
                               }}
                               variant="ghost"
                             >
@@ -884,16 +1076,19 @@ function ContactDetailBody() {
                             </Button>
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
                   </li>
-                );
-              })}
-            </ol>
-          )}
-        </section>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
 
-        <aside className="flex flex-col gap-8">
+        <aside
+          aria-label="Reference"
+          className="flex flex-col gap-8 xl:min-h-0 xl:overflow-y-auto xl:pb-8"
+        >
           <section className="flex flex-col gap-3">
             <h2 className="text-heading-lg text-ink">Details</h2>
             {contact.emails.length > 0 && (
@@ -1025,91 +1220,9 @@ function ContactDetailBody() {
           </section>
 
           <section className="flex flex-col gap-4">
-            <h2 className="text-heading-lg text-ink">Reminders</h2>
-
-            <ReminderForm error={reminderError} onSubmit={handleAddReminder} />
-
-            {reminders.length === 0 ? (
-              <p className="text-body-md text-ink-mute">
-                No reminders yet. Add one, and it will be waiting on your home screen when the
-                day comes.
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-4">
-                {[...openReminders, ...doneReminders].map((reminder) => (
-                  <li className="flex flex-col gap-1.5" key={reminder.id}>
-                    <p
-                      className={cn(
-                        "text-body-md",
-                        reminder.status === "done"
-                          ? "text-ink-mute line-through"
-                          : "text-ink-secondary",
-                      )}
-                    >
-                      {reminder.body}
-                    </p>
-                    {reminder.status === "due" || reminder.status === "overdue" ? (
-                      <span
-                        className={cn(
-                          "self-start rounded-full px-2 py-1 text-micro-cap uppercase tabular-nums",
-                          reminderChipClass(reminder.status),
-                        )}
-                      >
-                        {reminderTiming(reminder, now)}
-                      </span>
-                    ) : (
-                      <span className="text-caption tabular-nums text-ink-mute">
-                        {reminderTiming(reminder, now)}
-                      </span>
-                    )}
-                    {confirmingReminderId === reminder.id ? (
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="text-caption text-ink-mute">Delete this reminder?</span>
-                        <Button
-                          onClick={() => handleDeleteReminder(reminder.id)}
-                          variant="danger"
-                        >
-                          Delete reminder
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            setConfirmingReminderId(null);
-                          }}
-                          variant="ghost"
-                        >
-                          Keep it
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-wrap gap-x-2">
-                        {reminder.status !== "done" && (
-                          <Button onClick={() => handleTickReminder(reminder.id)} variant="ghost">
-                            Mark done
-                          </Button>
-                        )}
-                        <Button
-                          onClick={() => {
-                            setConfirmingReminderId(reminder.id);
-                          }}
-                          variant="ghost"
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="flex flex-col gap-4">
             <h2 className="text-heading-lg text-ink">Important dates</h2>
 
-            <ImportantDateForm
-              error={importantDateError}
-              onSubmit={handleAddImportantDate}
-            />
+            <ImportantDateForm error={importantDateError} onSubmit={handleAddImportantDate} />
 
             {importantDates.length === 0 ? (
               <p className="text-body-md text-ink-mute">
@@ -1163,82 +1276,6 @@ function ContactDetailBody() {
                           Delete
                         </Button>
                       </div>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="flex flex-col gap-4">
-            <h2 className="text-heading-lg text-ink">Notes</h2>
-            <NoteForm
-              error={noteError}
-              initialBody=""
-              onSubmit={handleAddNote}
-              pendingLabel="Saving your note"
-              submitLabel="Add note"
-            />
-            {notes.length === 0 ? (
-              <p className="text-body-md text-ink-mute">No notes yet.</p>
-            ) : (
-              <ul className="flex flex-col gap-4">
-                {notes.map((note) => (
-                  <li className="flex flex-col gap-1.5" key={note.id}>
-                    {editingNoteId === note.id ? (
-                      <NoteForm
-                        error={noteError}
-                        initialBody={note.body}
-                        onCancel={() => {
-                          setEditingNoteId(null);
-                          setNoteError(null);
-                        }}
-                        onSubmit={(body) => handleUpdateNote(note.id, body)}
-                        pendingLabel="Saving changes"
-                        submitLabel="Save changes"
-                      />
-                    ) : (
-                      <>
-                        <p className="whitespace-pre-wrap text-body-md text-ink-secondary">
-                          {note.body}
-                        </p>
-                        {confirmingNoteId === note.id ? (
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-caption text-ink-mute">Delete this note?</span>
-                            <Button onClick={() => handleDeleteNote(note.id)} variant="danger">
-                              Delete note
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setConfirmingNoteId(null);
-                              }}
-                              variant="ghost"
-                            >
-                              Keep it
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex flex-wrap gap-x-2">
-                            <Button
-                              onClick={() => {
-                                setEditingNoteId(note.id);
-                                setNoteError(null);
-                              }}
-                              variant="ghost"
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              onClick={() => {
-                                setConfirmingNoteId(note.id);
-                              }}
-                              variant="ghost"
-                            >
-                              Delete
-                            </Button>
-                          </div>
-                        )}
-                      </>
                     )}
                   </li>
                 ))}
