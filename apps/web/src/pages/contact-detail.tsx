@@ -915,6 +915,7 @@ function ContactDetailBody() {
 
             {addingReminder && (
               <ReminderForm
+                autoFocus
                 error={reminderError}
                 onCancel={() => {
                   setAddingReminder(false);
@@ -1006,6 +1007,7 @@ function ContactDetailBody() {
             </div>
             {addingNote && (
               <NoteForm
+                autoFocus
                 error={noteError}
                 initialBody=""
                 onCancel={() => {

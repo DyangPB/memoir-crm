@@ -9,9 +9,10 @@ type ReminderFormProps = {
   error: string | null;
   onSubmit: (values: ReminderInput) => Promise<void>;
   onCancel?: () => void;
+  autoFocus?: boolean;
 };
 
-export function ReminderForm({ error, onSubmit, onCancel }: ReminderFormProps) {
+export function ReminderForm({ error, onSubmit, onCancel, autoFocus }: ReminderFormProps) {
   const id = useId();
   const [body, setBody] = useState("");
   const [dueOn, setDueOn] = useState(todayIsoDay());
@@ -35,6 +36,7 @@ export function ReminderForm({ error, onSubmit, onCancel }: ReminderFormProps) {
           Reminder
         </label>
         <Input
+          autoFocus={autoFocus}
           id={`${id}-body`}
           onChange={(event) => setBody(event.target.value)}
           placeholder="Call Bob"

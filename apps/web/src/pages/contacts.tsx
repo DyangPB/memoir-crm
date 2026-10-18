@@ -216,7 +216,7 @@ export function ContactsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-canvas md:flex md:h-dvh md:flex-col md:overflow-hidden">
+    <div className="min-h-screen bg-canvas md:flex md:h-dvh md:min-h-0 md:flex-col md:overflow-hidden">
       <AppHeader email={session.user.email} />
       <main className="mx-auto flex w-full max-w-6xl flex-col px-4 py-4 sm:px-6 sm:py-8 md:min-h-0 md:flex-1 md:pb-0">
         {error !== null && (

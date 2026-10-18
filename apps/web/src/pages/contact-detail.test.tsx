@@ -195,4 +195,18 @@ describe("Contact detail panes", () => {
     await waitFor(() => expect(screen.queryByPlaceholderText(REMINDER_PLACEHOLDER)).toBeNull());
     expect(screen.getByRole("button", { name: "Add reminder" })).toBeTruthy();
   });
+
+  it("moves focus into the Note form and the Reminder form when they open", async () => {
+    const user = userEvent.setup();
+
+    renderDetail();
+
+    await screen.findByRole("heading", { level: 1, name: "Ada Lovelace" });
+
+    await user.click(screen.getByRole("button", { name: "Add note" }));
+    expect(document.activeElement).toBe(screen.getByPlaceholderText(NOTE_PLACEHOLDER));
+
+    await user.click(screen.getByRole("button", { name: "Add reminder" }));
+    expect(document.activeElement).toBe(screen.getByPlaceholderText(REMINDER_PLACEHOLDER));
+  });
 });

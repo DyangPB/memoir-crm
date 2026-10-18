@@ -108,13 +108,13 @@ Material Symbols Outlined, loaded as a font and set in text-size classes (`text-
 - Brand pages center in a 72rem (1152px) container, Tailwind's `max-w-6xl`; the airmail edge extends edge-to-edge above.
 - The app is five surfaces under one shared header: **Dashboard**, **Contacts**, **Reminders**, **Calendar**, **Settings**. The header carries the airmail edge, the wordmark, the five links (the current one in `{colors.primary-bg-subdued}`), and the sign-out control.
 - **Contacts is a split pane.** A 22rem list rail (the "Your people" title with "Add contact", the Cadence Health pill, search, Label chips, then the rows) sits beside the selected Contact's detail. Below Tablet the list fills the screen and the detail replaces it (push navigation), with a back control.
-- **Contact detail** has two columns from Wide up: the main column (the Timeline thread) and a 260px reference sidebar (Details with the custom fields, Labels, Reminders, Important Dates, then Notes). Below that the sidebar stacks under the thread.
+- **Contact detail** is two panes under pinned chrome. From Tablet up the Contacts page fits the viewport and never scrolls as a whole: the app header and the identity block stay put. From Wide up the main column (the Timeline thread, then Reminders, then Notes, with prose capped at 80ch) and a 260px reference sidebar (Details with the custom fields, Labels, Important Dates only) each scroll on their own. Below Wide the sidebar stacks under the main column and the pane scrolls as one.
 - **Dashboard** is a single centered column: a greeting with the "Log interaction" action, then the cards.
 - **Reminders** is a centered column: header, tab strip, quick-add card, then the sections.
 - **Calendar** is a wide page: toolbar, layer toggles, then the view. Month sits beside a 320px selected-day panel; Week, Day, and Agenda fill the width.
 
 ### Whitespace Philosophy
-Paper needs room to breathe. Brand sections keep 96px gaps; the app tightens to 16 to 24px between related controls. The contact detail is the product's calmest surface: one thread, one sidebar, generous vertical rhythm on the timeline.
+Paper needs room to breathe. Brand sections keep 96px gaps; the app tightens to 16 to 24px between related controls. The contact detail is the product's calmest surface: one thread, one reference sidebar, generous vertical rhythm on the timeline.
 
 ## Elevation & Depth
 
@@ -289,6 +289,7 @@ Month, Week, Day, and Agenda over Memoir's own data and, when connected, the Goo
 
 - **Header**: the 64px avatar, "Contact" in `{typography.micro-cap}`, the name in `{typography.display-lg}`, role and location in `{typography.body-md}`, the `Local Clock`, and "Add photo" or "Change photo" and "Remove photo" as ghost buttons. The days-since numeral and "Edit" sit at the right.
 - **Timeline**: the form to log an Interaction, then the thread. Each entry offers "Attach file", "Edit", and "Delete" as ghost buttons; deleting asks first, in plain words.
+- **Reminders and Notes**: each sits under the Timeline with an "Add reminder" or "Add note" secondary button beside its heading. The button opens the form in place and goes away while it is open; saving or "Cancel" closes it again. Note text and Interaction text are held to an 80ch measure (`max-w-[80ch]`).
 
 ### Settings
 
@@ -323,7 +324,7 @@ One `card-feature-light` per concern, each headed in `{typography.headline-sm}`:
 
 | Name | Width | Key Changes |
 |---|---|---|
-| Wide | ≥ 1280px | Contact detail shows the sidebar beside the thread |
+| Wide | ≥ 1280px | Contact detail shows the sidebar beside the main column, and the two scroll independently |
 | Desktop | 1024–1279px | The Calendar's day panel sits beside the Month grid |
 | Tablet | 768–1023px | Contacts is the split pane (22rem rail beside the detail); the Month grid and its day panel stack; the detail sidebar stacks under the thread |
 | Mobile | < 768px | List-first: the Contact list fills the screen and the detail replaces it (push navigation); Week becomes one column of days below 640px; the quick-add button drops below its fields |
@@ -334,7 +335,7 @@ One `card-feature-light` per concern, each headed in `{typography.headline-sm}`:
 
 ### Collapsing Strategy
 - The timeline thread condenses spacing on mobile but never loses its dots: the proof element survives at every size.
-- Detail moves from two columns to one; the sidebar stacks below the thread.
+- Detail moves from two columns to one; the sidebar stacks below the main column and the pane scrolls as one. Below Tablet the page scrolls naturally.
 - The Calendar's Month keeps its seven columns on every width; chips truncate rather than the grid collapsing.
 
 ### Image Behavior
