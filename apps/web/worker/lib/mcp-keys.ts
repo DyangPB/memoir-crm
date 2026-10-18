@@ -1,3 +1,4 @@
+import type { McpKeySummary } from "@memoir/core";
 import { mcpKeys } from "@memoir/db";
 import { and, desc, eq } from "drizzle-orm";
 
@@ -6,14 +7,6 @@ import { createDb } from "./db";
 const SECRET_PREFIX = "mem_";
 const SECRET_BYTES = 32;
 const DISPLAY_PREFIX_LENGTH = SECRET_PREFIX.length + 4;
-
-export type McpKeySummary = {
-  id: string;
-  name: string;
-  prefix: string;
-  createdAt: string;
-  lastUsedAt: string | null;
-};
 
 type McpKeyRow = typeof mcpKeys.$inferSelect;
 
@@ -43,7 +36,6 @@ function toSummary(row: McpKeyRow): McpKeySummary {
     name: row.name,
     prefix: row.prefix,
     createdAt: row.createdAt.toISOString(),
-    lastUsedAt: row.lastUsedAt?.toISOString() ?? null,
   };
 }
 

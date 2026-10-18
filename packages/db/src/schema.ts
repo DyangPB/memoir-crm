@@ -403,7 +403,6 @@ export const mcpKeys = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
-    lastUsedAt: integer("last_used_at", { mode: "timestamp_ms" }),
   },
   (table) => [index("mcp_keys_userId_idx").on(table.userId)],
 );

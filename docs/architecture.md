@@ -38,7 +38,7 @@ Label filtering is a `?label=` query parameter on `/app/contacts`, carried onto 
 - `notes` — freeform captured info per contact
 - `reminders` — one-off dated prompts per contact; `important_dates` — yearly recurring dates (birthdays)
 - `labels` + `contact_labels` — flat, per-user organization
-- `mcp_keys` — per-user API keys for the MCP server
+- `mcp_keys` — per-user API keys for the MCP server (SHA-256 hash only, with a short display prefix; see ADR-0007)
 - FTS5 virtual table over contact names, notes, and interactions
 
 Every row except `users` is scoped by `user_id` — that column is the entire multi-tenant isolation model (ADR in reverse: no vaults, no teams, no permissions).

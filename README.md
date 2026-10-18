@@ -25,6 +25,12 @@ pnpm typecheck
 pnpm build
 ```
 
+## Connect an AI assistant
+
+Memoir runs an MCP server at `/mcp` (streamable HTTP). In **Settings → Assistant access**, create an API key, copy it (it is shown once), and add `https://<your-memoir>/mcp` to your assistant as an MCP server with the key as its Bearer token.
+
+Tools: `list_contacts`, `get_contact` (with Timeline and Notes), `create_contact`, `update_contact`, `log_interaction`, `add_note`, `add_reminder`, and the deletes `delete_contact`, `delete_interaction`, `delete_note`, `delete_reminder`. Deletes ask you to confirm through the assistant and do nothing otherwise; assistants on older MCP protocol versions can't be asked, so they are refused. See [ADR-0007](docs/adr/0007-mcp-keys-and-confirmed-deletes.md).
+
 ## Deploy
 
 Live at <https://memoir.shadypb.workers.dev>. Deploy locally with `pnpm deploy`, and from

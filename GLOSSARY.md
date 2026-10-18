@@ -68,6 +68,10 @@ _Avoid_: Avatar image, profile picture, headshot (use Photo; "letter avatar" is 
 A file added to an Interaction: images show inline in the Timeline, anything else is a download. Belongs to one Interaction and goes with it when the Interaction or its Contact is deleted.
 _Avoid_: Upload, document, media (use Attachment for the file, Photo for a Contact's picture)
 
+**API Key**:
+A secret a User generates in Settings so an AI assistant can use their Memoir over MCP. Shown once when created, stored only as a hash, and revoked at any time; revoking stops it working immediately. It reaches the assistant tools only, never the web app's own API.
+_Avoid_: Token, password, MCP key (use API Key)
+
 **Memoir calendar**:
 The secondary Google calendar named "Memoir" that Memoir creates in a connected Google account. Every dated Reminder and Important Date is mirrored there, in both directions, so they show on the user's phone. A birthday goes one way only (Memoir's version wins), and a done Reminder has no event. Disconnecting stops the syncing and leaves the calendar in Google.
 _Avoid_: Sync calendar, Memoir feed

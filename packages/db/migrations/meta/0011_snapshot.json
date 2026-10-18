@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d5c1abce-784d-43fd-a23e-09c2523a08d8",
+  "id": "a82aba37-87f6-4bc0-ab0f-7ebca0001577",
   "prevId": "bbc84769-0dfb-466b-8357-279ef64574f6",
   "tables": {
     "accounts": {
@@ -1128,13 +1128,6 @@
           "notNull": true,
           "autoincrement": false,
           "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
-        },
-        "last_used_at": {
-          "name": "last_used_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
         }
       },
       "indexes": {

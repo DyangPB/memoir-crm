@@ -1,5 +1,10 @@
 import { interactionTypes } from "@memoir/core";
-import type { McpServer } from "@modelcontextprotocol/server";
+import {
+  acceptedContent,
+  inputRequired,
+  type McpServer,
+  type ServerContext,
+} from "@modelcontextprotocol/server";
 import { z } from "zod";
 
 import type { ApiCall, ApiResult } from "./api-call";
@@ -44,6 +49,123 @@ const contactDetails = {
   roleCompany: z.string().nullable().optional(),
   timezone: z.string().nullable().optional().describe("An IANA zone such as Europe/London"),
 };
+
+const confirmation = z.object({ confirm: z.boolean().describe("Tick to go ahead") });
+
+/**
+ * Deletes never run on the assistant's say-so: the user is asked, through the
+ * client, and only an accepted "yes" lets the tool carry on. Everything else
+ * (a "no", a dismissed prompt, a client that cannot be asked) leaves the data
+ * as it is.
+ */
+function askBeforeDeleting(
+  ctx: ServerContext,
+  question: string,
+): "confirmed" | ToolReply | ReturnType<typeof inputRequired> {
+  const answers = ctx.mcpReq.inputResponses;
+
+  if (acceptedContent(answers, "confirm", confirmation)?.confirm === true) {
+    return "confirmed";
+  }
+
+  if (answers !== undefined && "confirm" in answers) {
+    return { content: [{ type: "text", text: "Not deleted: you chose not to confirm." }] };
+  }
+
+  // Only clients on the newer protocol can be asked from a stateless server.
+  if (ctx.mcpReq.envelope === undefined) {
+    return {
+      content: [
+        {
+          type: "text",
+          text: "Not deleted: this assistant can't ask you to confirm, and Memoir won't delete without asking. Delete it in the Memoir app instead.",
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  return inputRequired({
+    inputRequests: {
+      confirm: inputRequired.elicit({ message: question, requestedSchema: confirmation }),
+    },
+  });
+}
+
+type Logged = { id: string } & Record<string, unknown>;
+
+type LoggedKind = {
+  tool: string;
+  noun: string;
+  idArg: string;
+  /** Path segment, and the key its list comes back under. */
+  collection: "interactions" | "notes" | "reminders";
+  summary: (item: Logged) => string;
+};
+
+const loggedKinds: LoggedKind[] = [
+  {
+    tool: "delete_interaction",
+    noun: "interaction",
+    idArg: "interactionId",
+    collection: "interactions",
+    summary: (item) => `${String(item.type)} on ${String(item.occurredOn)}`,
+  },
+  {
+    tool: "delete_note",
+    noun: "note",
+    idArg: "noteId",
+    collection: "notes",
+    summary: (item) => `"${String(item.body).slice(0, 80)}"`,
+  },
+  {
+    tool: "delete_reminder",
+    noun: "reminder",
+    idArg: "reminderId",
+    collection: "reminders",
+    summary: (item) => `"${String(item.body).slice(0, 80)}"`,
+  },
+];
+
+function registerDeleteLogged(server: McpServer, call: ApiCall, kind: LoggedKind) {
+  server.registerTool(
+    kind.tool,
+    {
+      description: `Delete one ${kind.noun} from a Contact. The user is asked to confirm first, and nothing is deleted unless they say yes.`,
+      inputSchema: z.object({ contactId: z.string(), [kind.idArg]: z.string() }),
+      annotations: { destructiveHint: true },
+    },
+    async (args: Record<string, string>, ctx) => {
+      const contactPath = `/contacts/${encodeURIComponent(args.contactId ?? "")}`;
+      const itemId = args[kind.idArg] ?? "";
+      const [contact, items] = await Promise.all([
+        call("GET", contactPath),
+        call("GET", `${contactPath}/${kind.collection}`),
+      ]);
+
+      if (!contact.ok || !items.ok) {
+        return reply(contact.ok ? items : contact);
+      }
+
+      const list = (items.body as Record<string, Logged[]>)[kind.collection] ?? [];
+      const item = list.find((entry) => entry.id === itemId);
+
+      if (item === undefined) {
+        return reply({ ok: false, status: 404, body: { error: `That ${kind.noun} isn't here.` } });
+      }
+
+      const name = (contact.body as { contact: { name: string } }).contact.name;
+      const gate = askBeforeDeleting(
+        ctx,
+        `Delete this ${kind.noun} (${kind.summary(item)}) from ${name}? This can't be undone.`,
+      );
+
+      return gate === "confirmed"
+        ? reply(await call("DELETE", `${contactPath}/${kind.collection}/${encodeURIComponent(itemId)}`))
+        : gate;
+    },
+  );
+}
 
 export function registerTools(server: McpServer, call: ApiCall) {
   server.registerTool(
@@ -199,4 +321,34 @@ export function registerTools(server: McpServer, call: ApiCall) {
       return reply(await call("PUT", path, { ...kept, ...given }));
     },
   );
+
+  server.registerTool(
+    "delete_contact",
+    {
+      description:
+        "Delete a Contact and everything logged against them: Timeline, Notes, Reminders, Important Dates. The user is asked to confirm first, and nothing is deleted unless they say yes.",
+      inputSchema: z.object({ contactId: z.string() }),
+      annotations: { destructiveHint: true },
+    },
+    async ({ contactId }, ctx) => {
+      const path = `/contacts/${encodeURIComponent(contactId)}`;
+      const current = await call("GET", path);
+
+      if (!current.ok) {
+        return reply(current);
+      }
+
+      const name = (current.body as { contact: { name: string } }).contact.name;
+      const gate = askBeforeDeleting(
+        ctx,
+        `Delete ${name} and everything logged about them? This can't be undone.`,
+      );
+
+      return gate === "confirmed" ? reply(await call("DELETE", path)) : gate;
+    },
+  );
+
+  for (const kind of loggedKinds) {
+    registerDeleteLogged(server, call, kind);
+  }
 }

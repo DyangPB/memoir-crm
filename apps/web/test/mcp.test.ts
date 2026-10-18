@@ -90,8 +90,28 @@ describe("/mcp authentication", () => {
 
 type ToolResult = { content: { type: string; text?: string }[]; isError?: boolean };
 
-async function connect(secret: string): Promise<Client> {
-  const client = new Client({ name: "test-assistant", version: "1.0.0" });
+type Answer = { action: "accept"; content: { confirm: boolean } } | { action: "decline" };
+
+/**
+ * An assistant that can be asked to confirm: it speaks the newer protocol and
+ * answers every prompt with `answer`, recording what it was asked.
+ */
+async function connect(secret: string, asks?: { answer: Answer; questions: string[] }): Promise<Client> {
+  const client =
+    asks === undefined
+      ? new Client({ name: "test-assistant", version: "1.0.0" })
+      : new Client(
+          { name: "test-assistant", version: "1.0.0" },
+          { capabilities: { elicitation: { form: {} } }, versionNegotiation: { mode: "auto" } },
+        );
+
+  if (asks !== undefined) {
+    client.setRequestHandler("elicitation/create", async (request) => {
+      asks.questions.push(request.params.message);
+
+      return asks.answer;
+    });
+  }
 
   await client.connect(
     new StreamableHTTPClientTransport(new URL(`${ORIGIN}/mcp`), {
@@ -300,6 +320,104 @@ describe("/mcp updating a contact", () => {
 
     expect(foreign.isError).toBe(true);
   });
+});
+
+describe("/mcp deleting a contact", () => {
+  async function contactNames(cookie: string): Promise<string[]> {
+    const response = await api("GET", "/api/contacts", undefined, cookie);
+
+    return ((await response.json()) as { contacts: { name: string }[] }).contacts.map(
+      (contact) => contact.name,
+    );
+  }
+
+  it("deletes only after the user says yes when asked", async () => {
+    const owner = await signInAs("mcp-delete-yes@example.com");
+    const ada = await addContact(owner, "Ada Lovelace");
+    const asks = { answer: { action: "accept", content: { confirm: true } } as Answer, questions: [] as string[] };
+    const client = await connect((await createKey(owner, "Assistant")).secret, asks);
+
+    const deleted = await callTool(client, "delete_contact", { contactId: ada.id });
+
+    expect(deleted.isError).toBe(false);
+    expect(asks.questions).toHaveLength(1);
+    expect(asks.questions[0]).toContain("Ada Lovelace");
+    expect(await contactNames(owner)).toEqual([]);
+  });
+
+  it("keeps the contact when the user declines or ticks no", async () => {
+    const owner = await signInAs("mcp-delete-no@example.com");
+    const ada = await addContact(owner, "Ada Lovelace");
+    const secret = (await createKey(owner, "Assistant")).secret;
+
+    for (const answer of [
+      { action: "decline" } as Answer,
+      { action: "accept", content: { confirm: false } } as Answer,
+    ]) {
+      const client = await connect(secret, { answer, questions: [] });
+      const result = await callTool(client, "delete_contact", { contactId: ada.id });
+
+      expect(result.text).toMatch(/not deleted/i);
+    }
+
+    expect(await contactNames(owner)).toEqual(["Ada Lovelace"]);
+  });
+
+  it("refuses, and keeps the contact, when the assistant cannot be asked", async () => {
+    const owner = await signInAs("mcp-delete-unasked@example.com");
+    const ada = await addContact(owner, "Ada Lovelace");
+    const client = await connect((await createKey(owner, "Assistant")).secret);
+
+    const result = await callTool(client, "delete_contact", { contactId: ada.id });
+
+    expect(result.isError).toBe(true);
+    expect(result.text).toMatch(/confirm/i);
+    expect(await contactNames(owner)).toEqual(["Ada Lovelace"]);
+  });
+});
+
+describe("/mcp deleting what is logged on a contact", () => {
+  const kinds = [
+    { tool: "delete_interaction", idArg: "interactionId", list: "interactions", make: "interactions", made: "interaction", body: { type: "call", occurredOn: "2026-10-01", note: "Quick call" } },
+    { tool: "delete_note", idArg: "noteId", list: "notes", make: "notes", made: "note", body: { body: "Likes tea" } },
+    { tool: "delete_reminder", idArg: "reminderId", list: "reminders", make: "reminders", made: "reminder", body: { body: "Call Bob", dueOn: "2099-10-20" } },
+  ] as const;
+
+  for (const kind of kinds) {
+    it(`${kind.tool} asks first, and deletes only on yes`, async () => {
+      const owner = await signInAs(`mcp-${kind.tool}@example.com`);
+      const bob = await addContact(owner, "Bob Brown");
+      const created = await api("POST", `/api/contacts/${bob.id}/${kind.make}`, kind.body, owner);
+      const itemId = ((await created.json()) as Record<string, { id: string }>)[kind.made]?.id;
+      const secret = (await createKey(owner, "Assistant")).secret;
+      const remaining = async () => {
+        const response = await api("GET", `/api/contacts/${bob.id}/${kind.list}`, undefined, owner);
+
+        return ((await response.json()) as Record<string, unknown[]>)[kind.list]?.length;
+      };
+      const args = { contactId: bob.id, [kind.idArg]: itemId };
+
+      const declined = await connect(secret, { answer: { action: "decline" }, questions: [] });
+
+      expect((await callTool(declined, kind.tool, args)).text).toMatch(/not deleted/i);
+      expect(await remaining()).toBe(1);
+
+      const unasked = await connect(secret);
+
+      expect((await callTool(unasked, kind.tool, args)).isError).toBe(true);
+      expect(await remaining()).toBe(1);
+
+      const questions: string[] = [];
+      const accepted = await connect(secret, {
+        answer: { action: "accept", content: { confirm: true } },
+        questions,
+      });
+
+      expect((await callTool(accepted, kind.tool, args)).isError).toBe(false);
+      expect(questions).toHaveLength(1);
+      expect(await remaining()).toBe(0);
+    });
+  }
 });
 
 describe("/mcp revoked keys", () => {
