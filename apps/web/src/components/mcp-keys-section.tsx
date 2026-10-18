@@ -15,6 +15,7 @@ export function McpKeysSection() {
   const [newKey, setNewKey] = useState<NewKey | null>(null);
   const [copied, setCopied] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [revoking, setRevoking] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -67,7 +68,11 @@ export function McpKeysSection() {
   }
 
   async function handleRevoke(keyId: string) {
+    setRevoking(true);
+
     const result = await revokeMcpKey(keyId);
+
+    setRevoking(false);
 
     if (!result.ok && result.status !== 404) {
       setError(result.message);
@@ -86,7 +91,7 @@ export function McpKeysSection() {
         <p className="text-caption text-ink-mute">
           Let an AI assistant read your contacts and log interactions, notes and reminders for you.
           Add <code className="text-ink-secondary">{`${window.location.origin}/mcp`}</code> to your
-          assistant as an MCP server, with a key below as its Bearer token. Anything it deletes asks
+          assistant as an MCP server and give it one of the keys below. Anything it deletes asks
           you first.
         </p>
       </div>
@@ -125,7 +130,7 @@ export function McpKeysSection() {
           <div className="flex flex-wrap items-center gap-2">
             <Input
               aria-label="New key"
-              className="min-w-0 flex-1 font-mono"
+              className="min-w-0 flex-1"
               onFocus={(event) => event.target.select()}
               readOnly
               value={newKey.secret}
@@ -150,7 +155,7 @@ export function McpKeysSection() {
             <li className="flex flex-col gap-1.5 py-3" key={key.id}>
               <div className="flex flex-wrap items-baseline gap-x-3">
                 <span className="text-body-md text-ink">{key.name}</span>
-                <span className="font-mono text-caption text-ink-mute">{key.prefix}…</span>
+                <span className="text-caption tabular-nums text-ink-mute">{key.prefix}…</span>
                 <span className="text-caption tabular-nums text-ink-mute">
                   Created {formatDay(key.createdAt.slice(0, 10))}
                 </span>
@@ -160,7 +165,7 @@ export function McpKeysSection() {
                   <span className="text-caption text-ink-mute">
                     Revoke "{key.name}"? Any assistant using it stops working right away.
                   </span>
-                  <Button onClick={() => void handleRevoke(key.id)} variant="danger">
+                  <Button disabled={revoking} onClick={() => void handleRevoke(key.id)} variant="danger">
                     Revoke key
                   </Button>
                   <Button onClick={() => setConfirmingId(null)} variant="ghost">

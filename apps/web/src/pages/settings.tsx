@@ -10,8 +10,8 @@ import { Navigate, useNavigate } from "react-router";
 
 import { AppHeader } from "../components/app-header";
 import { DefaultCadenceForm } from "../components/default-cadence-form";
-import { McpKeysSection } from "../components/mcp-keys-section";
 import { GoogleCalendarSection } from "../components/google-calendar-section";
+import { McpKeysSection } from "../components/mcp-keys-section";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Select } from "../components/ui/select";

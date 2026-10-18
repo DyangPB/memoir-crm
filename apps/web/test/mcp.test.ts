@@ -420,6 +420,43 @@ describe("/mcp deleting what is logged on a contact", () => {
   }
 });
 
+describe("/mcp ids and keys stay in their lane", () => {
+  it("does not let an id escape its place in the path", async () => {
+    const owner = await signInAs("mcp-dots@example.com");
+    const bob = await addContact(owner, "Bob Brown");
+    const client = await connect((await createKey(owner, "Assistant")).secret);
+
+    for (const contactId of [".", "..", "../contacts", `${bob.id}/notes`]) {
+      for (const [tool, extra] of [
+        ["get_contact", {}],
+        ["add_note", { body: "x" }],
+        ["log_interaction", { type: "call", occurredOn: "2026-10-01" }],
+        ["add_reminder", { body: "x", dueOn: "2099-01-01" }],
+        ["update_contact", { location: "x" }],
+        ["delete_contact", {}],
+      ] as const) {
+        const result = await callTool(client, tool, { contactId, ...extra });
+
+        expect(result.isError, `${tool} ${contactId}`).toBe(true);
+        expect(result.text).not.toContain("Bob Brown");
+      }
+    }
+  });
+
+  it("is not a way into the web app's own API", async () => {
+    const owner = await signInAs("mcp-no-api@example.com");
+    const { secret } = await createKey(owner, "Assistant");
+
+    for (const path of ["/api/contacts", "/api/mcp-keys", "/api/settings"]) {
+      const response = await exports.default.fetch(`${ORIGIN}${path}`, {
+        headers: { authorization: `Bearer ${secret}` },
+      });
+
+      expect(response.status, path).toBe(401);
+    }
+  });
+});
+
 describe("/mcp revoked keys", () => {
   it("stops working the moment the key is revoked, even for a connected client", async () => {
     const owner = await signInAs("mcp-revoke-owner@example.com");

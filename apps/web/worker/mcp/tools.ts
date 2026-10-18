@@ -9,6 +9,14 @@ import { z } from "zod";
 
 import type { ApiCall, ApiResult } from "./api-call";
 
+/**
+ * Ids go straight into request paths, so they are limited to the characters
+ * our UUIDs use: "." or ".." would otherwise be read as part of the path.
+ */
+const id = z
+  .string()
+  .regex(/^[A-Za-z0-9_-]+$/, "That isn't a Memoir id.");
+
 type ToolReply = { content: { type: "text"; text: string }[]; isError?: boolean };
 
 function reply(result: ApiResult): ToolReply {
@@ -132,7 +140,7 @@ function registerDeleteLogged(server: McpServer, call: ApiCall, kind: LoggedKind
     kind.tool,
     {
       description: `Delete one ${kind.noun} from a Contact. The user is asked to confirm first, and nothing is deleted unless they say yes.`,
-      inputSchema: z.object({ contactId: z.string(), [kind.idArg]: z.string() }),
+      inputSchema: z.object({ contactId: id, [kind.idArg]: id }),
       annotations: { destructiveHint: true },
     },
     async (args: Record<string, string>, ctx) => {
@@ -201,7 +209,7 @@ export function registerTools(server: McpServer, call: ApiCall) {
     {
       description:
         "Get one Contact with their Timeline of logged Interactions (newest first) and their Notes.",
-      inputSchema: z.object({ contactId: z.string() }),
+      inputSchema: z.object({ contactId: id }),
       annotations: { readOnlyHint: true },
     },
     async ({ contactId }) => {
@@ -239,7 +247,7 @@ export function registerTools(server: McpServer, call: ApiCall) {
       description:
         "Log an Interaction with a Contact on their Timeline: a call, meeting, message or other, on a given day (YYYY-MM-DD), with an optional note.",
       inputSchema: z.object({
-        contactId: z.string(),
+        contactId: id,
         type: z.enum(interactionTypes),
         occurredOn: z.string().describe("The day it happened, YYYY-MM-DD"),
         note: z.string().optional(),
@@ -259,7 +267,7 @@ export function registerTools(server: McpServer, call: ApiCall) {
     "add_note",
     {
       description: "Add a freeform Note to a Contact: something worth remembering about them.",
-      inputSchema: z.object({ contactId: z.string(), body: z.string() }),
+      inputSchema: z.object({ contactId: id, body: z.string() }),
     },
     async ({ contactId, body }) =>
       reply(await call("POST", `/contacts/${encodeURIComponent(contactId)}/notes`, { body })),
@@ -271,7 +279,7 @@ export function registerTools(server: McpServer, call: ApiCall) {
       description:
         "Add a Reminder to reach out to a Contact by a given day (YYYY-MM-DD), such as \"call Bob by October 20\".",
       inputSchema: z.object({
-        contactId: z.string(),
+        contactId: id,
         body: z.string(),
         dueOn: z.string().describe("The day it is due, YYYY-MM-DD"),
       }),
@@ -298,7 +306,7 @@ export function registerTools(server: McpServer, call: ApiCall) {
       description:
         "Change a Contact's details. Pass only the fields to change; everything else stays as it is. Use null to clear a field.",
       inputSchema: z.object({
-        contactId: z.string(),
+        contactId: id,
         name: z.string().optional(),
         ...contactDetails,
       }),
@@ -326,8 +334,8 @@ export function registerTools(server: McpServer, call: ApiCall) {
     "delete_contact",
     {
       description:
-        "Delete a Contact and everything logged against them: Timeline, Notes, Reminders, Important Dates. The user is asked to confirm first, and nothing is deleted unless they say yes.",
-      inputSchema: z.object({ contactId: z.string() }),
+        "Delete a Contact and everything logged against them: Timeline (with its Attachments), Notes, Reminders, Important Dates. The user is asked to confirm first, and nothing is deleted unless they say yes.",
+      inputSchema: z.object({ contactId: id }),
       annotations: { destructiveHint: true },
     },
     async ({ contactId }, ctx) => {

@@ -11,7 +11,7 @@
 
 ## Deletes
 
-Delete tools never run on the assistant's word alone. They return an `input_required` result asking the user, and carry on only when the retried call carries an accepted `confirm: true`. A "no", a dismissed prompt, or a client that cannot be asked leaves the data untouched.
+Delete tools never run on the assistant's word alone (they carry `destructiveHint` in their schema, and the confirmation itself is the `input_required` round trip, not a schema flag). They return an `input_required` result asking the user, and carry on only when the retried call carries an accepted `confirm: true`. A "no", a dismissed prompt, or a client that cannot be asked leaves the data untouched.
 
 The stateless handler (`createMcpHandler`) can only ask this way, which needs a client on the 2026-07-28 protocol. The older pushed `elicitation/create` needs a session the server keeps between requests, which means a Durable Object per session. We chose not to build that yet, so assistants on the older protocol get a clear refusal and the user deletes in the app.
 
@@ -19,4 +19,7 @@ The stateless handler (`createMcpHandler`) can only ask this way, which needs a 
 
 - Revoking a key deletes its row, and every request looks the key up, so revocation is immediate.
 - Supporting older clients later means adding a session-backed legacy handler (`createLegacyMcpHandler` with `WorkerTransport` and Durable Object storage) beside the stateless one and routing by protocol generation; the tools and the confirmation rule stay as they are.
+- The confirmation is not bound to its target: the answer is read from the retried call's `inputResponses`, so a script holding the key can supply it without a prompt. That is the key owner acting on their own data, which the key already allows, so we accept it; the SDK's `requestState` binding is the way to close it if a key ever needs to be held by something less trusted than the user's own client.
+- `createMcpHandler` only accepts browser `Origin`s from localhost and the `workers.dev` host. Assistants send no `Origin`, so they are unaffected; moving to a custom domain means setting `allowedHostnames` and `allowedOriginHostnames`.
+- Tool ids are limited to `[A-Za-z0-9_-]` because they are placed in request paths; "." or ".." would be read as path segments.
 - `agents`, `@modelcontextprotocol/server` and `@modelcontextprotocol/client` are pinned together; take their upgrades as one change.

@@ -85,3 +85,5 @@ One Durable Object per user holds the due-event schedule. Its single alarm point
 - [0003 — DO alarm reminders](adr/0003-durable-object-alarm-reminders.md)
 - [0004 — Dashboard home](adr/0004-dashboard-home.md)
 - [0005 — Demo account](adr/0005-demo-account.md)
+- [0006 — Google Calendar full mirror](adr/0006-google-calendar-full-mirror.md)
+- [0007 — MCP keys and confirmed deletes](adr/0007-mcp-keys-and-confirmed-deletes.md)
