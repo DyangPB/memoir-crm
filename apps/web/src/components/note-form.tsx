@@ -10,6 +10,7 @@ type NoteFormProps = {
   error: string | null;
   onSubmit: (body: string) => Promise<void>;
   onCancel?: () => void;
+  autoFocus?: boolean;
 };
 
 export function NoteForm({
@@ -19,6 +20,7 @@ export function NoteForm({
   error,
   onSubmit,
   onCancel,
+  autoFocus,
 }: NoteFormProps) {
   const id = useId();
   const [body, setBody] = useState(initialBody);
@@ -39,6 +41,7 @@ export function NoteForm({
     <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
       <Textarea
         aria-label="Note"
+        autoFocus={autoFocus}
         id={`${id}-body`}
         onChange={(event) => setBody(event.target.value)}
         placeholder="What should you remember?"
